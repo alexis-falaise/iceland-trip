@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Iceland Epic 🇮🇸</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --accent: #0056b3;
+            --accent-light: #e6f0fa;
+            --success: #27ae60;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 60px;
+        }
+        header {
+            background-color: var(--accent);
+            color: white;
+            padding: 40px 20px 20px;
+            text-align: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        header p { font-size: 0.9rem; opacity: 0.9; }
+        
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        
+        .card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+        }
+        .card h3 { color: var(--accent); margin-bottom: 10px; font-size: 1.1rem;}
+        
+        details {
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        summary {
+            padding: 18px 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            transition: background 0.2s ease;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary:after {
+            content: "+";
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+        details[open] summary:after { content: "−"; }
+        details[open] summary { background-color: var(--accent-light); border-bottom: 1px solid #eee; }
+        
+        .day-content { padding: 15px; font-size: 0.95rem; }
+        .day-content h4 { margin: 15px 0 5px; color: var(--accent); }
+        .day-content ul { padding-left: 20px; margin-bottom: 10px; }
+        .day-content li { margin-bottom: 5px; }
+        
+        .map-btn {
+            display: block;
+            background-color: var(--accent);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .tag {
+            display: inline-block;
+            background: #eee;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        /* Packing List Styles */
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            accent-color: var(--success);
+            cursor: pointer;
+        }
+        .checklist-item label {
+            font-size: 1rem;
+            cursor: pointer;
+            flex-grow: 1;
+            transition: color 0.2s, text-decoration 0.2s;
+        }
+        .checklist-item input[type="checkbox"]:checked + label {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🇮🇸 Iceland Epic</h1>
+        <p>March 4 - March 14, 2026</p>
+        <p>You & Ebba ❤️</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="card">
+            <h3>✈️ Flight Info</h3>
+            <p><strong>Outbound (Mar 4):</strong> Orly (14:25) ➔ Keflavik (17:15)<br>
+            <em>EJU4895 | Ref: K93RDQ3</em></p>
+            <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+            <p><strong>Return (Mar 14):</strong> Keflavik (17:15) ➔ Orly (21:35)<br>
+            <em>EJU4898 | Ref: KBHPM1R</em></p>
+        </div>
+
+        <div class="card" id="packing-card">
+            <h3>🎒 Essential Packing List</h3>
+            <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+            <div id="checklist-container">
+                </div>
+        </div>
+
+        <details>
+            <summary>Day 1: The Discovery</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~1.5h Drive</span>
+                <span class="tag">⛺ Reykjavik / Thingvellir</span>
+                <a href="https://www.google.com/maps/dir/Keflav%C3%ADk+International+Airport,+Keflav%C3%ADk,+Iceland/Reykjav%C3%ADk,+Iceland/Thingvellir+National+Park,+Selfoss,+Iceland/data=!4m20!4m19!1m5!1m1!19sChIJn3mr4vz9KUkRzSjDFQqN-Cc!2m2!1d-22.623943999999998!2d63.9948577!1m5!1m1!19sChIJw-3c7rl01kgRcWDSMKIskew!2m2!1d-21.940755199999998!2d64.1469868!1m5!1m1!19sChIJe2kT-x-B1kgR8mKSB4tsdWs!2m2!1d-21.0764492!2d64.2821725!3e0" target="_blank" class="map-btn">📍 Open Route Map</a>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Pick up van at Keflavik (18:30)</li>
+                    <li>Grocery shopping in Reykjavik (Bónus/Krónan)</li>
+                    <li>Drive to campsite</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Brauð & Co (Cinnamon buns)</li>
+                    <li>Bæjarins Beztu Pylsur (Famous hot dogs)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 2: Golden Circle Day</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~3h Drive</span>
+                <span class="tag">⛺ Gesthús Selfoss</span>
+                <a href="https://www.google.com/maps/dir/Thingvellir+National+Park,+Selfoss,+Iceland/Geysir/Gullfoss+Falls/Keri%C3%B0+Crater,+Klausturholar,+Iceland/Hrunalaug+Hot+Spring,+S%C3%B3lheimar,+Fl%C3%BA%C3%B0ir,+Iceland/Gesth%C3%BAs+Selfoss,+Engjavegur+56,+Selfoss,+Iceland/data=!4m38!4m37!1m5!1m1!19sChIJe2kT-x-B1kgR8mKSB4tsdWs!2m2!1d-21.0764492!2d64.2821725!1m5!1m1!19sChIJP09CA5-j1kgRPyjiYhocdbQ!2m2!1d-20.3023605!2d64.310371899999993!1m5!1m1!19sChIJybZFr3Sl1kgRARZBC9tHYyw!2m2!1d-20.1199478!2d64.3270716!1m5!1m1!19sChIJV_L2VbeL1kgRB9kuweBEWlE!2m2!1d-20.8851466!2d64.04127849999999!1m5!1m1!19sChIJ24-g5ju-1kgRay4MayAeeUA!2m2!1d-20.2551249!2d64.1327657!1m5!1m1!19sChIJJyXX28lf1kgRJDG96H4pABQ!2m2!1d-20.988809099999997!2d63.933055599999996!3e0" target="_blank" class="map-btn">📍 Open Route Map</a>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Thingvellir National Park</li>
+                    <li>Strokkur Geyser</li>
+                    <li>Gullfoss Waterfall</li>
+                    <li>Kerið Crater</li>
+                    <li>Hrunalaug Hot Spring</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Friðheimar (Tomato greenhouse lunch)</li>
+                    <li>Efstidalur II (Farm ice cream)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 3: Dramatic Waterfalls</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~2.5h Drive</span>
+                <span class="tag">⛺ Vik or Þakgil</span>
+                <a href="https://www.google.com/maps/dir/Selfoss,+Iceland/Seljalandsfoss/Sk%C3%B3gafoss/Dyrh%C3%B3laey,+Iceland/Reynisfjara+Beach/Vik,+Iceland/data=!4m38!4m37!1m5!1m1!19sChIJywmZh8tf1kgRET-0iMl3mVw!2m2!1d-20.9996925!2d63.931832199999995!1m5!1m1!19sChIJFSTv6K0e10gRjRcJUiDmAa4!2m2!1d-19.9885688!2d63.615623199999995!1m5!1m1!19sChIJFYylOXY710gRSHn-zR_HYA8!2m2!1d-19.511370499999998!2d63.5320523!1m5!1m1!19sChIJmdOPSLJJ10gRcudiVCXKJSc!2m2!1d-19.1185521!2d63.4046799!1m5!1m1!19sChIJfSZn1YRJ10gR1Wuz9KNUeeA!2m2!1d-19.0716193!2d63.4057404!1m5!1m1!19sChIJ0bA2SUJK10gRjXdtABtTg74!2m2!1d-18.9974396!2d63.4176505!3e0" target="_blank" class="map-btn">📍 Open Route Map</a>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Seljalandsfoss (Walk behind)</li>
+                    <li>Seljavallalaug (Optional hot pool)</li>
+                    <li>Skógafoss Waterfall</li>
+                    <li>Dyrhólaey Viewpoint</li>
+                    <li>Reynisfjara Black Sand Beach</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Mia's Country Van (Fish & Chips)</li>
+                    <li>Smiðjan Brugghús (Vik Brewery)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 4: The Diamond Day</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~4h Drive</span>
+                <span class="tag">⛺ Vestrahorn Campsite</span>
+                <a href="https://www.google.com/maps/dir/Vik,+Iceland/Fja%C3%B0r%C3%A1rglj%C3%BAfur,+Iceland/Svartifoss,+Iceland/Sv%C3%ADnafellsj%C3%B6kull/J%C3%B6kuls%C3%A1rl%C3%B3n/Vestrahorn/data=!4m38!4m37!1m5!1m1!19sChIJ0bA2SUJK10gRjXdtABtTg74!2m2!1d-18.9974396!2d63.4176505!1m5!1m1!19sChIJ3ZFCWfDl0EgRvbVlccHsIKQ!2m2!1d-18.171815799999997!2d63.771279!1m5!1m1!19sChIJV6KJ4M810EgR11NlQqEPJ-M!2m2!1d-16.9753083!2d64.027528199999992!1m5!1m1!19sChIJb5Mix1wx0EgRm9eODP-obSc!2m2!1d-16.821478199999998!2d64.0185923!1m5!1m1!19sChIJGTg61-zWz0gRqUYB4VnJBc0!2m2!1d-16.230553699999998!2d64.0784458!1m5!1m1!19sChIJ3T8ZQouqz0gR7ONHAE2AO2o!2m2!1d-15.008611199999999!2d64.27333329999999!3e0" target="_blank" class="map-btn">📍 Open Route Map</a>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Fjaðrárgljúfur Canyon</li>
+                    <li>Svartifoss (Basalt waterfall)</li>
+                    <li>Svínafellsjökull Glacier</li>
+                    <li>Jökulsárlón Glacier Lagoon</li>
+                    <li>Diamond Beach</li>
+                    <li>Vestrahorn (Batman Mountain)</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Systrakaffi (Lunch stop)</li>
+                    <li>Pakkhús Restaurant (Langoustine in Höfn)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 5: Day of the Canyons</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~4-8h Drive</span>
+                <span class="tag">⛺ Camp Egilsstadir</span>
+                <a href="https://www.google.com/maps/dir/Vestrahorn/Lagarflj%C3%B3t/Stu%C3%B0lagil+Canyon,+5M6Q%2BHP,+Eiriksstadhir,+Iceland/Dettifoss/Egilssta%C3%B0ir,+Iceland/data=!4m32!4m31!1m5!1m1!19sChIJ3T8ZQouqz0gR7ONHAE2AO2o!2m2!1d-15.008611199999999!2d64.27333329999999!1m5!1m1!19sChIJr4aDwdodzEgRRnPj0NA6OYg!2m2!1d-14.4122113!2d65.3420229!1m5!1m1!19sChIJd7rLAfYpzEgR34_8axXpsF0!2m2!1d-15.3069273!2d65.1632703!1m5!1m1!19sChIJuU9fzooGzUgReiMomHV4QkA!2m2!1d-16.384576!2d65.814666199999991!1m5!1m1!19sChIJ056oDYAEzEgRVH98LGtBv5U!2m2!1d-14.399439399999999!2d65.2609232!3e0" target="_blank" class="map-btn">📍 Open Route Map</a>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Egilsstaðir & Lagarfljót Lake</li>
+                    <li>Stuðlagil Canyon</li>
+                    <li>Dettifoss (Check road.is! Route 862 often closed)</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Salt Café & Bistro</li>
+                    <li>Vök Baths (Floating geothermal pools)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 6: Day of the Gods</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~3h Drive</span>
+                <span class="tag">⛺ Hamrar (Akureyri)</span>
+                <a href="https://www.google.com/maps/dir/Egilssta%C3%B0ir,+Iceland/N%C3%A1maskard/Go%C3%B0afoss+Waterfall/Akureyri,+Iceland/data=!4m26!4m25!1m5!1m1!19sChIJ056oDYAEzEgRVH98LGtBv5U!2m2!1d-14.399439399999999!2d65.2609232!1m5!1m1!19sChIJBxz9UKGfzUgR1lrqxPH-eEg!2m2!1d-16.826666799999998!2d65.6472222!1m5!1m1!19sChIJnzYfSGp-zUgROx0NTqrNu34!2m2!1d-17.5501918!2d65.6827782!1m5!1m1!19sChIJp7-wHAeP0kgR0f1xjHkytr0!2m2!1d-18.0906859!2d65.6825509!3e0" target="_blank" class="map-btn">📍 Open Route Map</a>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Námaskarð (Mud pots)</li>
+                    <li>Goðafoss (Waterfall of the Gods)</li>
+                    <li>Akureyri Town</li>
+                    <li>Forest Lagoon (Skógarböðin)</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Vogafjós Farm Resort (Cowshed cafe)</li>
+                    <li>Rub23 (Sushi in Akureyri)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 7: Less Dramatic Waterfalls</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~3h Drive</span>
+                <span class="tag">⛺ Búðardalur Campsite</span>
+                <a href="https://www.google.com/maps/dir/Akureyri,+Iceland/Fosslaug+geothermic+pool,+FJV8%2BMHM,+Unnamed+Road,+Varmahl%C3%AD%C3%B0,+Islandia/B%C3%BA%C3%B0ardalur,+Iceland/data=!4m20!4m19!1m5!1m1!19sChIJp7-wHAeP0kgR0f1xjHkytr0!2m2!1d-18.0906859!2d65.6825509!1m5!1m1!19sChIJrQl9EY0F00gRvGmSEP5icpA!2m2!1d-19.3835889!2d65.494216299999991!1m5!1m1!19sChIJJeb3swv51EgRPVpIzd0Gqpw!2m2!1d-21.7672907!2d65.1099356!3e0" target="_blank" class="map-btn">📍 Open Route Map</a>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Scenic Road 83</li>
+                    <li>Fosslaug Geothermal Pool</li>
+                    <li>Reykyafoss</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Sauðárkrókur Bakery</li>
+                    <li>Erpsstaðir Creamery (Skyr & Ice Cream)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 8: Coastal Poetry</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~4h Drive</span>
+                <span class="tag">⛺ Snorrastadir (Plan A)</span>
+                <a href="https://www.google.com/maps/dir/B%C3%BA%C3%B0ardalur,+Iceland/Sv%C3%B6rtuloft+Lighthouse,+Sn%C3%A6fellsnes,+Iceland/Arnarstapi,+Iceland/Snorrasta%C3%B0ir+Campsite+%26+Accommodation,+Snorrasta%C3%B0ir+Fer%C3%B0a%C3%BEj%C3%B3nusta,+Borgarnes,+%C3%8Dsland/data=!4m26!4m25!1m5!1m1!19sChIJJeb3swv51EgRPVpIzd0Gqpw!2m2!1d-21.7672907!2d65.1099356!1m5!1m1!19sChIJJ-1B7uCPKkkRMMU_jc6Z2_U!2m2!1d-24.0390958!2d64.86380059999999!1m5!1m1!19sChIJlyAzMgiBKkkRUfLoebLqwz8!2m2!1d-23.6224317!2d64.7695169!1m5!1m1!19sChIJ2Tml4MKk1UgRiJ-b0l1sQ0I!2m2!1d-22.3012436!2d64.7736001!3e0" target="_blank" class="map-btn">📍 Open Route Map</a>
+                <h4>Route & Visits (Plan A: Snæfellsnes)</h4>
+                <ul>
+                    <li>Svörtuloft Lighthouse</li>
+                    <li>Arnarstapi Coastal Cliffs</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Fjöruhúsið Hellnum (Waffles on the cliff)</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 9: Icelandic Culture</summary>
+            <div class="day-content">
+                <span class="tag">🚗 ~2.5h Drive</span>
+                <span class="tag">⛺ Home Exchange (Reykjavik)</span>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Return Van by 11:00</li>
+                    <li>Old Harbor & Sun Voyager</li>
+                    <li>Harpa Concert Hall</li>
+                    <li>Perlan or Lebowski Bar</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Sægreifinn (Lobster Soup)</li>
+                    <li>Icelandic Street Food</li>
+                </ul>
+            </div>
+        </details>
+
+        <details>
+            <summary>Day 10: The Day of Care</summary>
+            <div class="day-content">
+                <span class="tag">⛺ Home Exchange (Reykjavik)</span>
+                <h4>Route & Visits</h4>
+                <ul>
+                    <li>Sky Lagoon (Infinity edge) OR Blue Lagoon (Milky blue)</li>
+                    <li>Relax and recover!</li>
+                </ul>
+                <h4>Recommendations</h4>
+                <ul>
+                    <li>Lava Restaurant (Blue Lagoon)</li>
+                    <li>Kaffi Loki (Rye bread ice cream)</li>
+                </ul>
+            </div>
+        </details>
+
+    </div>
+
+    <script>
+        // --- Accordion Logic ---
+        const details = document.querySelectorAll("details");
+        details.forEach((targetDetail) => {
+            targetDetail.addEventListener("click", () => {
+                details.forEach((detail) => {
+                    if (detail !== targetDetail) {
+                        detail.removeAttribute("open");
+                    }
+                });
+            });
+        });
+
+        // --- Packing List Logic ---
+        const packItems = [
+            "Thermals (Merino wool base layers)",
+            "Warm mid-layer (Fleece/Wool sweater)",
+            "Waterproof jacket (Windproof)",
+            "Waterproof pants (Essential for waterfalls!)",
+            "Waterproof hiking boots",
+            "Microspikes/Crampons (Ice on paths)",
+            "Warm beanie hat & scarf/buff",
+            "Waterproof gloves",
+            "Swimsuit & quick-dry towel",
+            "Power bank for phones",
+            "Lip balm & moisturizer",
+            "Headlamp (for campsites)"
+        ];
+
+        const container = document.getElementById('checklist-container');
+        const progressBar = document.getElementById('progress');
+
+        // Load saved state from Local Storage
+        const savedState = JSON.parse(localStorage.getItem('icelandPackList')) || {};
+
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.pack-checkbox');
+            const total = checkboxes.length;
+            const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const percentage = total === 0 ? 0 : (checked / total) * 100;
+            progressBar.style.width = percentage + '%';
+        }
+
+        packItems.forEach((item, index) => {
+            const id = 'item-' + index;
+            const div = document.createElement('div');
+            div.className = 'checklist-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = id;
+            checkbox.className = 'pack-checkbox';
+            checkbox.checked = savedState[id] || false;
+
+            const label = document.createElement('label');
+            label.htmlFor = id;
+            label.innerText = item;
+
+            // Save to Local Storage on click
+            checkbox.addEventListener('change', (e) => {
+                savedState[id] = e.target.checked;
+                localStorage.setItem('icelandPackList', JSON.stringify(savedState));
+                updateProgress();
+            });
+
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            container.appendChild(div);
+        });
+
+        // Initial progress update
+        updateProgress();
+    </script>
+</body>
+</html>
