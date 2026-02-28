@@ -1,704 +1,2510 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Iceland Epic 🇮🇸</title>
-    <style>
-        /* ===== DESIGN TOKENS ===== */
-        :root {
-            --bg: #fafafa;
-            --card: #ffffff;
-            --border: #e4e4e7;
-            --text: #09090b;
-            --muted: #f4f4f5;
-            --muted-text: #71717a;
-            --success: #16a34a;
-            --radius: 10px;
-            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <title>Iceland Epic 🇮🇸</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 
-            /* Day palette — 11 colours */
-            --d1-text:#1e3a5f; --d1-bg:#dbeafe; --d1-border:#bfdbfe; --d1-dot:#1d4ed8;
-            --d2-text:#78350f; --d2-bg:#fef3c7; --d2-border:#fde68a; --d2-dot:#d97706;
-            --d3-text:#0c4a6e; --d3-bg:#e0f2fe; --d3-border:#bae6fd; --d3-dot:#0284c7;
-            --d4-text:#27272a; --d4-bg:#f4f4f5; --d4-border:#d4d4d8; --d4-dot:#52525b;
-            --d5-text:#7c2d12; --d5-bg:#ffedd5; --d5-border:#fdba74; --d5-dot:#ea580c;
-            --d6-text:#4c0519; --d6-bg:#ffe4e6; --d6-border:#fda4af; --d6-dot:#be123c;
-            --d7-text:#134e4a; --d7-bg:#ccfbf1; --d7-border:#99f6e4; --d7-dot:#0d9488;
-            --d8-text:#2e1065; --d8-bg:#ede9fe; --d8-border:#ddd6fe; --d8-dot:#7c3aed;
-            --d9-text:#14532d; --d9-bg:#dcfce7; --d9-border:#bbf7d0; --d9-dot:#15803d;
-            --d10-text:#881337;--d10-bg:#ffe4e6;--d10-border:#fecdd3;--d10-dot:#f43f5e;
-            --d11-text:#701a75;--d11-bg:#fae8ff;--d11-border:#f0abfc;--d11-dot:#c026d3;
-        }
+    :root {
+      --background: 210 40% 98%;
+      --foreground: 222.2 47.4% 11.2%;
+      --card: 0 0% 100%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --border: 214.3 31.8% 91.4%;
+      --ring: 215 20.2% 65.1%;
+      --primary: 221.2 83.2% 53.3%;
+      --primary-foreground: 210 40% 98%;
+      --success: 142 76% 36%;
+      --radius: 16px;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 
-        /* Day custom-property injection */
-        .d1  { --day-text:var(--d1-text);  --day-bg:var(--d1-bg);  --day-dot:var(--d1-dot);  --day-border:var(--d1-border); }
-        .d2  { --day-text:var(--d2-text);  --day-bg:var(--d2-bg);  --day-dot:var(--d2-dot);  --day-border:var(--d2-border); }
-        .d3  { --day-text:var(--d3-text);  --day-bg:var(--d3-bg);  --day-dot:var(--d3-dot);  --day-border:var(--d3-border); }
-        .d4  { --day-text:var(--d4-text);  --day-bg:var(--d4-bg);  --day-dot:var(--d4-dot);  --day-border:var(--d4-border); }
-        .d5  { --day-text:var(--d5-text);  --day-bg:var(--d5-bg);  --day-dot:var(--d5-dot);  --day-border:var(--d5-border); }
-        .d6  { --day-text:var(--d6-text);  --day-bg:var(--d6-bg);  --day-dot:var(--d6-dot);  --day-border:var(--d6-border); }
-        .d7  { --day-text:var(--d7-text);  --day-bg:var(--d7-bg);  --day-dot:var(--d7-dot);  --day-border:var(--d7-border); }
-        .d8  { --day-text:var(--d8-text);  --day-bg:var(--d8-bg);  --day-dot:var(--d8-dot);  --day-border:var(--d8-border); }
-        .d9  { --day-text:var(--d9-text);  --day-bg:var(--d9-bg);  --day-dot:var(--d9-dot);  --day-border:var(--d9-border); }
-        .d10 { --day-text:var(--d10-text); --day-bg:var(--d10-bg); --day-dot:var(--d10-dot); --day-border:var(--d10-border); }
-        .d11 { --day-text:var(--d11-text); --day-bg:var(--d11-bg); --day-dot:var(--d11-dot); --day-border:var(--d11-border); }
+      --day-1: #0b3d91;
+      --day-2: #f59e0b;
+      --day-3: #38bdf8;
+      --day-4: #9ca3af;
+      --day-5: #b45309;
+      --day-6: #7f1d1d;
+      --day-7: #14b8a6;
+      --day-8: #5b21b6;
+      --day-9: #166534;
+      --day-10: #fb7185;
+      --day-11: #f472b6;
+    }
 
-        /* ===== RESET ===== */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font);
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-            padding-bottom: 72px;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        /* ===== HEADER ===== */
-        .app-header {
-            background: linear-gradient(155deg, #0f2040 0%, #1e3a5f 100%);
-            color: #fff;
-            padding: 52px 20px 22px;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .app-header h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.3px; }
-        .app-header .dates { font-size: 0.83rem; color: rgba(255,255,255,.72); margin-top: 5px; }
-        .app-header .couple { font-size: 0.82rem; color: rgba(255,255,255,.55); margin-top: 2px; }
+    body {
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: hsl(var(--foreground));
+      background:
+        radial-gradient(circle at 20% -10%, rgba(59, 130, 246, 0.18), transparent 36%),
+        radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.12), transparent 30%),
+        hsl(var(--background));
+      min-height: 100vh;
+      line-height: 1.45;
+      padding-bottom: 40px;
+    }
 
-        /* ===== CONTAINER ===== */
-        .container { padding: 14px 14px; max-width: 640px; margin: 0 auto; }
+    body.modal-open {
+      overflow: hidden;
+    }
 
-        /* ===== CARD ===== */
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 4px rgba(0,0,0,.04);
-        }
-        .card-title {
-            font-size: 0.83rem;
-            font-weight: 600;
-            letter-spacing: .01em;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 12px;
-        }
+    .day-card {
+      border: 1px solid hsl(var(--border));
+      border-left: 6px solid var(--day-color);
+      border-radius: var(--radius);
+      background: white;
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
 
-        /* ===== FLIGHT CARD ===== */
-        .flight-block { padding: 9px 0; }
-        .flight-block + .flight-block { border-top: 1px solid var(--border); }
-        .flight-badge { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted-text); margin-bottom: 3px; }
-        .flight-route { font-size: 0.9rem; font-weight: 600; }
-        .flight-ref { font-size: 0.76rem; color: var(--muted-text); margin-top: 2px; }
+    .day-card summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--day-color) 18%, white), white 65%);
+    }
 
-        /* ===== DAY CARDS ===== */
-        .day-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            margin-bottom: 9px;
-            overflow: hidden;
-            box-shadow: 0 1px 4px rgba(0,0,0,.04);
-            transition: box-shadow .2s;
-        }
-        .day-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    .day-card summary::-webkit-details-marker {
+      display: none;
+    }
 
-        .day-summary {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            padding: 12px 13px;
-            cursor: pointer;
-            user-select: none;
-            border-left: 3px solid var(--day-dot, var(--border));
-            background: var(--day-bg, transparent);
-            transition: filter .15s;
-        }
-        .day-summary:hover { filter: brightness(.97); }
+    .fullscreen-trigger {
+      background: var(--day-color);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 6px 14px color-mix(in srgb, var(--day-color) 35%, transparent);
+    }
 
-        .day-num {
-            width: 25px; height: 25px;
-            border-radius: 50%;
-            background: var(--day-dot, var(--muted));
-            color: #fff;
-            font-size: .7rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .day-info { flex: 1; min-width: 0; }
-        .day-name {
-            font-size: .875rem; font-weight: 600;
-            color: var(--day-text, var(--text));
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .day-meta {
-            font-size: .7rem;
-            color: var(--day-text, var(--muted-text));
-            opacity: .72; margin-top: 1px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+    .fullscreen-trigger:hover {
+      background: color-mix(in srgb, var(--day-color) 80%, black);
+      color: #ffffff;
+    }
 
-        .day-controls { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
-        .icon-btn {
-            border: none; background: transparent; cursor: pointer;
-            padding: 5px; border-radius: 6px;
-            color: var(--day-text, var(--muted-text));
-            opacity: .55; transition: opacity .15s, background .15s;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .icon-btn:hover { opacity: 1; background: rgba(0,0,0,.07); }
-        .day-chevron { opacity: .4; transition: transform .22s ease; }
-        .day-card.open .day-chevron { transform: rotate(180deg); }
+    .day-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
 
-        /* Day body */
-        .day-body {
-            display: none;
-            padding: 13px 14px 14px;
-            border-top: 1px solid var(--border);
-            font-size: .875rem;
-        }
-        .day-card.open .day-body { display: block; }
+    .day-number {
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: white;
+      background: var(--day-color);
+      border-radius: 999px;
+      padding: 4px 9px;
+      white-space: nowrap;
+    }
 
-        .tags-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 11px; }
-        .tag {
-            display: inline-flex; align-items: center;
-            background: var(--muted); border: 1px solid var(--border);
-            padding: 2px 9px; border-radius: 100px;
-            font-size: .7rem; font-weight: 500; color: var(--muted-text);
-        }
+    .day-title {
+      font-weight: 800;
+      font-size: 0.96rem;
+      line-height: 1.25;
+    }
 
-        .section-title {
-            font-size: .68rem; font-weight: 600;
-            text-transform: uppercase; letter-spacing: .07em;
-            color: var(--muted-text); margin: 11px 0 6px;
-        }
-        .item-list { list-style: none; }
-        .item-list li {
-            display: flex; gap: 7px;
-            padding: 5px 0; border-bottom: 1px solid var(--border);
-            font-size: .875rem; line-height: 1.4;
-        }
-        .item-list li:last-child { border-bottom: none; }
-        .item-list li::before { content: "–"; color: var(--muted-text); flex-shrink: 0; }
+    .day-content {
+      border-top: 1px solid hsl(var(--border));
+      padding: 14px;
+      font-size: 0.93rem;
+    }
 
-        .map-link {
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            border: 1px solid var(--border); background: var(--muted);
-            color: var(--text); padding: 9px 14px; border-radius: 8px;
-            text-decoration: none; font-weight: 500; font-size: .82rem;
-            margin-top: 13px; transition: background .15s;
-        }
-        .map-link:hover { background: var(--border); }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 11px;
+    }
 
-        /* ===== PACKING LIST ===== */
-        .prog-row { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted-text); margin-bottom: 5px; }
-        .prog-bar { height: 5px; background: var(--muted); border-radius: 100px; overflow: hidden; margin-bottom: 13px; }
-        .prog-fill { height: 100%; background: var(--success); border-radius: 100px; transition: width .3s ease; width: 0%; }
+    .tag {
+      border: 1px solid hsl(var(--border));
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: hsl(var(--muted));
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: hsl(var(--muted-foreground));
+    }
 
-        .add-row { display: flex; gap: 7px; margin-bottom: 11px; }
-        .text-input {
-            flex: 1; border: 1px solid var(--border); border-radius: 8px;
-            padding: 7px 11px; font-size: .875rem; font-family: var(--font);
-            background: var(--bg); color: var(--text); outline: none;
-            transition: border-color .15s;
-        }
-        .text-input:focus { border-color: #a1a1aa; }
-        .btn-primary {
-            border: none; background: var(--text); color: var(--card);
-            border-radius: 8px; padding: 7px 14px; font-size: .875rem;
-            font-weight: 500; cursor: pointer; font-family: var(--font);
-            transition: opacity .15s; white-space: nowrap;
-        }
-        .btn-primary:hover { opacity: .82; }
+    .map-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: #1d4ed8;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
 
-        .pack-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 9px 0; border-bottom: 1px solid var(--border);
-        }
-        .pack-item:last-child { border-bottom: none; }
-        .pack-item input[type="checkbox"] {
-            width: 16px; height: 16px; flex-shrink: 0;
-            accent-color: var(--success); cursor: pointer;
-        }
-        .pack-label {
-            flex: 1; font-size: .875rem; cursor: pointer;
-            line-height: 1.4; word-break: break-word;
-        }
-        .pack-label.done { color: var(--muted-text); text-decoration: line-through; }
-        .pack-edit-input {
-            flex: 1; border: 1px solid var(--border); border-radius: 6px;
-            padding: 3px 8px; font-size: .875rem; font-family: var(--font); outline: none;
-        }
-        .item-actions {
-            display: flex; gap: 2px; flex-shrink: 0;
-            opacity: 0; transition: opacity .15s;
-        }
-        .pack-item:hover .item-actions { opacity: 1; }
-        @media (hover: none) { .item-actions { opacity: 1; } }
-        .act-btn {
-            border: none; background: transparent; cursor: pointer;
-            padding: 4px; border-radius: 4px; color: var(--muted-text);
-            display: flex; align-items: center; transition: color .15s, background .15s;
-        }
-        .act-btn:hover { background: var(--muted); color: var(--text); }
-        .act-btn.del:hover { color: #dc2626; }
+    .map-link:hover {
+      text-decoration: underline;
+    }
 
-        /* ===== FULLSCREEN MODAL ===== */
-        .overlay {
-            position: fixed; inset: 0;
-            background: rgba(9,9,11,.55);
-            backdrop-filter: blur(5px);
-            z-index: 200;
-            display: none; /* toggled via .open */
-            align-items: flex-start;
-            overflow-y: auto;
-        }
-        .overlay.open { display: flex; }
+    .day-content h4,
+    .fullscreen-card h4 {
+      margin: 8px 0 6px;
+      font-size: 0.88rem;
+      color: hsl(var(--muted-foreground));
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
 
-        .modal {
-            background: var(--card);
-            width: 100%; min-height: 100dvh;
-            max-width: 680px; margin: 0 auto;
-            animation: slideIn .22s cubic-bezier(.4,0,.2,1);
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(14px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+    .day-content ul {
+      padding-left: 20px;
+      margin-bottom: 8px;
+    }
 
-        /* Modal sticky header with day colour */
-        .modal-top {
-            display: flex; align-items: flex-start;
-            justify-content: space-between; gap: 12px;
-            padding: 18px 15px 15px;
-            border-bottom: 1px solid var(--border);
-            border-left: 4px solid var(--day-dot, transparent);
-            background: var(--day-bg, var(--card));
-            position: sticky; top: 0; z-index: 10;
-        }
-        .modal-top h2 { font-size: 1.05rem; font-weight: 700; color: var(--day-text, var(--text)); }
-        .modal-meta { font-size: .75rem; color: var(--muted-text); margin-top: 3px; }
+    .day-content li {
+      margin: 4px 0;
+    }
 
-        .btn-close {
-            border: 1px solid var(--border); background: rgba(255,255,255,.85);
-            border-radius: 7px; padding: 5px 11px;
-            font-size: .8rem; font-weight: 500; cursor: pointer;
-            font-family: var(--font); color: var(--text);
-            transition: background .15s; flex-shrink: 0; white-space: nowrap;
-        }
-        .btn-close:hover { background: var(--muted); }
+    .fullscreen-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(2, 6, 23, 0.72);
+      display: none;
+      padding: 0;
+    }
 
-        /* Map embed */
-        .modal-map-wrap { width: 100%; position: relative; background: var(--muted); }
-        .modal-map-wrap iframe { width: 100%; height: 260px; border: none; display: block; }
-        .map-open-btn {
-            position: absolute; bottom: 10px; right: 10px;
-            background: white; border: 1px solid var(--border);
-            border-radius: 7px; padding: 6px 11px;
-            font-size: .75rem; font-weight: 500;
-            text-decoration: none; color: var(--text);
-            box-shadow: 0 1px 6px rgba(0,0,0,.12);
-            display: flex; align-items: center; gap: 5px;
-        }
-        .no-map {
-            height: 110px; display: flex; align-items: center;
-            justify-content: center; flex-direction: column; gap: 5px;
-            color: var(--muted-text); font-size: .85rem;
-        }
+    .fullscreen-modal.open {
+      display: block;
+    }
 
-        .modal-body { padding: 15px; }
-    </style>
+    .fullscreen-panel {
+      width: 100%;
+      height: 100dvh;
+      background: white;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .fullscreen-head {
+      color: white;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .fullscreen-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .fullscreen-body {
+      overflow-y: auto;
+      padding: 14px;
+      background: hsl(var(--background));
+    }
+
+    .fullscreen-card {
+      background: white;
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .map-embed {
+      width: 100%;
+      min-height: 280px;
+      border: 1px solid hsl(var(--border));
+      border-radius: 12px;
+      margin-bottom: 10px;
+      background: hsl(var(--muted));
+      overflow: hidden;
+    }
+
+    .route-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .route-stop {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--muted));
+      border-radius: 999px;
+      font-size: 0.77rem;
+      font-weight: 700;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .route-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--route-color, #1d4ed8);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+    }
+
+    .itinerary-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .itinerary-item {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .itinerary-rail {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      width: 20px;
+      min-height: 40px;
+    }
+
+    .itinerary-rail::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      bottom: -14px;
+      width: 2px;
+      background: hsl(var(--border));
+    }
+
+    .itinerary-item:last-child .itinerary-rail::before {
+      display: none;
+    }
+
+    .itinerary-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--itinerary-color, #1d4ed8);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+      margin-top: 2px;
+      z-index: 1;
+    }
+
+    .location-card {
+      border: 1px solid hsl(var(--border));
+      border-radius: 12px;
+      padding: 10px;
+      background: white;
+    }
+
+    .location-name {
+      font-size: 0.97rem;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .location-note {
+      font-size: 0.86rem;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 8px;
+    }
+
+    .location-image {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--muted));
+    }
+
+    .recommendation-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .recommendation-item {
+      border: 1px solid hsl(var(--border));
+      border-radius: 12px;
+      padding: 10px;
+      background: white;
+    }
+
+    .recommendation-item h5 {
+      font-size: 0.92rem;
+      margin-bottom: 5px;
+      font-weight: 800;
+    }
+
+    .recommendation-item p {
+      font-size: 0.86rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .muted {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.88rem;
+    }
+
+    /* Index-style visual override */
+    :root {
+      --bg: #fafafa;
+      --card-ui: #ffffff;
+      --border-ui: #e4e4e7;
+      --text-ui: #09090b;
+      --muted-ui: #f4f4f5;
+      --muted-text-ui: #71717a;
+      --success-ui: #16a34a;
+      --radius-ui: 10px;
+      --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text-ui);
+      line-height: 1.5;
+      padding-bottom: 72px;
+    }
+
+    .shell {
+      max-width: 640px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .app-header {
+      background: linear-gradient(155deg, #0f2040 0%, #1e3a5f 100%);
+      color: #fff;
+      padding: 52px 20px 22px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+      margin-bottom: 0;
+    }
+
+    .app-header h1 {
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .app-header .dates {
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.72);
+      margin-top: 5px;
+    }
+
+    .app-header .couple {
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.55);
+      margin-top: 2px;
+    }
+
+    .card {
+      background: var(--card-ui);
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    #packing-card {
+      background: var(--card-ui);
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      padding: 14px 16px;
+    }
+
+    .card-title {
+      font-size: 0.83rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    #packing-card .card-title {
+      font-size: 0.83rem;
+      margin-bottom: 12px;
+      letter-spacing: 0.01em;
+    }
+
+    .flight-block {
+      padding: 9px 0;
+    }
+
+    .flight-block + .flight-block {
+      border-top: 1px solid var(--border-ui);
+    }
+
+    .flight-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted-text-ui);
+      margin-bottom: 3px;
+    }
+
+    .flight-route {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .flight-ref {
+      font-size: 0.76rem;
+      color: var(--muted-text-ui);
+      margin-top: 2px;
+    }
+
+    .section-title {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted-text-ui);
+      margin: 11px 0 6px;
+    }
+
+    .prog-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--muted-text-ui);
+      margin-bottom: 5px;
+    }
+
+    .prog-bar {
+      height: 5px;
+      background: var(--muted-ui);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-bottom: 13px;
+    }
+
+    .prog-fill {
+      height: 100%;
+      background: var(--success-ui);
+      border-radius: 100px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .add-row {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 11px;
+    }
+
+    .text-input {
+      flex: 1;
+      border: 1px solid var(--border-ui);
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 0.875rem;
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text-ui);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .text-input:focus {
+      border-color: #a1a1aa;
+    }
+
+    .btn {
+      border: 1px solid var(--border-ui);
+      background: #fff;
+      color: var(--muted-text-ui);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      transform: none;
+      transition: color 0.15s, background 0.15s, border-color 0.15s, opacity 0.15s;
+    }
+
+    .btn:hover {
+      transform: none;
+      background: var(--muted-ui);
+      color: var(--text-ui);
+    }
+
+    .btn-primary {
+      border: none;
+      background: var(--text-ui);
+      color: var(--card-ui);
+      padding: 7px 14px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 8px;
+      font-family: var(--font-ui);
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover {
+      background: var(--text-ui);
+      opacity: 0.82;
+    }
+
+    .btn-danger {
+      color: #dc2626;
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.35);
+      padding: 8px 10px;
+      font-size: 0.8rem;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    #packlist {
+      display: block;
+      background: #ffffff;
+    }
+
+    .pack-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border-ui);
+      background: transparent;
+    }
+
+    .pack-item:last-child {
+      border-bottom: none;
+    }
+
+    .pack-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--success-ui);
+      flex-shrink: 0;
+      display: block;
+      cursor: pointer;
+    }
+
+    .pack-label {
+      flex: 1;
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.4;
+      min-width: 0;
+      word-break: break-word;
+      cursor: pointer;
+    }
+
+    .pack-label.done {
+      color: var(--muted-text-ui);
+      text-decoration: line-through;
+    }
+
+    .pack-edit-input {
+      flex: 1;
+      border: 1px solid var(--border-ui);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.875rem;
+      font-family: var(--font-ui);
+      outline: none;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .pack-item:hover .item-actions {
+      opacity: 1;
+    }
+
+    @media (hover: none) {
+      .item-actions {
+        opacity: 1;
+      }
+    }
+
+    .act-btn {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      color: var(--muted-text-ui);
+      display: flex;
+      align-items: center;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .act-btn:hover {
+      background: var(--muted-ui);
+      color: var(--text-ui);
+    }
+
+    .act-btn.del:hover {
+      color: #dc2626;
+    }
+
+    .act-btn svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .day-card {
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      margin-bottom: 9px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    .day-card summary {
+      padding: 12px 13px;
+      border-left: 3px solid var(--day-color);
+      background: color-mix(in srgb, var(--day-color) 18%, white);
+      transition: filter 0.15s;
+    }
+
+    .day-card summary:hover {
+      filter: brightness(0.97);
+    }
+
+    .day-number {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: var(--day-color);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .day-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: color-mix(in srgb, var(--day-color) 75%, black);
+    }
+
+    .fullscreen-trigger {
+      border: 1px solid var(--border-ui);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text-ui);
+      box-shadow: none;
+      padding: 5px 9px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .fullscreen-trigger:hover {
+      background: var(--muted-ui);
+      color: var(--text-ui);
+    }
+
+    .day-content {
+      border-top: 1px solid var(--border-ui);
+      padding: 13px 14px 14px;
+      font-size: 0.875rem;
+    }
+
+    .meta-row {
+      gap: 5px;
+      margin-bottom: 11px;
+    }
+
+    .tag {
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      border-radius: 100px;
+      padding: 2px 9px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--muted-text-ui);
+    }
+
+    .day-drive-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .drive-plan {
+      opacity: 0.72;
+      font-size: 0.64rem;
+      white-space: nowrap;
+    }
+
+    .map-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      color: var(--text-ui);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .map-link:hover {
+      background: var(--border-ui);
+      text-decoration: none;
+    }
+
+    .day-content h4,
+    .fullscreen-card h4 {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted-text-ui);
+      margin: 11px 0 6px;
+    }
+
+    .fullscreen-modal {
+      background: rgba(9, 9, 11, 0.55);
+      backdrop-filter: blur(5px);
+      align-items: flex-start;
+      overflow-y: auto;
+    }
+
+    .fullscreen-modal.open {
+      display: flex;
+    }
+
+    .fullscreen-panel {
+      background: var(--card-ui);
+      width: 100%;
+      min-height: 100dvh;
+      max-width: 680px;
+      margin: 0 auto;
+      animation: slideIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      display: block;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fullscreen-head {
+      color: var(--text-ui);
+      background: var(--muted-ui);
+      border-bottom: 1px solid var(--border-ui);
+      border-left: 4px solid var(--day-color, transparent);
+      padding: 18px 15px 15px;
+      align-items: flex-start;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .fullscreen-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-ui);
+    }
+
+    #fullscreen-subtitle {
+      color: var(--muted-text-ui) !important;
+      font-size: 0.75rem;
+      margin-top: 3px;
+    }
+
+    #fullscreen-subtitle .drive-plan {
+      font-size: 0.7rem;
+      margin-left: 6px;
+    }
+
+    #close-fullscreen {
+      border: 1px solid var(--border-ui);
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--text-ui);
+      border-radius: 7px;
+      padding: 5px 11px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    #close-fullscreen:hover {
+      background: var(--muted-ui);
+    }
+
+    .fullscreen-body {
+      padding: 15px;
+      background: var(--card-ui);
+    }
+
+    .fullscreen-card {
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      box-shadow: none;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    .map-embed {
+      min-height: 260px;
+      border: none;
+      border-radius: 0;
+      background: var(--muted-ui);
+      margin: 0 0 8px;
+    }
+
+    .route-strip {
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+
+    .route-stop {
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      border-radius: 100px;
+      padding: 2px 9px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--muted-text-ui);
+    }
+
+    .route-stop.campsite-stop {
+      border-color: #bfdbfe;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-weight: 600;
+    }
+
+    .route-dot {
+      width: 7px;
+      height: 7px;
+      box-shadow: none;
+    }
+
+    .itinerary-list {
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .location-card,
+    .recommendation-item {
+      border: 1px solid var(--border-ui);
+      border-radius: 8px;
+      box-shadow: none;
+      padding: 9px 10px;
+      background: #fff;
+    }
+
+    .location-name,
+    .recommendation-item h5 {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .location-note,
+    .recommendation-item p,
+    .muted {
+      font-size: 0.78rem;
+      color: var(--muted-text-ui);
+    }
+
+    .location-card.campsite-card {
+      border-color: #bfdbfe;
+      background: linear-gradient(180deg, #eff6ff 0%, #ffffff 60%);
+    }
+
+    .location-name .stop-icon {
+      margin-right: 6px;
+    }
+
+    .location-image {
+      border: 1px solid var(--border-ui);
+      border-radius: 8px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .route-stop,
+    .location-link {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .route-stop:hover {
+      background: var(--border-ui);
+    }
+
+    .location-link {
+      display: block;
+    }
+
+    .location-link:hover .location-card {
+      border-color: #a1a1aa;
+      background: var(--muted-ui);
+    }
+
+    .location-link-inline {
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-color: var(--muted-text-ui);
+      text-underline-offset: 2px;
+    }
+
+    .location-link-inline:hover {
+      color: var(--text-ui);
+      text-decoration-color: var(--text-ui);
+    }
+
+    .itinerary-drive-time {
+      margin: -2px 0 6px 32px;
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px dashed var(--border-ui);
+      background: var(--muted-ui);
+      color: var(--muted-text-ui);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      font-weight: 500;
+    }
+
+    .itinerary-road-summary {
+      margin: -2px 0 4px 32px;
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border-ui);
+      background: #ffffff;
+      color: var(--muted-text-ui);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .itinerary-road-summary.loading {
+      opacity: 0.82;
+      font-style: italic;
+    }
+
+    .itinerary-drive-time.loading {
+      opacity: 0.82;
+      font-style: italic;
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: 94vw;
+      }
+
+      .day-card summary {
+        padding: 12px;
+      }
+
+      .day-title {
+        font-size: 0.9rem;
+      }
+
+      .btn-ghost {
+        font-size: 0.72rem;
+        padding: 6px 8px;
+      }
+
+      .map-embed {
+        min-height: 240px;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<header class="app-header">
+  <header class="app-header">
     <h1>🇮🇸 Iceland Epic</h1>
     <p class="dates">March 4 – 14, 2026</p>
     <p class="couple">You &amp; Ebba ❤️</p>
-</header>
+  </header>
 
-<div class="container">
+  <div class="shell">
+    <section class="card" aria-labelledby="flight-title">
+      <h2 id="flight-title" class="card-title">✈️ Flights</h2>
+      <div class="flight-block">
+        <div class="flight-badge">Outbound · Mar 4</div>
+        <div class="flight-route">Orly 14:25 → Keflavik 17:15</div>
+        <div class="flight-ref">EJU4895 · Ref: K93RDQ3</div>
+      </div>
+      <div class="flight-block">
+        <div class="flight-badge">Return · Mar 14</div>
+        <div class="flight-route">Keflavik 17:15 → Orly 21:35</div>
+        <div class="flight-ref">EJU4898 · Ref: KBHPM1R</div>
+      </div>
+    </section>
 
-    <!-- Flights -->
-    <div class="card">
-        <div class="card-title">✈️ Flights</div>
-        <div class="flight-block">
-            <div class="flight-badge">Outbound · Mar 4</div>
-            <div class="flight-route">Orly 14:25 → Keflavik 17:15</div>
-            <div class="flight-ref">EJU4895 · Ref: K93RDQ3</div>
+    <section id="packing-card" class="card" aria-labelledby="pack-title">
+      <h2 id="pack-title" class="card-title">🎒 Packing List</h2>
+      <div class="prog-row">
+        <span id="prog-label">0 packed</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="prog-bar" aria-hidden="true">
+        <div class="prog-fill" id="pack-progress"></div>
+      </div>
+
+      <form id="add-item-form" class="add-row">
+        <input id="new-item-input" class="text-input" type="text" placeholder="Add an item…" maxlength="100" aria-label="Add packing item">
+        <button class="btn-primary" type="submit">Add</button>
+      </form>
+
+      <div id="packlist" aria-live="polite"></div>
+    </section>
+
+    <h2 class="section-title">Itinerary Days</h2>
+    <section id="days-container" aria-label="Iceland trip days"></section>
+  </div>
+
+  <div id="fullscreen-modal" class="fullscreen-modal" role="dialog" aria-modal="true" aria-labelledby="fullscreen-title">
+    <div class="fullscreen-panel">
+      <div id="fullscreen-head" class="fullscreen-head">
+        <div>
+          <h3 id="fullscreen-title" class="fullscreen-title"></h3>
+          <p id="fullscreen-subtitle" class="muted" style="color: rgba(255,255,255,0.92);"></p>
         </div>
-        <div class="flight-block">
-            <div class="flight-badge">Return · Mar 14</div>
-            <div class="flight-route">Keflavik 17:15 → Orly 21:35</div>
-            <div class="flight-ref">EJU4898 · Ref: KBHPM1R</div>
+        <button id="close-fullscreen" class="btn btn-ghost" type="button">Close ✕</button>
+      </div>
+      <div class="fullscreen-body">
+        <div class="fullscreen-card">
+          <div id="fullscreen-map" class="map-embed" role="img" aria-label="Day itinerary map"></div>
+          <div id="fullscreen-route" class="route-strip"></div>
+          <a id="fullscreen-map-link" class="map-link" target="_blank" rel="noopener noreferrer">📍 Open route map in Google Maps</a>
+          <p class="muted">Interactive map with the day's itinerary route overlay.</p>
         </div>
+
+        <div class="fullscreen-card">
+          <h4>Itinerary</h4>
+          <div id="fullscreen-itinerary" class="itinerary-list"></div>
+        </div>
+
+        <div class="fullscreen-card">
+          <h4>Recommendations</h4>
+          <div id="fullscreen-reco" class="recommendation-list"></div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Packing list -->
-    <div class="card">
-        <div class="card-title">🎒 Packing List</div>
-        <div class="prog-row"><span id="prog-label">0 packed</span><span id="prog-pct">0%</span></div>
-        <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
-        <div class="add-row">
-            <input type="text" class="text-input" id="new-item" placeholder="Add an item…" autocomplete="off" />
-            <button class="btn-primary" id="btn-add">Add</button>
-        </div>
-        <div id="pack-list"></div>
-    </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const dayColors = [
+      "var(--day-1)",
+      "var(--day-2)",
+      "var(--day-3)",
+      "var(--day-4)",
+      "var(--day-5)",
+      "var(--day-6)",
+      "var(--day-7)",
+      "var(--day-8)",
+      "var(--day-9)",
+      "var(--day-10)",
+      "var(--day-11)"
+    ];
 
-    <!-- Days rendered by JS -->
-    <div id="days-list"></div>
+    const IMAGE_CACHE_STORAGE_KEY = "icelandImageUrlCacheV1";
+    const DRIVE_CACHE_STORAGE_KEY = "icelandDriveLegCacheV1";
+    const IMAGE_CACHE_MAX_ITEMS = 240;
+    const DRIVE_CACHE_MAX_ITEMS = 180;
 
-</div>
-
-<!-- Fullscreen modal -->
-<div class="overlay" id="overlay">
-    <div class="modal" id="modal">
-        <div class="modal-top" id="modal-top">
-            <div>
-                <h2 id="modal-title"></h2>
-                <div class="modal-meta" id="modal-meta"></div>
-            </div>
-            <button class="btn-close" id="btn-close">✕ Close</button>
-        </div>
-        <div class="modal-map-wrap" id="modal-map"></div>
-        <div class="modal-body" id="modal-body"></div>
-    </div>
-</div>
-
-<script>
-// =============================================
-// DATA
-// =============================================
-const DAYS = [
-    {
-        n:1, cls:"d1", title:"The Discovery",
-        drive:"~1.5h Drive", camp:"Reykjavik / Thingvellir",
-        osmBbox:"-22.7,63.8,-20.9,64.4",
-        mapUrl:"https://www.google.com/maps/dir/Keflav%C3%ADk+International+Airport/Reykjav%C3%ADk/Thingvellir+National+Park/",
-        visits:["Pick up van at Keflavik (18:30)","Grocery shopping in Reykjavik (Bónus/Krónan)","Drive to campsite"],
-        recs:["Brauð & Co (Cinnamon buns)","Bæjarins Beztu Pylsur (Famous hot dogs)"]
-    },
-    {
-        n:2, cls:"d2", title:"Golden Circle Day",
-        drive:"~3h Drive", camp:"Gesthús Selfoss",
-        osmBbox:"-21.2,63.85,-19.8,64.45",
-        mapUrl:"https://www.google.com/maps/dir/Thingvellir+National+Park/Geysir/Gullfoss+Falls/Ker%C3%AD%C3%B0+Crater/Hrunalaug+Hot+Spring/Selfoss/",
-        visits:["Thingvellir National Park","Strokkur Geyser","Gullfoss Waterfall","Kerið Crater","Hrunalaug Hot Spring"],
-        recs:["Friðheimar (Tomato greenhouse lunch)","Efstidalur II (Farm ice cream)"]
-    },
-    {
-        n:3, cls:"d3", title:"Dramatic Waterfalls",
-        drive:"~2.5h Drive", camp:"Vik or Þakgil",
-        osmBbox:"-21.1,63.3,-18.8,63.75",
-        mapUrl:"https://www.google.com/maps/dir/Selfoss+Iceland/Seljalandsfoss/Sk%C3%B3gafoss/Dyrh%C3%B3laey/Reynisfjara+Black+Sand+Beach/Vik+Iceland/",
-        visits:["Seljalandsfoss (Walk behind)","Seljavallalaug (Optional hot pool)","Skógafoss Waterfall","Dyrhólaey Viewpoint","Reynisfjara Black Sand Beach"],
-        recs:["Mia's Country Van (Fish & Chips)","Smiðjan Brugghús (Vik Brewery)"]
-    },
-    {
-        n:4, cls:"d4", title:"The Diamond Day",
-        drive:"~4h Drive", camp:"Vestrahorn Campsite",
-        osmBbox:"-19.1,63.35,-14.7,64.15",
-        mapUrl:"https://www.google.com/maps/dir/Vik+Iceland/Fja%C3%B0r%C3%A1rglj%C3%BAfur+Canyon/Svartifoss/Sv%C3%ADnafellsj%C3%B6kull/J%C3%B6kuls%C3%A1rl%C3%B3n/Diamond+Beach+Iceland/Vestrahorn/",
-        visits:["Fjaðrárgljúfur Canyon","Svartifoss (Basalt waterfall)","Svínafellsjökull Glacier","Jökulsárlón Glacier Lagoon","Diamond Beach","Vestrahorn (Batman Mountain)"],
-        recs:["Systrakaffi (Lunch stop)","Pakkhús Restaurant (Langoustine in Höfn)"]
-    },
-    {
-        n:5, cls:"d5", title:"Day of the Canyons",
-        drive:"~4–8h Drive", camp:"Camp Egilsstaðir",
-        osmBbox:"-16.6,64.1,-13.8,65.9",
-        mapUrl:"https://www.google.com/maps/dir/Vestrahorn/Lagarflj%C3%B3t/Stu%C3%B0lagil+Canyon/Dettifoss/Egilssta%C3%B0ir/",
-        visits:["Egilsstaðir & Lagarfljót Lake","Stuðlagil Canyon","Dettifoss (Check road.is! Route 862 often closed)"],
-        recs:["Salt Café & Bistro","Vök Baths (Floating geothermal pools)"]
-    },
-    {
-        n:6, cls:"d6", title:"Day of the Gods",
-        drive:"~3h Drive", camp:"Hamrar (Akureyri)",
-        osmBbox:"-18.3,65.2,-14.2,65.8",
-        mapUrl:"https://www.google.com/maps/dir/Egilssta%C3%B0ir/N%C3%A1maskard/Go%C3%B0afoss+Waterfall/Akureyri/",
-        visits:["Námaskarð (Mud pots)","Goðafoss (Waterfall of the Gods)","Akureyri Town","Forest Lagoon (Skógarböðin)"],
-        recs:["Vogafjós Farm Resort (Cowshed cafe)","Rub23 (Sushi in Akureyri)"]
-    },
-    {
-        n:7, cls:"d7", title:"Less Dramatic Waterfalls",
-        drive:"~3h Drive", camp:"Búðardalur Campsite",
-        osmBbox:"-21.9,65.0,-18.0,65.9",
-        mapUrl:"https://www.google.com/maps/dir/Akureyri/Fosslaug+Geothermal+Pool/B%C3%BA%C3%B0ardalur/",
-        visits:["Scenic Road 83","Fosslaug Geothermal Pool","Reykyafoss"],
-        recs:["Sauðárkrókur Bakery","Erpsstaðir Creamery (Skyr & Ice Cream)"]
-    },
-    {
-        n:8, cls:"d8", title:"Coastal Poetry",
-        drive:"~4h Drive", camp:"Snorrastaðir (Plan A)",
-        osmBbox:"-24.2,64.6,-21.6,65.2",
-        mapUrl:"https://www.google.com/maps/dir/B%C3%BA%C3%B0ardalur+Iceland/Sv%C3%B6rtuloft+Lighthouse/Arnarstapi+Iceland/Snorrastadir/",
-        visits:["Svörtuloft Lighthouse","Arnarstapi Coastal Cliffs"],
-        recs:["Fjöruhúsið Hellnum (Waffles on the cliff)"]
-    },
-    {
-        n:9, cls:"d9", title:"Icelandic Culture",
-        drive:"~2.5h Drive", camp:"Home Exchange (Reykjavik)",
-        osmBbox:"-22.15,64.05,-21.7,64.22",
-        mapUrl:null,
-        visits:["Return Van by 11:00","Old Harbor & Sun Voyager","Harpa Concert Hall","Perlan or Lebowski Bar"],
-        recs:["Sægreifinn (Lobster Soup)","Icelandic Street Food"]
-    },
-    {
-        n:10, cls:"d10", title:"The Day of Care",
-        drive:null, camp:"Home Exchange (Reykjavik)",
-        osmBbox:"-22.5,63.85,-21.7,64.2",
-        mapUrl:null,
-        visits:["Sky Lagoon (Infinity edge) OR Blue Lagoon (Milky blue)","Relax and recover!"],
-        recs:["Lava Restaurant (Blue Lagoon)","Kaffi Loki (Rye bread ice cream)"]
-    },
-    {
-        n:11, cls:"d11", title:"Au Revoir, Iceland",
-        drive:null, camp:"→ Keflavik · Flight 17:15",
-        osmBbox:"-22.75,63.95,-22.25,64.15",
-        mapUrl:null,
-        visits:["Check out, final packing","Drive to Keflavik Airport","EJU4898 departs 17:15 → Orly 21:35"],
-        recs:["Last coffee & pastry before the road"]
-    }
-];
-
-// =============================================
-// UTILITY
-// =============================================
-function esc(str) {
-    return String(str)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function buildItemList(arr) {
-    return `<ul class="item-list">${arr.map(v=>`<li>${esc(v)}</li>`).join('')}</ul>`;
-}
-
-// =============================================
-// DAY CARDS
-// =============================================
-const daysList = document.getElementById('days-list');
-
-DAYS.forEach(day => {
-    const meta = [day.drive, day.camp].filter(Boolean).join(' · ');
-    const card = document.createElement('div');
-    card.className = `day-card ${day.cls}`;
-    card.id = `day-${day.n}`;
-
-    card.innerHTML = `
-        <div class="day-summary" onclick="toggleDay(${day.n})">
-            <div class="day-num">${day.n}</div>
-            <div class="day-info">
-                <div class="day-name">Day ${day.n}: ${esc(day.title)}</div>
-                ${meta ? `<div class="day-meta">${esc(meta)}</div>` : ''}
-            </div>
-            <div class="day-controls">
-                <button class="icon-btn" onclick="openModal(${day.n},event)" title="Fullscreen">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-                        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-                    </svg>
-                </button>
-                <svg class="day-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"/>
-                </svg>
-            </div>
-        </div>
-        <div class="day-body">
-            ${(day.drive || day.camp) ? `
-            <div class="tags-row">
-                ${day.drive ? `<span class="tag">🚗 ${esc(day.drive)}</span>` : ''}
-                ${day.camp  ? `<span class="tag">⛺ ${esc(day.camp)}</span>` : ''}
-            </div>` : ''}
-            ${day.visits.length ? `<div class="section-title">Route & Visits</div>${buildItemList(day.visits)}` : ''}
-            ${day.recs.length   ? `<div class="section-title">Food & Drinks</div>${buildItemList(day.recs)}` : ''}
-            ${day.mapUrl ? `<a href="${day.mapUrl}" target="_blank" rel="noopener" class="map-link">📍 Open Route in Google Maps</a>` : ''}
-        </div>
-    `;
-
-    daysList.appendChild(card);
-});
-
-function toggleDay(n) {
-    const card = document.getElementById(`day-${n}`);
-    const isOpen = card.classList.contains('open');
-    document.querySelectorAll('.day-card.open').forEach(c => c.classList.remove('open'));
-    if (!isOpen) card.classList.add('open');
-}
-
-// =============================================
-// FULLSCREEN MODAL
-// =============================================
-const overlay   = document.getElementById('overlay');
-const modalTop  = document.getElementById('modal-top');
-const modalMap  = document.getElementById('modal-map');
-const modalBody = document.getElementById('modal-body');
-
-function openModal(n, e) {
-    if (e) e.stopPropagation();
-    const day = DAYS.find(d => d.n === n);
-    if (!day) return;
-
-    // Colour the sticky header via the day class (CSS vars cascade)
-    modalTop.className = `modal-top ${day.cls}`;
-    document.getElementById('modal-title').textContent = `Day ${day.n}: ${day.title}`;
-    document.getElementById('modal-meta').textContent  = [day.drive, day.camp].filter(Boolean).join(' · ');
-
-    // Map — OpenStreetMap area embed + Google Maps route button
-    if (day.osmBbox) {
-        const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${day.osmBbox}&layer=mapnik`;
-        modalMap.innerHTML = `
-            <iframe src="${osmUrl}" loading="lazy" title="Area map for Day ${day.n}"></iframe>
-            ${day.mapUrl
-                ? `<a href="${day.mapUrl}" target="_blank" rel="noopener" class="map-open-btn">📍 Open Route</a>`
-                : ''}
-        `;
-    } else {
-        modalMap.innerHTML = `<div class="no-map"><span style="font-size:1.6rem">📍</span><span>No route map for this day</span></div>`;
+    function readLocalStorageObject(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) {
+          return {};
+        }
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch {
+        return {};
+      }
     }
 
-    // Body content
-    modalBody.innerHTML = `
-        ${(day.drive || day.camp) ? `
-        <div class="tags-row">
-            ${day.drive ? `<span class="tag">🚗 ${esc(day.drive)}</span>` : ''}
-            ${day.camp  ? `<span class="tag">⛺ ${esc(day.camp)}</span>`  : ''}
-        </div>` : ''}
-        ${day.visits.length ? `<div class="section-title">Route & Visits</div>${buildItemList(day.visits)}` : ''}
-        ${day.recs.length   ? `<div class="section-title">Food & Drinks</div>${buildItemList(day.recs)}` : ''}
-    `;
+    function writeLocalStorageObject(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {
+        // localStorage might be unavailable/quota-limited; skip persistence.
+      }
+    }
 
-    overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-}
+    let imageUrlCache = readLocalStorageObject(IMAGE_CACHE_STORAGE_KEY);
+    let driveTimesStorageCache = readLocalStorageObject(DRIVE_CACHE_STORAGE_KEY);
 
-function closeModal() {
-    overlay.classList.remove('open');
-    document.body.style.overflow = '';
-    modalMap.innerHTML = ''; // stop iframe loading
-}
+    function compactObjectCache(cacheObject, maxItems) {
+      const entries = Object.entries(cacheObject || {});
+      if (entries.length <= maxItems) {
+        return cacheObject;
+      }
 
-document.getElementById('btn-close').onclick = closeModal;
-overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+      entries.sort((a, b) => {
+        const aTs = Number((a[1] && a[1].updatedAt) || 0);
+        const bTs = Number((b[1] && b[1].updatedAt) || 0);
+        return bTs - aTs;
+      });
 
-// =============================================
-// PACKING LIST
-// =============================================
-const PACK_KEY = 'iceland_pack_v2';
-const DEFAULTS = [
-    "Thermals (Merino wool base layers)",
-    "Warm mid-layer (Fleece/Wool sweater)",
-    "Waterproof jacket (Windproof)",
-    "Waterproof pants (Essential for waterfalls!)",
-    "Waterproof hiking boots",
-    "Microspikes/Crampons (Ice on paths)",
-    "Warm beanie hat & scarf/buff",
-    "Waterproof gloves",
-    "Swimsuit & quick-dry towel",
-    "Power bank for phones",
-    "Lip balm & moisturizer",
-    "Headlamp (for campsites)"
-];
+      const trimmed = {};
+      entries.slice(0, maxItems).forEach(([key, value]) => {
+        trimmed[key] = value;
+      });
+      return trimmed;
+    }
 
-let items = (() => {
-    try { const s = localStorage.getItem(PACK_KEY); if (s) return JSON.parse(s); } catch(e) {}
-    return DEFAULTS.map((text, i) => ({ id: i + 1, text, done: false }));
-})();
-let uid = items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
+    function imageFor(keyword, seed) {
+      const tags = ("iceland," + String(keyword).toLowerCase())
+        .replace(/[^a-z0-9]+/g, ",")
+        .replace(/,+/g, ",")
+        .replace(/^,|,$/g, "");
+      return "https://loremflickr.com/1200/800/" + tags + "?lock=" + seed;
+    }
 
-const packList  = document.getElementById('pack-list');
-const progFill  = document.getElementById('prog-fill');
-const progLabel = document.getElementById('prog-label');
-const progPct   = document.getElementById('prog-pct');
+    function getLocationImageCacheKey(dayNumber, stopIndex, locationName) {
+      const normalizedName = String(locationName || "stop")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return "d" + dayNumber + "-s" + (stopIndex + 1) + "-" + normalizedName;
+    }
 
-function save() { localStorage.setItem(PACK_KEY, JSON.stringify(items)); }
+    function getCachedImageUrl(imageKey) {
+      const cached = imageUrlCache[imageKey];
+      return cached && typeof cached.url === "string" ? cached.url : "";
+    }
 
-function render() {
-    const total   = items.length;
-    const checked = items.filter(i => i.done).length;
-    const pct     = total ? Math.round(checked / total * 100) : 0;
-    progFill.style.width    = pct + '%';
-    progLabel.textContent   = `${checked} / ${total} packed`;
-    progPct.textContent     = pct + '%';
+    function saveCachedImageUrl(imageKey, imageUrl) {
+      if (!imageKey || typeof imageUrl !== "string" || !imageUrl.trim()) {
+        return;
+      }
 
-    packList.innerHTML = '';
-    items.forEach(item => {
-        const div = document.createElement('div');
-        div.className  = 'pack-item';
-        div.dataset.id = item.id;
-        div.innerHTML = `
-            <input type="checkbox" ${item.done ? 'checked' : ''} />
-            <span class="pack-label ${item.done ? 'done' : ''}">${esc(item.text)}</span>
-            <div class="item-actions">
-                <button class="act-btn" data-action="edit" title="Edit">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                </button>
-                <button class="act-btn del" data-action="del" title="Remove">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                        <path d="M10 11v6M14 11v6"/>
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                    </svg>
-                </button>
-            </div>
-        `;
+      imageUrlCache[imageKey] = {
+        url: imageUrl,
+        updatedAt: Date.now()
+      };
+      imageUrlCache = compactObjectCache(imageUrlCache, IMAGE_CACHE_MAX_ITEMS);
+      writeLocalStorageObject(IMAGE_CACHE_STORAGE_KEY, imageUrlCache);
+    }
 
-        div.querySelector('input').onchange              = () => { item.done = !item.done; save(); render(); };
-        div.querySelector('[data-action="del"]').onclick  = () => { items = items.filter(i => i.id !== item.id); save(); render(); };
-        div.querySelector('[data-action="edit"]').onclick = () => startEdit(item.id);
-        div.querySelector('.pack-label').ondblclick      = () => startEdit(item.id);
+    function imageLoaded(event) {
+      const img = event.target;
+      const imageKey = img.dataset.imageKey || "";
+      const currentUrl = img.currentSrc || img.src;
+      if (imageKey && currentUrl) {
+        saveCachedImageUrl(imageKey, currentUrl);
+        img.dataset.cachedSrc = currentUrl;
+      }
+      img.dataset.fallbackStage = "0";
+    }
 
-        packList.appendChild(div);
-    });
-}
+    function imageFallback(event) {
+      const img = event.target;
+      const stage = Number.parseInt(img.dataset.fallbackStage || "0", 10);
 
-function startEdit(id) {
-    const item    = items.find(i => i.id === id);
-    const div     = packList.querySelector(`[data-id="${id}"]`);
-    const label   = div.querySelector('.pack-label');
-    const actions = div.querySelector('.item-actions');
+      if (stage === 0) {
+        const cached = img.dataset.cachedSrc || "";
+        if (cached && cached !== img.src) {
+          img.dataset.fallbackStage = "1";
+          img.src = cached;
+          return;
+        }
+      }
 
-    const inp = document.createElement('input');
-    inp.type      = 'text';
-    inp.className = 'pack-edit-input';
-    inp.value     = item.text;
-    label.replaceWith(inp);
-    actions.style.visibility = 'hidden';
-    inp.focus(); inp.select();
+      if (stage <= 1) {
+        img.dataset.fallbackStage = "2";
+      } else {
+        return;
+      }
 
-    const commit = () => { const v = inp.value.trim(); if (v) { item.text = v; save(); } render(); };
-    inp.onblur   = commit;
-    inp.onkeydown = e => {
-        if (e.key === 'Enter')  { e.preventDefault(); inp.blur(); }
-        if (e.key === 'Escape') render();
+      const seed = img.dataset.fallbackSeed || "iceland-fallback";
+      img.src = "https://picsum.photos/seed/" + seed + "/1200/800";
+    }
+
+    function buildMapEmbed(bounds) {
+      const encoded = bounds.join("%2C");
+      return "https://www.openstreetmap.org/export/embed.html?bbox=" + encoded + "&layer=mapnik";
+    }
+
+    function extractRouteCoordinatesFromLink(mapLink) {
+      const decoded = decodeURIComponent(mapLink || "");
+      const regex = /!1d(-?\d+(?:\.\d+)?)!2d(-?\d+(?:\.\d+)?)/g;
+      const points = [];
+      let match;
+      while ((match = regex.exec(decoded)) !== null) {
+        const lon = Number.parseFloat(match[1]);
+        const lat = Number.parseFloat(match[2]);
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          points.push([lat, lon]);
+        }
+      }
+      return points;
+    }
+
+    function getDayRoutePoints(day) {
+      const locationRoute = day.locations
+        .filter((location) => Array.isArray(location.coords) && location.coords.length === 2)
+        .map((location) => location.coords);
+      if (locationRoute.length === day.locations.length && locationRoute.length > 1) {
+        return locationRoute;
+      }
+
+      const routeFromLink = extractRouteCoordinatesFromLink(day.mapLink || "");
+      if (routeFromLink.length > 1) {
+        return routeFromLink;
+      }
+
+      return locationRoute;
+    }
+
+    function locationMapsUrl(location, fallbackPoint) {
+      const point =
+        (Array.isArray(location.coords) && location.coords.length === 2 && location.coords) ||
+        (Array.isArray(fallbackPoint) && fallbackPoint.length === 2 && fallbackPoint) ||
+        null;
+
+      if (point) {
+        return "https://www.google.com/maps/search/?api=1&query=" + point[0] + "," + point[1];
+      }
+
+      const query = encodeURIComponent((location.name || "Iceland") + ", Iceland");
+      return "https://www.google.com/maps/search/?api=1&query=" + query;
+    }
+
+    function normalizePlaceText(value) {
+      return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\([^)]*\)/g, " ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+    }
+
+    function placeKeywords(value) {
+      const stopWords = new Set([
+        "camp",
+        "campsite",
+        "home",
+        "exchange",
+        "plan",
+        "the",
+        "and",
+        "or",
+        "for",
+        "with",
+        "stay"
+      ]);
+      return normalizePlaceText(value)
+        .split(" ")
+        .filter((token) => token.length >= 3 && !stopWords.has(token));
+    }
+
+    function hasSharedPlaceKeyword(a, b) {
+      const left = placeKeywords(a);
+      const right = new Set(placeKeywords(b));
+      return left.some((token) => right.has(token));
+    }
+
+    function shouldAppendCampStop(day, locations) {
+      const campName = String(day.camp || "").trim();
+      if (!campName || /departure/i.test(campName)) {
+        return false;
+      }
+      if (!locations.length) {
+        return true;
+      }
+      const lastLocation = locations[locations.length - 1];
+      if (lastLocation && (lastLocation.isCampsite || lastLocation.isCamp)) {
+        return false;
+      }
+      return !hasSharedPlaceKeyword(campName, lastLocation ? lastLocation.name : "");
+    }
+
+    function getDisplayLocations(day, routePoints = getDayRoutePoints(day)) {
+      const locations = day.locations.map((location) => ({
+        ...location,
+        isCampsite: Boolean(location.isCampsite || location.isCamp)
+      }));
+      if (!shouldAppendCampStop(day, locations)) {
+        return locations;
+      }
+
+      const campName = String(day.camp || "Campsite").trim();
+      const routeFromLink = extractRouteCoordinatesFromLink(day.mapLink || "");
+      const knownCampCoordsByName = [
+        { match: "gesthus selfoss", coords: [63.9330556, -20.9888091] },
+        { match: "hamrar akureyri", coords: [65.6485410, -18.1024258] },
+        { match: "home exchange reykjavik", coords: [64.1459810, -21.9422367] }
+      ];
+      const normalizedCampName = normalizePlaceText(campName);
+      const mappedCampCoordsEntry = knownCampCoordsByName.find((entry) =>
+        normalizedCampName.includes(entry.match)
+      );
+      const routeEndPoint =
+        (routeFromLink.length > locations.length &&
+          Array.isArray(routeFromLink[routeFromLink.length - 1]) &&
+          routeFromLink[routeFromLink.length - 1]) ||
+        routePoints.length > locations.length && Array.isArray(routePoints[routePoints.length - 1])
+          ? routePoints[routePoints.length - 1]
+          : mappedCampCoordsEntry
+            ? mappedCampCoordsEntry.coords
+            : null;
+
+      locations.push({
+        name: campName,
+        note: "Overnight stop. Check in, organize gear, and recharge for tomorrow.",
+        image: imageFor("iceland campsite " + campName, day.day * 100 + 99),
+        coords: routeEndPoint,
+        isCampsite: true,
+        isCamp: true
+      });
+
+      return locations;
+    }
+
+    const LEG_DURATION_OVERRIDES = {
+      4: [
+        {
+          from: "Jokulsarlon Lagoon",
+          to: "Diamond Beach",
+          seconds: 5 * 60
+        }
+      ]
     };
-}
 
-function addItem() {
-    const inp  = document.getElementById('new-item');
-    const text = inp.value.trim();
-    if (!text) return;
-    items.push({ id: uid++, text, done: false });
-    save(); render();
-    inp.value = ''; inp.focus();
-}
+    function getLegDurationOverride(day, fromLocation, toLocation) {
+      const dayOverrides = LEG_DURATION_OVERRIDES[day.day];
+      if (!Array.isArray(dayOverrides)) {
+        return null;
+      }
 
-document.getElementById('btn-add').onclick  = addItem;
-document.getElementById('new-item').onkeydown = e => { if (e.key === 'Enter') addItem(); };
+      const fromName = normalizePlaceText(fromLocation && fromLocation.name);
+      const toName = normalizePlaceText(toLocation && toLocation.name);
 
-render();
-</script>
+      for (const override of dayOverrides) {
+        if (
+          fromName === normalizePlaceText(override.from) &&
+          toName === normalizePlaceText(override.to) &&
+          Number.isFinite(override.seconds)
+        ) {
+          return override.seconds;
+        }
+      }
+      return null;
+    }
+
+    function getLegDurationSeconds(day, fromLocation, toLocation, legSummary) {
+      const overrideSeconds = getLegDurationOverride(day, fromLocation, toLocation);
+      if (Number.isFinite(overrideSeconds)) {
+        return overrideSeconds;
+      }
+      if (legSummary && Number.isFinite(legSummary.duration)) {
+        return legSummary.duration;
+      }
+      return null;
+    }
+
+    function getDayDriveAggregate(day, driveLegSummaries = []) {
+      const routePoints = getDayRoutePoints(day);
+      const locations = getDisplayLocations(day, routePoints);
+      const legCount = Math.max(0, locations.length - 1);
+      let totalSeconds = 0;
+      let knownLegs = 0;
+
+      for (let index = 0; index < legCount; index += 1) {
+        const durationSeconds = getLegDurationSeconds(
+          day,
+          locations[index],
+          locations[index + 1],
+          driveLegSummaries[index]
+        );
+        if (Number.isFinite(durationSeconds) && durationSeconds > 0) {
+          totalSeconds += durationSeconds;
+          knownLegs += 1;
+        }
+      }
+
+      return {
+        legCount,
+        knownLegs,
+        missingLegs: Math.max(0, legCount - knownLegs),
+        totalSeconds: knownLegs ? totalSeconds : null
+      };
+    }
+
+    function getDayDriveDisplay(day, driveLegSummaries = []) {
+      const aggregate = getDayDriveAggregate(day, driveLegSummaries);
+      if (!Number.isFinite(aggregate.totalSeconds)) {
+        return {
+          main: day.drive,
+          planned: null
+        };
+      }
+
+      const derived = formatDriveDuration(aggregate.totalSeconds) + " total";
+      if (aggregate.missingLegs > 0) {
+        return {
+          main: derived + " (partial)",
+          planned: day.drive
+        };
+      }
+
+      return {
+        main: derived,
+        planned: day.drive
+      };
+    }
+
+    function renderDayDriveTag(day, driveLegSummaries = []) {
+      const tag = document.querySelector('[data-day-drive="' + day.day + '"]');
+      if (!tag) {
+        return;
+      }
+
+      const display = getDayDriveDisplay(day, driveLegSummaries);
+      const planHtml = display.planned
+        ? "<span class=\"drive-plan\">plan: " + escapeHtml(display.planned) + "</span>"
+        : "";
+      tag.innerHTML =
+        "🚗 " +
+        "<span class=\"drive-main\">" + escapeHtml(display.main) + "</span>" +
+        planHtml;
+    }
+
+    function renderFullscreenSubtitle(day, driveLegSummaries = []) {
+      const display = getDayDriveDisplay(day, driveLegSummaries);
+      const planHtml = display.planned
+        ? "<span class=\"drive-plan\">plan: " + escapeHtml(display.planned) + "</span>"
+        : "";
+      modalSubtitleEl.innerHTML =
+        "<span class=\"drive-main\">" + escapeHtml(display.main) + "</span>" +
+        planHtml +
+        " · ⛺ " +
+        escapeHtml(day.camp);
+    }
+
+    function formatDriveDuration(seconds) {
+      if (!Number.isFinite(seconds) || seconds <= 0) {
+        return "Unknown";
+      }
+      const totalMinutes = Math.round(seconds / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+
+      if (!hours) {
+        return minutes + "m";
+      }
+      if (!minutes) {
+        return hours + "h";
+      }
+      return hours + "h " + minutes + "m";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function getCardinalDirection(fromPoint, toPoint) {
+      if (
+        !Array.isArray(fromPoint) ||
+        !Array.isArray(toPoint) ||
+        fromPoint.length !== 2 ||
+        toPoint.length !== 2
+      ) {
+        return "Unknown";
+      }
+
+      const lat1 = (fromPoint[0] * Math.PI) / 180;
+      const lat2 = (toPoint[0] * Math.PI) / 180;
+      const deltaLon = ((toPoint[1] - fromPoint[1]) * Math.PI) / 180;
+      const y = Math.sin(deltaLon) * Math.cos(lat2);
+      const x =
+        Math.cos(lat1) * Math.sin(lat2) -
+        Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
+      const bearing = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+      const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+      return directions[Math.round(bearing / 45) % 8];
+    }
+
+    function collectRoadNumbersFromText(text, bucket) {
+      if (typeof text !== "string" || !text.trim()) {
+        return;
+      }
+
+      const upper = text.toUpperCase();
+
+      upper.split(/[;,/|]/).forEach((segment) => {
+        const token = segment.trim();
+        if (/^(?:F)?\d{1,3}[A-Z]?$/.test(token)) {
+          bucket.add(token);
+        }
+      });
+
+      const routePattern = /\b(?:ROUTE|ROAD|RTE)\s*(F?\d{1,3}[A-Z]?)\b/g;
+      let match;
+      while ((match = routePattern.exec(upper)) !== null) {
+        bucket.add(match[1]);
+      }
+
+      const fRoadPattern = /\b(F\d{1,3})\b/g;
+      while ((match = fRoadPattern.exec(upper)) !== null) {
+        bucket.add(match[1]);
+      }
+    }
+
+    function extractRoadNumbersFromLeg(leg) {
+      const roads = new Set();
+      if (!leg || !Array.isArray(leg.steps)) {
+        return [];
+      }
+
+      leg.steps.forEach((step) => {
+        collectRoadNumbersFromText(step.ref, roads);
+        collectRoadNumbersFromText(step.name, roads);
+        collectRoadNumbersFromText(step.destinations, roads);
+      });
+
+      return Array.from(roads).slice(0, 4);
+    }
+
+    function summarizeDrivingLeg(leg, fromPoint, toPoint) {
+      return {
+        duration: Number.isFinite(leg && leg.duration) ? leg.duration : null,
+        roads: extractRoadNumbersFromLeg(leg),
+        direction: getCardinalDirection(fromPoint, toPoint)
+      };
+    }
+
+    const driveTimesCache = new Map();
+
+    function getDriveRouteCacheKey(day, route) {
+      return (
+        String(day.day) +
+        "|" +
+        route.map((point) => point[0].toFixed(5) + "," + point[1].toFixed(5)).join(";")
+      );
+    }
+
+    function sanitizeDriveLegSummaries(rawValue) {
+      if (!Array.isArray(rawValue)) {
+        return [];
+      }
+      return rawValue.map((entry) => ({
+        duration:
+          entry && Number.isFinite(entry.duration)
+            ? Number(entry.duration)
+            : null,
+        roads:
+          entry && Array.isArray(entry.roads)
+            ? entry.roads
+                .filter((road) => typeof road === "string" && road.trim().length > 0)
+                .slice(0, 6)
+            : [],
+        direction:
+          entry && typeof entry.direction === "string" && entry.direction.trim()
+            ? entry.direction
+            : "Unknown"
+      }));
+    }
+
+    function getPersistedDriveLegSummaries(cacheKey) {
+      const entry = driveTimesStorageCache[cacheKey];
+      if (!entry) {
+        return [];
+      }
+
+      if (Array.isArray(entry)) {
+        return sanitizeDriveLegSummaries(entry);
+      }
+
+      return sanitizeDriveLegSummaries(entry.summaries);
+    }
+
+    function savePersistedDriveLegSummaries(cacheKey, summaries) {
+      driveTimesStorageCache[cacheKey] = {
+        updatedAt: Date.now(),
+        summaries: sanitizeDriveLegSummaries(summaries)
+      };
+      driveTimesStorageCache = compactObjectCache(driveTimesStorageCache, DRIVE_CACHE_MAX_ITEMS);
+      writeLocalStorageObject(DRIVE_CACHE_STORAGE_KEY, driveTimesStorageCache);
+    }
+
+    function getCachedDrivingLegDurations(day) {
+      const route = getDayRoutePoints(day);
+      if (route.length < 2) {
+        return [];
+      }
+
+      const cacheKey = getDriveRouteCacheKey(day, route);
+
+      if (driveTimesCache.has(cacheKey)) {
+        return driveTimesCache.get(cacheKey);
+      }
+
+      const persisted = getPersistedDriveLegSummaries(cacheKey);
+      if (persisted.length) {
+        driveTimesCache.set(cacheKey, persisted);
+      }
+      return persisted;
+    }
+
+    async function fetchDrivingLegDurations(day) {
+      const route = getDayRoutePoints(day);
+      if (route.length < 2) {
+        return [];
+      }
+
+      const cacheKey = getDriveRouteCacheKey(day, route);
+      const fallbackSummaries = getCachedDrivingLegDurations(day);
+
+      const coordinateParam = route.map((point) => point[1] + "," + point[0]).join(";");
+      const url =
+        "https://router.project-osrm.org/route/v1/driving/" +
+        coordinateParam +
+        "?overview=false&steps=true&annotations=false";
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            Accept: "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("OSRM request failed with status " + response.status);
+        }
+
+        const data = await response.json();
+        const legs =
+          data && data.routes && data.routes[0] && Array.isArray(data.routes[0].legs)
+            ? data.routes[0].legs
+            : [];
+
+        const summaries = legs.map((leg, index) =>
+          summarizeDrivingLeg(leg, route[index], route[index + 1])
+        );
+        driveTimesCache.set(cacheKey, summaries);
+        savePersistedDriveLegSummaries(cacheKey, summaries);
+        return summaries;
+      } catch (error) {
+        console.warn("Drive time lookup failed", error);
+        return fallbackSummaries;
+      }
+    }
+
+    const days = [
+      {
+        day: 1,
+        title: "The Discovery",
+        drive: "~1.5h Drive",
+        camp: "Reykjavik / Thingvellir",
+        mapLink: "https://www.google.com/maps/dir/Keflav%C3%ADk+International+Airport,+Keflav%C3%ADk,+Iceland/Reykjav%C3%ADk,+Iceland/Thingvellir+National+Park,+Selfoss,+Iceland/data=!4m20!4m19!1m5!1m1!19sChIJn3mr4vz9KUkRzSjDFQqN-Cc!2m2!1d-22.623943999999998!2d63.9948577!1m5!1m1!19sChIJw-3c7rl01kgRcWDSMKIskew!2m2!1d-21.940755199999998!2d64.1469868!1m5!1m1!19sChIJe2kT-x-B1kgR8mKSB4tsdWs!2m2!1d-21.0764492!2d64.2821725!3e0",
+        mapEmbed: buildMapEmbed([-22.9,63.95,-20.85,64.35]),
+        locations: [
+          { name: "Keflavik Airport", note: "Pick up the van, SIM card, and road snacks.", image: imageFor("Keflavik Airport", 101), coords: [63.9965506, -22.6251460] },
+          { name: "Reykjavik Grocery Stop", note: "Stock up in Bonus or Kronan before leaving the city.", image: imageFor("Reykjavik street", 102), coords: [64.1459810, -21.9422367] },
+          { name: "Thingvellir National Park", note: "Golden hour walk between tectonic plates.", image: imageFor("Thingvellir National Park", 103), coords: [64.2786081, -21.0819412] }
+        ],
+        recommendations: [
+          { title: "Braud & Co", text: "Great first-stop bakery for warm cinnamon buns; grab extra for tomorrow's early drive." },
+          { title: "Baejarins Beztu Pylsur", text: "Fast and iconic hot dog stand, perfect for a no-fuss first Iceland dinner." }
+        ]
+      },
+      {
+        day: 2,
+        title: "Golden Circle Day",
+        drive: "~3h Drive",
+        camp: "Gesthus Selfoss",
+        mapLink: "https://www.google.com/maps/dir/Thingvellir+National+Park,+Selfoss,+Iceland/Geysir/Gullfoss+Falls/Keri%C3%B0+Crater,+Klausturholar,+Iceland/Hrunalaug+Hot+Spring,+S%C3%B3lheimar,+Fl%C3%BA%C3%B0ir,+Iceland/Gesth%C3%BAs+Selfoss,+Engjavegur+56,+Selfoss,+Iceland/data=!4m38!4m37!1m5!1m1!19sChIJe2kT-x-B1kgR8mKSB4tsdWs!2m2!1d-21.0764492!2d64.2821725!1m5!1m1!19sChIJP09CA5-j1kgRPyjiYhocdbQ!2m2!1d-20.3023605!2d64.310371899999993!1m5!1m1!19sChIJybZFr3Sl1kgRARZBC9tHYyw!2m2!1d-20.1199478!2d64.3270716!1m5!1m1!19sChIJV_L2VbeL1kgRB9kuweBEWlE!2m2!1d-20.8851466!2d64.04127849999999!1m5!1m1!19sChIJ24-g5ju-1kgRay4MayAeeUA!2m2!1d-20.2551249!2d64.1327657!1m5!1m1!19sChIJJyXX28lf1kgRJDG96H4pABQ!2m2!1d-20.988809099999997!2d63.933055599999996!3e0",
+        mapEmbed: buildMapEmbed([-21.35,63.9,-20.05,64.38]),
+        locations: [
+          { name: "Thingvellir National Park", note: "Short morning walk before heading deeper inland.", image: imageFor("Thingvellir Iceland", 201), coords: [64.2786081, -21.0819412] },
+          { name: "Strokkur Geyser", note: "Erupts every few minutes, ideal for repeated photo attempts.", image: imageFor("Strokkur geyser", 202), coords: [64.3126964, -20.3007733] },
+          { name: "Gullfoss Waterfall", note: "Powerful canyon waterfall with multiple viewpoints.", image: imageFor("Gullfoss waterfall", 203), coords: [64.3266103, -20.1216821] },
+          { name: "Kerid Crater", note: "Volcanic crater lake with vivid red and blue contrast.", image: imageFor("Kerid crater", 204), coords: [64.0417879, -20.8864810] },
+          { name: "Hrunalaug Hot Spring", note: "Small rustic soak to close the day.", image: imageFor("Iceland hot spring", 205), coords: [64.1328671, -20.2549498] },
+        ],
+        recommendations: [
+          { title: "Fridheimar", text: "Book ahead for a greenhouse tomato lunch; warm and cozy even in harsh weather." },
+          { title: "Efstidalur II", text: "Farm-made ice cream stop with mountain views and good coffee." }
+        ]
+      },
+      {
+        day: 3,
+        title: "Dramatic Waterfalls",
+        drive: "~2.5h Drive",
+        camp: "Vik or Thakgil",
+        mapLink: "https://www.google.com/maps/dir/Selfoss,+Iceland/Seljalandsfoss/Sk%C3%B3gafoss/Dyrh%C3%B3laey,+Iceland/Reynisfjara+Beach/Vik,+Iceland/data=!4m38!4m37!1m5!1m1!19sChIJywmZh8tf1kgRET-0iMl3mVw!2m2!1d-20.9996925!2d63.931832199999995!1m5!1m1!19sChIJFSTv6K0e10gRjRcJUiDmAa4!2m2!1d-19.9885688!2d63.615623199999995!1m5!1m1!19sChIJFYylOXY710gRSHn-zR_HYA8!2m2!1d-19.511370499999998!2d63.5320523!1m5!1m1!19sChIJmdOPSLJJ10gRcudiVCXKJSc!2m2!1d-19.1185521!2d63.4046799!1m5!1m1!19sChIJfSZn1YRJ10gR1Wuz9KNUeeA!2m2!1d-19.0716193!2d63.4057404!1m5!1m1!19sChIJ0bA2SUJK10gRjXdtABtTg74!2m2!1d-18.9974396!2d63.4176505!3e0",
+        mapEmbed: buildMapEmbed([-20.2,63.35,-18.85,63.72]),
+        locations: [
+          { name: "Seljalandsfoss", note: "Walk-behind waterfall path, usually wet and windy.", image: imageFor("Seljalandsfoss", 301), coords: [63.6154571, -19.9881686] },
+          { name: "Seljavallalaug", note: "Optional detour to a hidden historic pool.", image: imageFor("Seljavallalaug", 302), coords: [63.5661398, -19.6075649] },
+          { name: "Skogafoss", note: "Wide waterfall with mist rainbows on sunny moments.", image: imageFor("Skogafoss", 303), coords: [63.5321038, -19.5112920] },
+          { name: "Dyrholaey Viewpoint", note: "Cliff panoramas and ocean arches.", image: imageFor("Dyrholaey", 304), coords: [63.4018535, -19.1296788] },
+          { name: "Reynisfjara Beach", note: "Black sand and basalt columns; watch strong waves.", image: imageFor("Reynisfjara", 305), coords: [63.4044262, -19.0586361] },
+          { name: "Vik Campsite", note: "Settle in and recover from the long driving day.", image: imageFor("Vik", 306), coords: [63.4193981, -18.9957523], isCamp: true }
+        ],
+        recommendations: [
+          { title: "Mia's Country Van", text: "Reliable fish and chips stop when you want a quick warm meal." },
+          { title: "Smidjan Brugghus", text: "Good end-of-day burger and craft beer option in Vik." }
+        ]
+      },
+      {
+        day: 4,
+        title: "The Diamond Day",
+        drive: "~4h Drive",
+        camp: "Vestrahorn Campsite",
+        mapLink: "https://www.google.com/maps/dir/Vik,+Iceland/Fja%C3%B0r%C3%A1rglj%C3%BAfur,+Iceland/Svartifoss,+Iceland/Sv%C3%ADnafellsj%C3%B6kull/J%C3%B6kuls%C3%A1rl%C3%B3n+Lagoon,+Iceland/Diamond+Beach,+Iceland/Vestrahorn,+Iceland/",
+        mapEmbed: buildMapEmbed([-18.35,63.7,-14.75,64.35]),
+        locations: [
+          { name: "Fjadrargljufur Canyon", note: "Short scenic canyon trail and viewpoints.", image: imageFor("Fjadrargljufur canyon", 401), coords: [63.771279, -18.171816] },
+          { name: "Svartifoss", note: "Basalt-column waterfall hike in Skaftafell.", image: imageFor("Svartifoss", 402), coords: [64.027528, -16.975308] },
+          { name: "Svinafellsjokull", note: "Close-up glacier tongue views.", image: imageFor("Svinafellsjokull glacier", 403), coords: [64.018592, -16.821478] },
+          { name: "Jokulsarlon Lagoon", note: "Icebergs drifting from glacier to sea.", image: imageFor("Jokulsarlon", 404), coords: [64.048600, -16.179900] },
+          { name: "Diamond Beach", note: "Ice fragments scattered across black sand.", image: imageFor("Diamond beach iceland", 405), coords: [64.078444, -16.230556] },
+          { name: "Vestrahorn", note: "Epic final light at the dramatic mountain ridge.", image: imageFor("Vestrahorn", 406), coords: [64.273333, -15.008611] },
+          { name: "Vestrahorn Campsite", note: "Settle in and recover from the long driving day.", image: imageFor("Vestrahorn campsite", 407), coords: [64.2550701, -14.9940489], isCamp: true }
+        ],
+        recommendations: [
+          { title: "Systrakaffi", text: "Practical lunch stop with hearty plates before long stretches." },
+          { title: "Pakkhus", text: "Great seafood dinner in Hofn, especially local langoustine." }
+        ]
+      },
+      {
+        day: 5,
+        title: "Day of the Canyons",
+        drive: "~4-8h Drive",
+        camp: "Camp Egilsstadir",
+        mapLink: "https://www.google.com/maps/dir/Vestrahorn/Lagarflj%C3%B3t+Lake/Stu%C3%B0lagil+Canyon/Egilssta%C3%B0ir,+Iceland/",
+        mapEmbed: buildMapEmbed([-16.75,64.9,-14.05,65.92]),
+        locations: [
+          { name: "Vestrahorn", note: "Early light shots before heading north-east.", image: imageFor("Vestrahorn sunrise", 501), coords: [64.273333, -15.008611] },
+          { name: "Lagarfljot", note: "Quiet lake break around Egilsstadir region.", image: imageFor("Lagarfljot", 502), coords: [65.1696214, -14.6333108] },
+          { name: "Studlagil Canyon", note: "Basalt columns and turquoise river views.", image: imageFor("Studlagil canyon", 503), coords: [65.1623267, -15.3081247] },
+          { name: "Egilsstadir Camp", note: "Settle in and recover from the long driving day.", image: imageFor("Egilsstadir", 505), coords: [65.2609232, -14.3994394], isCamp: true }
+        ],
+        recommendations: [
+          { title: "Salt Cafe & Bistro", text: "Solid comfort-food stop for refueling in East Iceland." },
+          { title: "Vok Baths", text: "Floating geothermal pools with a calmer vibe than larger lagoons." }
+        ]
+      },
+      {
+        day: 6,
+        title: "Day of the Gods",
+        drive: "~3h Drive",
+        camp: "Hamrar (Akureyri)",
+        mapLink: "https://www.google.com/maps/dir/Egilssta%C3%B0ir,+Iceland/N%C3%A1maskard/Go%C3%B0afoss+Waterfall/Akureyri,+Iceland/data=!4m26!4m25!1m5!1m1!19sChIJ056oDYAEzEgRVH98LGtBv5U!2m2!1d-14.399439399999999!2d65.2609232!1m5!1m1!19sChIJBxz9UKGfzUgR1lrqxPH-eEg!2m2!1d-16.826666799999998!2d65.6472222!1m5!1m1!19sChIJnzYfSGp-zUgROx0NTqrNu34!2m2!1d-17.5501918!2d65.6827782!1m5!1m1!19sChIJp7-wHAeP0kgR0f1xjHkytr0!2m2!1d-18.0906859!2d65.6825509!3e0",
+        mapEmbed: buildMapEmbed([-18.35,65.2,-14.1,65.95]),
+        locations: [
+          { name: "Egilsstadir Start", note: "Coffee and supplies before crossing highlands roads.", image: imageFor("Egilsstadir city", 601), coords: [65.2620412, -14.4035258] },
+          { name: "Namaskard", note: "Steaming geothermal vents and sulfur-colored hills.", image: imageFor("Namaskard", 602), coords: [65.6473428, -16.8250680] },
+          { name: "Godafoss", note: "Classic horseshoe waterfall with easy access trails.", image: imageFor("Godafoss", 603), coords: [65.6828162, -17.5506240] },
+          { name: "Akureyri", note: "Explore town center and harbor streets.", image: imageFor("Akureyri", 604), coords: [65.6839036, -18.1121756] },
+          { name: "Forest Lagoon", note: "Evening soak overlooking Eyjafjordur.", image: imageFor("Forest lagoon iceland", 605), coords: [65.6699183, -18.0417986] }
+        ],
+        recommendations: [
+          { title: "Vogafjos Farm Resort", text: "Known for local dairy and hearty plates in a farm setting." },
+          { title: "Rub23", text: "High-quality sushi and seafood for a more refined dinner stop." }
+        ]
+      },
+      {
+        day: 7,
+        title: "Less Dramatic Waterfalls",
+        drive: "~3h Drive",
+        camp: "Budardalur Campsite",
+        mapLink: "https://www.google.com/maps/dir/Akureyri,+Iceland/Fosslaug+geothermic+pool,+FJV8%2BMHM,+Unnamed+Road,+Varmahl%C3%AD%C3%B0,+Islandia/B%C3%BA%C3%B0ardalur,+Iceland/data=!4m20!4m19!1m5!1m1!19sChIJp7-wHAeP0kgR0f1xjHkytr0!2m2!1d-18.0906859!2d65.6825509!1m5!1m1!19sChIJrQl9EY0F00gRvGmSEP5icpA!2m2!1d-19.3835889!2d65.494216299999991!1m5!1m1!19sChIJJeb3swv51EgRPVpIzd0Gqpw!2m2!1d-21.7672907!2d65.1099356!3e0",
+        mapEmbed: buildMapEmbed([-22.05,64.9,-18.0,65.8]),
+        locations: [
+          { name: "Akureyri Departure", note: "Quick city breakfast before westward drive.", image: imageFor("Akureyri morning", 701), coords: [65.6839036, -18.1121756] },
+          { name: "Road 83 Coastal Segment", note: "Scenic fjord roads and photo pull-offs.", image: imageFor("Iceland fjord road", 702), coords: [65.9710942, -18.5304388] },
+          { name: "Fosslaug", note: "Natural hot pool with river views.", image: imageFor("Fosslaug", 703), coords: [65.4964888, -19.3802608] },
+          { name: "Reykyafoss", note: "Short detour to a quieter waterfall stop.", image: imageFor("Iceland waterfall", 704), coords: [65.4945591, -19.3831862] },
+          { name: "Budardalur Campsite", note: "Calm overnight base before Snaefellsnes.", image: imageFor("Budardalur", 705), coords: [65.1099356, -21.7672907], isCamp: true }
+        ],
+        recommendations: [
+          { title: "Saudarkrokur Bakery", text: "Ideal quick stop for pastries, coffee, and road snacks." },
+          { title: "Erpsstadir Creamery", text: "Small farm creamery for skyr and house-made ice cream." }
+        ]
+      },
+      {
+        day: 8,
+        title: "Coastal Poetry",
+        drive: "~4h Drive",
+        camp: "Snorrastadir Camp",
+        mapLink: "https://www.google.com/maps/dir/B%C3%BA%C3%B0ardalur,+Iceland/Sv%C3%B6rtuloft+Lighthouse,+Sn%C3%A6fellsnes,+Iceland/Arnarstapi,+Iceland/Snorrasta%C3%B0ir+Campsite+%26+Accommodation,+Snorrasta%C3%B0ir+Fer%C3%B0a%C3%BEj%C3%B3nusta,+Borgarnes,+%C3%8Dsland/data=!4m26!4m25!1m5!1m1!19sChIJJeb3swv51EgRPVpIzd0Gqpw!2m2!1d-21.7672907!2d65.1099356!1m5!1m1!19sChIJJ-1B7uCPKkkRMMU_jc6Z2_U!2m2!1d-24.0390958!2d64.86380059999999!1m5!1m1!19sChIJlyAzMgiBKkkRUfLoebLqwz8!2m2!1d-23.6224317!2d64.7695169!1m5!1m1!19sChIJ2Tml4MKk1UgRiJ-b0l1sQ0I!2m2!1d-22.3012436!2d64.7736001!3e0",
+        mapEmbed: buildMapEmbed([-24.35,64.6,-21.75,65.2]),
+        locations: [
+          { name: "Budardalur Start", note: "Morning setup before entering the peninsula.", image: imageFor("Budardalur road", 801), coords: [65.1099356, -21.7672907] },
+          { name: "Svortuloft Lighthouse", note: "Remote cliffs and dramatic sea color.", image: imageFor("Svortuloft lighthouse", 802), coords: [64.8637148, -24.0390239] },
+          { name: "Arnarstapi Cliffs", note: "Coastal walk with arches and seabirds.", image: imageFor("Arnarstapi", 803), coords: [64.7667270, -23.6280850] },
+          { name: "Snorrastadir Camp", note: "Quiet base with easy next-day access.", image: imageFor("Snaefellsnes campsite", 804), coords: [64.7736001, -22.3012436], isCamp: true }
+        ],
+        recommendations: [
+          { title: "Fjoruhusid Hellnum", text: "Simple, cozy cafe known for waffles and ocean-facing views." }
+        ]
+      },
+      {
+        day: 9,
+        title: "Icelandic Culture",
+        drive: "~2.5h Drive",
+        camp: "Home Exchange (Reykjavik)",
+        mapLink: "https://www.google.com/maps/dir/B%C3%BA%C3%B0ardalur,+Iceland/Reykjav%C3%ADk,+Iceland/Harpa,+Austurbakki+2,+101+Reykjav%C3%ADk,+Iceland/Perlan,+Varmahl%C3%AD%C3%B0+1,+105+Reykjav%C3%ADk,+Iceland",
+        mapEmbed: buildMapEmbed([-22.05,64.03,-21.55,64.2]),
+        locations: [
+          { name: "Van Return", note: "Drop-off logistics before city mode starts.", image: imageFor("Reykjavik van rental", 901), coords: [64.1466, -21.9426] },
+          { name: "Sun Voyager", note: "Iconic sculpture on the waterfront promenade.", image: imageFor("Sun Voyager Reykjavik", 902), coords: [64.1478, -21.9226] },
+          { name: "Harpa Concert Hall", note: "Geometric glass facade and harbor views.", image: imageFor("Harpa Reykjavik", 903), coords: [64.1500, -21.9327] },
+          { name: "Perlan", note: "Museum and hilltop panorama over Reykjavik.", image: imageFor("Perlan Reykjavik", 904), coords: [64.1293, -21.9219] }
+        ],
+        recommendations: [
+          { title: "Saegreifinn", text: "Famous lobster soup spot near the old harbor, casual and quick." },
+          { title: "Icelandic Street Food", text: "Budget-friendly soups and Icelandic classics in central Reykjavik." }
+        ]
+      },
+      {
+        day: 10,
+        title: "The Day of Care",
+        drive: "Relaxed city day",
+        camp: "Home Exchange (Reykjavik)",
+        mapLink: "https://www.google.com/maps/dir/Reykjav%C3%ADk,+Iceland/Sky+Lagoon,+Vesturv%C3%B6r+44-48,+K%C3%B3pavogur,+Iceland/Blue+Lagoon,+Nor%C3%B0urlj%C3%B3savegur+9,+240+Grindav%C3%ADk,+Iceland/Reykjav%C3%ADk,+Iceland",
+        mapEmbed: buildMapEmbed([-22.05,63.8,-21.0,64.2]),
+        locations: [
+          { name: "Sky Lagoon", note: "Ocean-facing spa circuit and warm pools.", image: imageFor("Sky Lagoon Iceland", 1001), coords: [64.1197, -21.9112] },
+          { name: "Blue Lagoon Option", note: "Alternative geothermal experience with milky-blue water.", image: imageFor("Blue Lagoon Iceland", 1002), coords: [63.8804, -22.4495] },
+          { name: "Reykjavik Evening", note: "Slow city walk and recovery evening.", image: imageFor("Reykjavik evening", 1003), coords: [64.1466, -21.9426] }
+        ],
+        recommendations: [
+          { title: "Lava Restaurant", text: "Premium option at Blue Lagoon for a special slow meal." },
+          { title: "Kaffi Loki", text: "Great place to try rye bread ice cream and local comfort dishes." }
+        ]
+      },
+      {
+        day: 11,
+        title: "Farewell Iceland",
+        drive: "~1h Drive",
+        camp: "Departure",
+        mapLink: "https://www.google.com/maps/dir/Reykjav%C3%ADk,+Iceland/Keflav%C3%ADk+International+Airport,+Keflav%C3%ADk,+Iceland",
+        mapEmbed: buildMapEmbed([-22.85,63.95,-21.55,64.2]),
+        locations: [
+          { name: "Last Reykjavik Breakfast", note: "Final bakery or coffee stop in the city.", image: imageFor("Reykjavik breakfast", 1101), coords: [64.1466, -21.9426] },
+          { name: "Drive to Keflavik", note: "Leave time for fuel, drop-off, and tax-free desk.", image: imageFor("Keflavik road", 1102), coords: [64.0700, -22.1000] },
+          { name: "Departure", note: "Airport check-in and final Iceland views from the gate.", image: imageFor("Keflavik airport", 1103), coords: [63.9850, -22.6056] }
+        ],
+        recommendations: [
+          { title: "Airport Snack Run", text: "Pick up a final sandwich and treats before boarding." },
+          { title: "Tax-Free Check", text: "Handle receipts before security to avoid missing refunds." }
+        ]
+      }
+    ];
+
+    const PACK_STORAGE_KEY = "icelandPackListV2";
+    const defaultPackItems = [
+      "Thermals (merino wool base layers)",
+      "Warm mid-layer (fleece/wool sweater)",
+      "Waterproof jacket (windproof)",
+      "Waterproof pants (essential for waterfalls)",
+      "Waterproof hiking boots",
+      "Microspikes/Crampons",
+      "Warm beanie hat & scarf/buff",
+      "Waterproof gloves",
+      "Swimsuit & quick-dry towel",
+      "Power bank for phones",
+      "Lip balm & moisturizer",
+      "Headlamp (for campsites)"
+    ];
+
+    function loadPackItems() {
+      try {
+        const raw = localStorage.getItem(PACK_STORAGE_KEY);
+        if (!raw) {
+          return defaultPackItems.map((text, index) => ({ id: index + 1, text, done: false }));
+        }
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+          return defaultPackItems.map((text, index) => ({ id: index + 1, text, done: false }));
+        }
+
+        let fallbackId = 1;
+        const items = parsed
+          .filter((item) => item && (typeof item.text === "string" || typeof item.label === "string"))
+          .map((item) => {
+            const text = String(item.text ?? item.label).trim().slice(0, 100);
+            const rawId = Number(item.id);
+            const id = Number.isFinite(rawId) && rawId > 0 ? rawId : fallbackId++;
+            return {
+              id,
+              text,
+              done: Boolean(item.done ?? item.checked)
+            };
+          })
+          .filter((item) => item.text.length > 0);
+
+        if (items.length > 0) {
+          return items;
+        }
+        return defaultPackItems.map((text, index) => ({ id: index + 1, text, done: false }));
+      } catch {
+        return defaultPackItems.map((text, index) => ({ id: index + 1, text, done: false }));
+      }
+    }
+
+    let packItems = loadPackItems();
+    let nextPackId = packItems.length ? Math.max(...packItems.map((item) => item.id)) + 1 : 1;
+
+    const packListEl = document.getElementById("packlist");
+    const progressEl = document.getElementById("pack-progress");
+    const progLabelEl = document.getElementById("prog-label");
+    const progPctEl = document.getElementById("prog-pct");
+    const addItemFormEl = document.getElementById("add-item-form");
+    const newItemInputEl = document.getElementById("new-item-input");
+
+    function savePackItems() {
+      localStorage.setItem(PACK_STORAGE_KEY, JSON.stringify(packItems));
+    }
+
+    function updatePackProgress() {
+      const total = packItems.length;
+      const checked = packItems.filter((item) => item.done).length;
+      const ratio = total === 0 ? 0 : (checked / total) * 100;
+      progressEl.style.width = ratio + "%";
+      progLabelEl.textContent = checked + " / " + total + " packed";
+      progPctEl.textContent = Math.round(ratio) + "%";
+    }
+
+    function renderPackList() {
+      packListEl.innerHTML = "";
+
+      packItems.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "pack-item";
+        row.dataset.id = String(item.id);
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = item.done;
+        checkbox.setAttribute("aria-label", "Mark item packed");
+
+        const label = document.createElement("span");
+        label.className = "pack-label" + (item.done ? " done" : "");
+        label.textContent = item.text;
+
+        const actions = document.createElement("div");
+        actions.className = "item-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "act-btn";
+        editBtn.type = "button";
+        editBtn.title = "Edit item";
+        editBtn.setAttribute("aria-label", "Edit item");
+        editBtn.innerHTML = "<svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg>";
+
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "act-btn del";
+        removeBtn.type = "button";
+        removeBtn.title = "Remove item";
+        removeBtn.setAttribute("aria-label", "Remove item");
+        removeBtn.innerHTML = "<svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6M14 11v6\"/><path d=\"M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2\"/></svg>";
+
+        checkbox.addEventListener("change", () => {
+          item.done = checkbox.checked;
+          savePackItems();
+          renderPackList();
+        });
+
+        editBtn.addEventListener("click", () => {
+          startPackItemEdit(item.id);
+        });
+
+        removeBtn.addEventListener("click", () => {
+          packItems = packItems.filter((entry) => entry.id !== item.id);
+          savePackItems();
+          renderPackList();
+        });
+
+        label.addEventListener("dblclick", () => {
+          startPackItemEdit(item.id);
+        });
+
+        actions.appendChild(editBtn);
+        actions.appendChild(removeBtn);
+
+        row.appendChild(checkbox);
+        row.appendChild(label);
+        row.appendChild(actions);
+        packListEl.appendChild(row);
+      });
+
+      updatePackProgress();
+    }
+
+    function startPackItemEdit(id) {
+      const item = packItems.find((entry) => entry.id === id);
+      const row = packListEl.querySelector('[data-id="' + id + '"]');
+      if (!item || !row) {
+        return;
+      }
+
+      const label = row.querySelector(".pack-label");
+      const actions = row.querySelector(".item-actions");
+      if (!label || !actions) {
+        return;
+      }
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "pack-edit-input";
+      input.value = item.text;
+      input.maxLength = 100;
+
+      label.replaceWith(input);
+      actions.style.visibility = "hidden";
+      input.focus();
+      input.select();
+
+      const commit = () => {
+        const value = input.value.trim();
+        if (value) {
+          item.text = value;
+          savePackItems();
+        }
+        renderPackList();
+      };
+
+      input.addEventListener("blur", commit);
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          input.blur();
+        }
+        if (event.key === "Escape") {
+          renderPackList();
+        }
+      });
+    }
+
+    addItemFormEl.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = newItemInputEl.value.trim().slice(0, 100);
+      if (!value) {
+        return;
+      }
+      packItems.push({ id: nextPackId++, text: value, done: false });
+      savePackItems();
+      renderPackList();
+      newItemInputEl.value = "";
+      newItemInputEl.focus();
+    });
+
+    const daysContainerEl = document.getElementById("days-container");
+
+    function createDayCard(day, color) {
+      const details = document.createElement("details");
+      details.className = "day-card";
+      details.dataset.day = String(day.day);
+      details.style.setProperty("--day-color", color);
+
+      const routePoints = getDayRoutePoints(day);
+      const locations = getDisplayLocations(day, routePoints);
+      const visitsHTML = locations
+        .map((location, index) => {
+          const locationUrl = locationMapsUrl(location, routePoints[index]);
+          const prefix = location.isCampsite ? "🏠 " : "";
+          return "<li><a class=\"location-link-inline\" href=\"" + locationUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + prefix + escapeHtml(location.name) + "</a></li>";
+        })
+        .join("");
+      const recosHTML = day.recommendations.map((rec) => "<li>" + rec.title + "</li>").join("");
+
+      details.innerHTML =
+        "<summary>" +
+          "<div class=\"day-heading\">" +
+            "<span class=\"day-number\">" + day.day + "</span>" +
+            "<span class=\"day-title\">" + day.title + "</span>" +
+          "</div>" +
+          "<button class=\"btn btn-ghost fullscreen-trigger\" type=\"button\" aria-label=\"Open Day " + day.day + " fullscreen\">Fullscreen</button>" +
+        "</summary>" +
+        "<div class=\"day-content\">" +
+          "<div class=\"meta-row\">" +
+            "<span class=\"tag day-drive-tag\" data-day-drive=\"" + day.day + "\">🚗 <span class=\"drive-main\">" + escapeHtml(day.drive) + "</span></span>" +
+            "<span class=\"tag\">⛺ " + day.camp + "</span>" +
+          "</div>" +
+          "<a class=\"map-link\" href=\"" + day.mapLink + "\" target=\"_blank\" rel=\"noopener noreferrer\">📍 Open Route Map</a>" +
+          "<h4>Route &amp; Visits</h4>" +
+          "<ul>" + visitsHTML + "</ul>" +
+          "<h4>Recommendations</h4>" +
+          "<ul>" + recosHTML + "</ul>" +
+        "</div>";
+
+      return details;
+    }
+
+    days.forEach((day, index) => {
+      const color = dayColors[index % dayColors.length];
+      daysContainerEl.appendChild(createDayCard(day, color));
+    });
+
+    const allDayCards = Array.from(document.querySelectorAll(".day-card"));
+
+    allDayCards.forEach((detail) => {
+      detail.addEventListener("toggle", () => {
+        if (!detail.open) {
+          return;
+        }
+        allDayCards.forEach((other) => {
+          if (other !== detail) {
+            other.open = false;
+          }
+        });
+      });
+    });
+
+    const modalEl = document.getElementById("fullscreen-modal");
+    const modalHeadEl = document.getElementById("fullscreen-head");
+    const modalTitleEl = document.getElementById("fullscreen-title");
+    const modalSubtitleEl = document.getElementById("fullscreen-subtitle");
+    const modalMapEl = document.getElementById("fullscreen-map");
+    const modalMapLinkEl = document.getElementById("fullscreen-map-link");
+    const modalRouteEl = document.getElementById("fullscreen-route");
+    const modalItineraryEl = document.getElementById("fullscreen-itinerary");
+    const modalRecoEl = document.getElementById("fullscreen-reco");
+    const closeModalBtnEl = document.getElementById("close-fullscreen");
+
+    let fullscreenMap = null;
+    let mapRouteLayer = null;
+    let mapMarkersLayer = null;
+    let driveTimesRequestId = 0;
+    let activeFullscreenDay = null;
+
+    function resolveDayColorHex(dayNumber) {
+      return getComputedStyle(document.documentElement)
+        .getPropertyValue("--day-" + dayNumber)
+        .trim() || "#2563eb";
+    }
+
+    function ensureFullscreenMap() {
+      if (fullscreenMap || typeof L === "undefined") {
+        return;
+      }
+      fullscreenMap = L.map(modalMapEl, {
+        zoomControl: true,
+        attributionControl: true
+      });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(fullscreenMap);
+    }
+
+    function renderFullscreenMap(day, colorHex) {
+      ensureFullscreenMap();
+      if (!fullscreenMap) {
+        return;
+      }
+
+      if (mapRouteLayer) {
+        fullscreenMap.removeLayer(mapRouteLayer);
+        mapRouteLayer = null;
+      }
+      if (mapMarkersLayer) {
+        fullscreenMap.removeLayer(mapMarkersLayer);
+        mapMarkersLayer = null;
+      }
+
+      const route = getDayRoutePoints(day);
+      const locations = getDisplayLocations(day, route);
+
+      if (!route.length) {
+        fullscreenMap.setView([64.9, -19.0], 6);
+        setTimeout(() => fullscreenMap.invalidateSize(), 0);
+        return;
+      }
+
+      mapRouteLayer = L.polyline(route, {
+        color: colorHex,
+        weight: 4,
+        opacity: 0.9
+      }).addTo(fullscreenMap);
+
+      mapMarkersLayer = L.layerGroup().addTo(fullscreenMap);
+      route.forEach((point, index) => {
+        const location = locations[index] || null;
+        const locationName = location ? location.name : "Stop " + (index + 1);
+        const markerColor = location && location.isCampsite ? "#1d4ed8" : colorHex;
+        const markerRadius = location && location.isCampsite ? 7 : 6;
+        L.circleMarker(point, {
+          radius: markerRadius,
+          color: "#ffffff",
+          weight: 2,
+          fillColor: markerColor,
+          fillOpacity: 1
+        })
+          .addTo(mapMarkersLayer)
+          .bindPopup((index + 1) + ". " + (location && location.isCampsite ? "🏠 " : "") + locationName);
+      });
+
+      fullscreenMap.fitBounds(mapRouteLayer.getBounds(), { padding: [30, 30] });
+      setTimeout(() => fullscreenMap.invalidateSize(), 0);
+    }
+
+    function renderRouteStops(day, color) {
+      const routePoints = getDayRoutePoints(day);
+      const locations = getDisplayLocations(day, routePoints);
+      modalRouteEl.innerHTML = locations
+        .map((location, index) => {
+          const locationUrl = locationMapsUrl(location, routePoints[index]);
+          const stopClass = "route-stop" + (location.isCampsite ? " campsite-stop" : "");
+          const stopLabel = (location.isCampsite ? "🏠 " : "") + escapeHtml(location.name);
+          return (
+            "<a class=\"" + stopClass + "\" href=\"" + locationUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+              "<span class=\"route-dot\" style=\"--route-color:" + color + "\"></span>" +
+              stopLabel +
+            "</a>"
+          );
+        })
+        .join("");
+    }
+
+    function renderItinerary(day, color, driveLegSummaries = [], isLoading = false) {
+      const routePoints = getDayRoutePoints(day);
+      const locations = getDisplayLocations(day, routePoints);
+      let html = "";
+
+      locations.forEach((location, index) => {
+        const locationUrl = locationMapsUrl(location, routePoints[index]);
+        const cardClass = "location-card" + (location.isCampsite ? " campsite-card" : "");
+        const iconPrefix = location.isCampsite ? "<span class=\"stop-icon\">🏠</span>" : "";
+        const locationName = escapeHtml(location.name);
+        const locationNote = escapeHtml(location.note);
+        const imageKey = getLocationImageCacheKey(day.day, index, location.name);
+        const imageSrc = escapeHtml(location.image);
+        const cachedImageSrc = getCachedImageUrl(imageKey);
+        const cachedImageAttr = cachedImageSrc
+          ? " data-cached-src=\"" + escapeHtml(cachedImageSrc) + "\""
+          : "";
+
+        html +=
+          "<article class=\"itinerary-item\">" +
+            "<div class=\"itinerary-rail\">" +
+              "<span class=\"itinerary-dot\" style=\"--itinerary-color:" + color + "\"></span>" +
+            "</div>" +
+            "<a class=\"location-link\" href=\"" + locationUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+              "<div class=\"" + cardClass + "\">" +
+                "<h5 class=\"location-name\">" + (index + 1) + ". " + iconPrefix + locationName + "</h5>" +
+                "<p class=\"location-note\">" + locationNote + "</p>" +
+                "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\"" + cachedImageAttr + " data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
+              "</div>" +
+            "</a>" +
+          "</article>";
+
+        if (index < locations.length - 1) {
+          const legSummary = driveLegSummaries[index];
+          const fallbackDirection = getCardinalDirection(routePoints[index], routePoints[index + 1]);
+          const roadNumbers =
+            legSummary && Array.isArray(legSummary.roads) && legSummary.roads.length
+              ? legSummary.roads.join(" • ")
+              : "N/A";
+          const directionText =
+            legSummary && typeof legSummary.direction === "string" && legSummary.direction
+              ? legSummary.direction
+              : fallbackDirection;
+
+          let summaryClass = "itinerary-road-summary";
+          if (isLoading && !legSummary) {
+            summaryClass += " loading";
+          }
+
+          html +=
+            "<div class=\"" + summaryClass + "\">" +
+              "<span>🛣️ Roads: " + escapeHtml(roadNumbers) + "</span>" +
+              "<span>•</span>" +
+              "<span>Direction: " + escapeHtml(directionText) + "</span>" +
+            "</div>";
+
+          const durationValue = getLegDurationSeconds(
+            day,
+            locations[index],
+            locations[index + 1],
+            legSummary
+          );
+          let durationText = "Drive time unavailable";
+          let driveClass = "itinerary-drive-time";
+
+          if (typeof durationValue === "number") {
+            durationText = "Drive: " + formatDriveDuration(durationValue);
+          } else if (isLoading) {
+            durationText = "Looking up drive time...";
+            driveClass += " loading";
+          }
+
+          html +=
+            "<div class=\"" + driveClass + "\">" +
+              "<span>🚗</span>" +
+              "<span>" + durationText + "</span>" +
+            "</div>";
+        }
+      });
+
+      modalItineraryEl.innerHTML = html;
+    }
+
+    function renderRecommendations(day) {
+      modalRecoEl.innerHTML = day.recommendations
+        .map((rec) => (
+          "<article class=\"recommendation-item\">" +
+            "<h5>" + rec.title + "</h5>" +
+            "<p>" + rec.text + "</p>" +
+          "</article>"
+        ))
+        .join("");
+    }
+
+    function openDayFullscreen(dayNumber) {
+      const day = days.find((entry) => entry.day === dayNumber);
+      if (!day) {
+        return;
+      }
+      activeFullscreenDay = day.day;
+      const cachedDriveSummaries = getCachedDrivingLegDurations(day);
+
+      const color = dayColors[(day.day - 1) % dayColors.length];
+      modalHeadEl.style.setProperty("--day-color", color);
+      modalHeadEl.style.background = "color-mix(in srgb, " + color + " 18%, white)";
+      modalTitleEl.textContent = "Day " + day.day + ": " + day.title;
+      renderFullscreenSubtitle(day, cachedDriveSummaries);
+
+      modalMapLinkEl.href = day.mapLink;
+
+      modalEl.classList.add("open");
+      document.body.classList.add("modal-open");
+
+      const colorHex = resolveDayColorHex(day.day);
+      renderFullscreenMap(day, colorHex);
+      renderRouteStops(day, color);
+      renderDayDriveTag(day, cachedDriveSummaries);
+      renderItinerary(day, color, cachedDriveSummaries, !cachedDriveSummaries.length);
+      renderRecommendations(day);
+
+      const requestId = ++driveTimesRequestId;
+      fetchDrivingLegDurations(day).then((durations) => {
+        if (requestId !== driveTimesRequestId || !modalEl.classList.contains("open")) {
+          return;
+        }
+        renderFullscreenSubtitle(day, durations);
+        renderDayDriveTag(day, durations);
+        renderItinerary(day, color, durations, false);
+      });
+    }
+
+    function closeDayFullscreen() {
+      driveTimesRequestId += 1;
+      activeFullscreenDay = null;
+      modalEl.classList.remove("open");
+      document.body.classList.remove("modal-open");
+    }
+
+    daysContainerEl.addEventListener("click", (event) => {
+      const trigger = event.target.closest(".fullscreen-trigger");
+      if (!trigger) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+
+      const dayCard = trigger.closest(".day-card");
+      if (!dayCard) {
+        return;
+      }
+      const dayNumber = Number(dayCard.dataset.day);
+      openDayFullscreen(dayNumber);
+    });
+
+    closeModalBtnEl.addEventListener("click", closeDayFullscreen);
+
+    modalEl.addEventListener("click", (event) => {
+      if (event.target === modalEl) {
+        closeDayFullscreen();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modalEl.classList.contains("open")) {
+        closeDayFullscreen();
+      }
+    });
+
+    renderPackList();
+
+    days.forEach((day) => {
+      const cachedDurations = getCachedDrivingLegDurations(day);
+      if (cachedDurations.length) {
+        renderDayDriveTag(day, cachedDurations);
+      }
+
+      fetchDrivingLegDurations(day).then((durations) => {
+        renderDayDriveTag(day, durations);
+        if (modalEl.classList.contains("open") && activeFullscreenDay === day.day) {
+          renderFullscreenSubtitle(day, durations);
+          const color = dayColors[(day.day - 1) % dayColors.length];
+          renderItinerary(day, color, durations, false);
+        }
+      });
+    });
+  </script>
 </body>
 </html>

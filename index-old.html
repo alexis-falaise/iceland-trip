@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Iceland Epic 🇮🇸</title>
+    <style>
+        /* ===== DESIGN TOKENS ===== */
+        :root {
+            --bg: #fafafa;
+            --card: #ffffff;
+            --border: #e4e4e7;
+            --text: #09090b;
+            --muted: #f4f4f5;
+            --muted-text: #71717a;
+            --success: #16a34a;
+            --radius: 10px;
+            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+
+            /* Day palette — 11 colours */
+            --d1-text:#1e3a5f; --d1-bg:#dbeafe; --d1-border:#bfdbfe; --d1-dot:#1d4ed8;
+            --d2-text:#78350f; --d2-bg:#fef3c7; --d2-border:#fde68a; --d2-dot:#d97706;
+            --d3-text:#0c4a6e; --d3-bg:#e0f2fe; --d3-border:#bae6fd; --d3-dot:#0284c7;
+            --d4-text:#27272a; --d4-bg:#f4f4f5; --d4-border:#d4d4d8; --d4-dot:#52525b;
+            --d5-text:#7c2d12; --d5-bg:#ffedd5; --d5-border:#fdba74; --d5-dot:#ea580c;
+            --d6-text:#4c0519; --d6-bg:#ffe4e6; --d6-border:#fda4af; --d6-dot:#be123c;
+            --d7-text:#134e4a; --d7-bg:#ccfbf1; --d7-border:#99f6e4; --d7-dot:#0d9488;
+            --d8-text:#2e1065; --d8-bg:#ede9fe; --d8-border:#ddd6fe; --d8-dot:#7c3aed;
+            --d9-text:#14532d; --d9-bg:#dcfce7; --d9-border:#bbf7d0; --d9-dot:#15803d;
+            --d10-text:#881337;--d10-bg:#ffe4e6;--d10-border:#fecdd3;--d10-dot:#f43f5e;
+            --d11-text:#701a75;--d11-bg:#fae8ff;--d11-border:#f0abfc;--d11-dot:#c026d3;
+        }
+
+        /* Day custom-property injection */
+        .d1  { --day-text:var(--d1-text);  --day-bg:var(--d1-bg);  --day-dot:var(--d1-dot);  --day-border:var(--d1-border); }
+        .d2  { --day-text:var(--d2-text);  --day-bg:var(--d2-bg);  --day-dot:var(--d2-dot);  --day-border:var(--d2-border); }
+        .d3  { --day-text:var(--d3-text);  --day-bg:var(--d3-bg);  --day-dot:var(--d3-dot);  --day-border:var(--d3-border); }
+        .d4  { --day-text:var(--d4-text);  --day-bg:var(--d4-bg);  --day-dot:var(--d4-dot);  --day-border:var(--d4-border); }
+        .d5  { --day-text:var(--d5-text);  --day-bg:var(--d5-bg);  --day-dot:var(--d5-dot);  --day-border:var(--d5-border); }
+        .d6  { --day-text:var(--d6-text);  --day-bg:var(--d6-bg);  --day-dot:var(--d6-dot);  --day-border:var(--d6-border); }
+        .d7  { --day-text:var(--d7-text);  --day-bg:var(--d7-bg);  --day-dot:var(--d7-dot);  --day-border:var(--d7-border); }
+        .d8  { --day-text:var(--d8-text);  --day-bg:var(--d8-bg);  --day-dot:var(--d8-dot);  --day-border:var(--d8-border); }
+        .d9  { --day-text:var(--d9-text);  --day-bg:var(--d9-bg);  --day-dot:var(--d9-dot);  --day-border:var(--d9-border); }
+        .d10 { --day-text:var(--d10-text); --day-bg:var(--d10-bg); --day-dot:var(--d10-dot); --day-border:var(--d10-border); }
+        .d11 { --day-text:var(--d11-text); --day-bg:var(--d11-bg); --day-dot:var(--d11-dot); --day-border:var(--d11-border); }
+
+        /* ===== RESET ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 72px;
+        }
+
+        /* ===== HEADER ===== */
+        .app-header {
+            background: linear-gradient(155deg, #0f2040 0%, #1e3a5f 100%);
+            color: #fff;
+            padding: 52px 20px 22px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .app-header h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.3px; }
+        .app-header .dates { font-size: 0.83rem; color: rgba(255,255,255,.72); margin-top: 5px; }
+        .app-header .couple { font-size: 0.82rem; color: rgba(255,255,255,.55); margin-top: 2px; }
+
+        /* ===== CONTAINER ===== */
+        .container { padding: 14px 14px; max-width: 640px; margin: 0 auto; }
+
+        /* ===== CARD ===== */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .card-title {
+            font-size: 0.83rem;
+            font-weight: 600;
+            letter-spacing: .01em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        /* ===== FLIGHT CARD ===== */
+        .flight-block { padding: 9px 0; }
+        .flight-block + .flight-block { border-top: 1px solid var(--border); }
+        .flight-badge { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted-text); margin-bottom: 3px; }
+        .flight-route { font-size: 0.9rem; font-weight: 600; }
+        .flight-ref { font-size: 0.76rem; color: var(--muted-text); margin-top: 2px; }
+
+        /* ===== DAY CARDS ===== */
+        .day-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 9px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+            transition: box-shadow .2s;
+        }
+        .day-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+
+        .day-summary {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 12px 13px;
+            cursor: pointer;
+            user-select: none;
+            border-left: 3px solid var(--day-dot, var(--border));
+            background: var(--day-bg, transparent);
+            transition: filter .15s;
+        }
+        .day-summary:hover { filter: brightness(.97); }
+
+        .day-num {
+            width: 25px; height: 25px;
+            border-radius: 50%;
+            background: var(--day-dot, var(--muted));
+            color: #fff;
+            font-size: .7rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .day-info { flex: 1; min-width: 0; }
+        .day-name {
+            font-size: .875rem; font-weight: 600;
+            color: var(--day-text, var(--text));
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .day-meta {
+            font-size: .7rem;
+            color: var(--day-text, var(--muted-text));
+            opacity: .72; margin-top: 1px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .day-controls { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+        .icon-btn {
+            border: none; background: transparent; cursor: pointer;
+            padding: 5px; border-radius: 6px;
+            color: var(--day-text, var(--muted-text));
+            opacity: .55; transition: opacity .15s, background .15s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .icon-btn:hover { opacity: 1; background: rgba(0,0,0,.07); }
+        .day-chevron { opacity: .4; transition: transform .22s ease; }
+        .day-card.open .day-chevron { transform: rotate(180deg); }
+
+        /* Day body */
+        .day-body {
+            display: none;
+            padding: 13px 14px 14px;
+            border-top: 1px solid var(--border);
+            font-size: .875rem;
+        }
+        .day-card.open .day-body { display: block; }
+
+        .tags-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 11px; }
+        .tag {
+            display: inline-flex; align-items: center;
+            background: var(--muted); border: 1px solid var(--border);
+            padding: 2px 9px; border-radius: 100px;
+            font-size: .7rem; font-weight: 500; color: var(--muted-text);
+        }
+
+        .section-title {
+            font-size: .68rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: .07em;
+            color: var(--muted-text); margin: 11px 0 6px;
+        }
+        .item-list { list-style: none; }
+        .item-list li {
+            display: flex; gap: 7px;
+            padding: 5px 0; border-bottom: 1px solid var(--border);
+            font-size: .875rem; line-height: 1.4;
+        }
+        .item-list li:last-child { border-bottom: none; }
+        .item-list li::before { content: "–"; color: var(--muted-text); flex-shrink: 0; }
+
+        .map-link {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            border: 1px solid var(--border); background: var(--muted);
+            color: var(--text); padding: 9px 14px; border-radius: 8px;
+            text-decoration: none; font-weight: 500; font-size: .82rem;
+            margin-top: 13px; transition: background .15s;
+        }
+        .map-link:hover { background: var(--border); }
+
+        /* ===== PACKING LIST ===== */
+        .prog-row { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted-text); margin-bottom: 5px; }
+        .prog-bar { height: 5px; background: var(--muted); border-radius: 100px; overflow: hidden; margin-bottom: 13px; }
+        .prog-fill { height: 100%; background: var(--success); border-radius: 100px; transition: width .3s ease; width: 0%; }
+
+        .add-row { display: flex; gap: 7px; margin-bottom: 11px; }
+        .text-input {
+            flex: 1; border: 1px solid var(--border); border-radius: 8px;
+            padding: 7px 11px; font-size: .875rem; font-family: var(--font);
+            background: var(--bg); color: var(--text); outline: none;
+            transition: border-color .15s;
+        }
+        .text-input:focus { border-color: #a1a1aa; }
+        .btn-primary {
+            border: none; background: var(--text); color: var(--card);
+            border-radius: 8px; padding: 7px 14px; font-size: .875rem;
+            font-weight: 500; cursor: pointer; font-family: var(--font);
+            transition: opacity .15s; white-space: nowrap;
+        }
+        .btn-primary:hover { opacity: .82; }
+
+        .pack-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 0; border-bottom: 1px solid var(--border);
+        }
+        .pack-item:last-child { border-bottom: none; }
+        .pack-item input[type="checkbox"] {
+            width: 16px; height: 16px; flex-shrink: 0;
+            accent-color: var(--success); cursor: pointer;
+        }
+        .pack-label {
+            flex: 1; font-size: .875rem; cursor: pointer;
+            line-height: 1.4; word-break: break-word;
+        }
+        .pack-label.done { color: var(--muted-text); text-decoration: line-through; }
+        .pack-edit-input {
+            flex: 1; border: 1px solid var(--border); border-radius: 6px;
+            padding: 3px 8px; font-size: .875rem; font-family: var(--font); outline: none;
+        }
+        .item-actions {
+            display: flex; gap: 2px; flex-shrink: 0;
+            opacity: 0; transition: opacity .15s;
+        }
+        .pack-item:hover .item-actions { opacity: 1; }
+        @media (hover: none) { .item-actions { opacity: 1; } }
+        .act-btn {
+            border: none; background: transparent; cursor: pointer;
+            padding: 4px; border-radius: 4px; color: var(--muted-text);
+            display: flex; align-items: center; transition: color .15s, background .15s;
+        }
+        .act-btn:hover { background: var(--muted); color: var(--text); }
+        .act-btn.del:hover { color: #dc2626; }
+
+        /* ===== FULLSCREEN MODAL ===== */
+        .overlay {
+            position: fixed; inset: 0;
+            background: rgba(9,9,11,.55);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+            display: none; /* toggled via .open */
+            align-items: flex-start;
+            overflow-y: auto;
+        }
+        .overlay.open { display: flex; }
+
+        .modal {
+            background: var(--card);
+            width: 100%; min-height: 100dvh;
+            max-width: 680px; margin: 0 auto;
+            animation: slideIn .22s cubic-bezier(.4,0,.2,1);
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal sticky header with day colour */
+        .modal-top {
+            display: flex; align-items: flex-start;
+            justify-content: space-between; gap: 12px;
+            padding: 18px 15px 15px;
+            border-bottom: 1px solid var(--border);
+            border-left: 4px solid var(--day-dot, transparent);
+            background: var(--day-bg, var(--card));
+            position: sticky; top: 0; z-index: 10;
+        }
+        .modal-top h2 { font-size: 1.05rem; font-weight: 700; color: var(--day-text, var(--text)); }
+        .modal-meta { font-size: .75rem; color: var(--muted-text); margin-top: 3px; }
+
+        .btn-close {
+            border: 1px solid var(--border); background: rgba(255,255,255,.85);
+            border-radius: 7px; padding: 5px 11px;
+            font-size: .8rem; font-weight: 500; cursor: pointer;
+            font-family: var(--font); color: var(--text);
+            transition: background .15s; flex-shrink: 0; white-space: nowrap;
+        }
+        .btn-close:hover { background: var(--muted); }
+
+        /* Map embed */
+        .modal-map-wrap { width: 100%; position: relative; background: var(--muted); }
+        .modal-map-wrap iframe { width: 100%; height: 260px; border: none; display: block; }
+        .map-open-btn {
+            position: absolute; bottom: 10px; right: 10px;
+            background: white; border: 1px solid var(--border);
+            border-radius: 7px; padding: 6px 11px;
+            font-size: .75rem; font-weight: 500;
+            text-decoration: none; color: var(--text);
+            box-shadow: 0 1px 6px rgba(0,0,0,.12);
+            display: flex; align-items: center; gap: 5px;
+        }
+        .no-map {
+            height: 110px; display: flex; align-items: center;
+            justify-content: center; flex-direction: column; gap: 5px;
+            color: var(--muted-text); font-size: .85rem;
+        }
+
+        .modal-body { padding: 15px; }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <h1>🇮🇸 Iceland Epic</h1>
+    <p class="dates">March 4 – 14, 2026</p>
+    <p class="couple">You &amp; Ebba ❤️</p>
+</header>
+
+<div class="container">
+
+    <!-- Flights -->
+    <div class="card">
+        <div class="card-title">✈️ Flights</div>
+        <div class="flight-block">
+            <div class="flight-badge">Outbound · Mar 4</div>
+            <div class="flight-route">Orly 14:25 → Keflavik 17:15</div>
+            <div class="flight-ref">EJU4895 · Ref: K93RDQ3</div>
+        </div>
+        <div class="flight-block">
+            <div class="flight-badge">Return · Mar 14</div>
+            <div class="flight-route">Keflavik 17:15 → Orly 21:35</div>
+            <div class="flight-ref">EJU4898 · Ref: KBHPM1R</div>
+        </div>
+    </div>
+
+    <!-- Packing list -->
+    <div class="card">
+        <div class="card-title">🎒 Packing List</div>
+        <div class="prog-row"><span id="prog-label">0 packed</span><span id="prog-pct">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+        <div class="add-row">
+            <input type="text" class="text-input" id="new-item" placeholder="Add an item…" autocomplete="off" />
+            <button class="btn-primary" id="btn-add">Add</button>
+        </div>
+        <div id="pack-list"></div>
+    </div>
+
+    <!-- Days rendered by JS -->
+    <div id="days-list"></div>
+
+</div>
+
+<!-- Fullscreen modal -->
+<div class="overlay" id="overlay">
+    <div class="modal" id="modal">
+        <div class="modal-top" id="modal-top">
+            <div>
+                <h2 id="modal-title"></h2>
+                <div class="modal-meta" id="modal-meta"></div>
+            </div>
+            <button class="btn-close" id="btn-close">✕ Close</button>
+        </div>
+        <div class="modal-map-wrap" id="modal-map"></div>
+        <div class="modal-body" id="modal-body"></div>
+    </div>
+</div>
+
+<script>
+// =============================================
+// DATA
+// =============================================
+const DAYS = [
+    {
+        n:1, cls:"d1", title:"The Discovery",
+        drive:"~1.5h Drive", camp:"Reykjavik / Thingvellir",
+        osmBbox:"-22.7,63.8,-20.9,64.4",
+        mapUrl:"https://www.google.com/maps/dir/Keflav%C3%ADk+International+Airport/Reykjav%C3%ADk/Thingvellir+National+Park/",
+        visits:["Pick up van at Keflavik (18:30)","Grocery shopping in Reykjavik (Bónus/Krónan)","Drive to campsite"],
+        recs:["Brauð & Co (Cinnamon buns)","Bæjarins Beztu Pylsur (Famous hot dogs)"]
+    },
+    {
+        n:2, cls:"d2", title:"Golden Circle Day",
+        drive:"~3h Drive", camp:"Gesthús Selfoss",
+        osmBbox:"-21.2,63.85,-19.8,64.45",
+        mapUrl:"https://www.google.com/maps/dir/Thingvellir+National+Park/Geysir/Gullfoss+Falls/Ker%C3%AD%C3%B0+Crater/Hrunalaug+Hot+Spring/Selfoss/",
+        visits:["Thingvellir National Park","Strokkur Geyser","Gullfoss Waterfall","Kerið Crater","Hrunalaug Hot Spring"],
+        recs:["Friðheimar (Tomato greenhouse lunch)","Efstidalur II (Farm ice cream)"]
+    },
+    {
+        n:3, cls:"d3", title:"Dramatic Waterfalls",
+        drive:"~2.5h Drive", camp:"Vik or Þakgil",
+        osmBbox:"-21.1,63.3,-18.8,63.75",
+        mapUrl:"https://www.google.com/maps/dir/Selfoss+Iceland/Seljalandsfoss/Sk%C3%B3gafoss/Dyrh%C3%B3laey/Reynisfjara+Black+Sand+Beach/Vik+Iceland/",
+        visits:["Seljalandsfoss (Walk behind)","Seljavallalaug (Optional hot pool)","Skógafoss Waterfall","Dyrhólaey Viewpoint","Reynisfjara Black Sand Beach"],
+        recs:["Mia's Country Van (Fish & Chips)","Smiðjan Brugghús (Vik Brewery)"]
+    },
+    {
+        n:4, cls:"d4", title:"The Diamond Day",
+        drive:"~4h Drive", camp:"Vestrahorn Campsite",
+        osmBbox:"-19.1,63.35,-14.7,64.15",
+        mapUrl:"https://www.google.com/maps/dir/Vik+Iceland/Fja%C3%B0r%C3%A1rglj%C3%BAfur+Canyon/Svartifoss/Sv%C3%ADnafellsj%C3%B6kull/J%C3%B6kuls%C3%A1rl%C3%B3n/Diamond+Beach+Iceland/Vestrahorn/",
+        visits:["Fjaðrárgljúfur Canyon","Svartifoss (Basalt waterfall)","Svínafellsjökull Glacier","Jökulsárlón Glacier Lagoon","Diamond Beach","Vestrahorn (Batman Mountain)"],
+        recs:["Systrakaffi (Lunch stop)","Pakkhús Restaurant (Langoustine in Höfn)"]
+    },
+    {
+        n:5, cls:"d5", title:"Day of the Canyons",
+        drive:"~4–8h Drive", camp:"Camp Egilsstaðir",
+        osmBbox:"-16.6,64.1,-13.8,65.9",
+        mapUrl:"https://www.google.com/maps/dir/Vestrahorn/Lagarflj%C3%B3t/Stu%C3%B0lagil+Canyon/Dettifoss/Egilssta%C3%B0ir/",
+        visits:["Egilsstaðir & Lagarfljót Lake","Stuðlagil Canyon","Dettifoss (Check road.is! Route 862 often closed)"],
+        recs:["Salt Café & Bistro","Vök Baths (Floating geothermal pools)"]
+    },
+    {
+        n:6, cls:"d6", title:"Day of the Gods",
+        drive:"~3h Drive", camp:"Hamrar (Akureyri)",
+        osmBbox:"-18.3,65.2,-14.2,65.8",
+        mapUrl:"https://www.google.com/maps/dir/Egilssta%C3%B0ir/N%C3%A1maskard/Go%C3%B0afoss+Waterfall/Akureyri/",
+        visits:["Námaskarð (Mud pots)","Goðafoss (Waterfall of the Gods)","Akureyri Town","Forest Lagoon (Skógarböðin)"],
+        recs:["Vogafjós Farm Resort (Cowshed cafe)","Rub23 (Sushi in Akureyri)"]
+    },
+    {
+        n:7, cls:"d7", title:"Less Dramatic Waterfalls",
+        drive:"~3h Drive", camp:"Búðardalur Campsite",
+        osmBbox:"-21.9,65.0,-18.0,65.9",
+        mapUrl:"https://www.google.com/maps/dir/Akureyri/Fosslaug+Geothermal+Pool/B%C3%BA%C3%B0ardalur/",
+        visits:["Scenic Road 83","Fosslaug Geothermal Pool","Reykyafoss"],
+        recs:["Sauðárkrókur Bakery","Erpsstaðir Creamery (Skyr & Ice Cream)"]
+    },
+    {
+        n:8, cls:"d8", title:"Coastal Poetry",
+        drive:"~4h Drive", camp:"Snorrastaðir (Plan A)",
+        osmBbox:"-24.2,64.6,-21.6,65.2",
+        mapUrl:"https://www.google.com/maps/dir/B%C3%BA%C3%B0ardalur+Iceland/Sv%C3%B6rtuloft+Lighthouse/Arnarstapi+Iceland/Snorrastadir/",
+        visits:["Svörtuloft Lighthouse","Arnarstapi Coastal Cliffs"],
+        recs:["Fjöruhúsið Hellnum (Waffles on the cliff)"]
+    },
+    {
+        n:9, cls:"d9", title:"Icelandic Culture",
+        drive:"~2.5h Drive", camp:"Home Exchange (Reykjavik)",
+        osmBbox:"-22.15,64.05,-21.7,64.22",
+        mapUrl:null,
+        visits:["Return Van by 11:00","Old Harbor & Sun Voyager","Harpa Concert Hall","Perlan or Lebowski Bar"],
+        recs:["Sægreifinn (Lobster Soup)","Icelandic Street Food"]
+    },
+    {
+        n:10, cls:"d10", title:"The Day of Care",
+        drive:null, camp:"Home Exchange (Reykjavik)",
+        osmBbox:"-22.5,63.85,-21.7,64.2",
+        mapUrl:null,
+        visits:["Sky Lagoon (Infinity edge) OR Blue Lagoon (Milky blue)","Relax and recover!"],
+        recs:["Lava Restaurant (Blue Lagoon)","Kaffi Loki (Rye bread ice cream)"]
+    },
+    {
+        n:11, cls:"d11", title:"Au Revoir, Iceland",
+        drive:null, camp:"→ Keflavik · Flight 17:15",
+        osmBbox:"-22.75,63.95,-22.25,64.15",
+        mapUrl:null,
+        visits:["Check out, final packing","Drive to Keflavik Airport","EJU4898 departs 17:15 → Orly 21:35"],
+        recs:["Last coffee & pastry before the road"]
+    }
+];
+
+// =============================================
+// UTILITY
+// =============================================
+function esc(str) {
+    return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildItemList(arr) {
+    return `<ul class="item-list">${arr.map(v=>`<li>${esc(v)}</li>`).join('')}</ul>`;
+}
+
+// =============================================
+// DAY CARDS
+// =============================================
+const daysList = document.getElementById('days-list');
+
+DAYS.forEach(day => {
+    const meta = [day.drive, day.camp].filter(Boolean).join(' · ');
+    const card = document.createElement('div');
+    card.className = `day-card ${day.cls}`;
+    card.id = `day-${day.n}`;
+
+    card.innerHTML = `
+        <div class="day-summary" onclick="toggleDay(${day.n})">
+            <div class="day-num">${day.n}</div>
+            <div class="day-info">
+                <div class="day-name">Day ${day.n}: ${esc(day.title)}</div>
+                ${meta ? `<div class="day-meta">${esc(meta)}</div>` : ''}
+            </div>
+            <div class="day-controls">
+                <button class="icon-btn" onclick="openModal(${day.n},event)" title="Fullscreen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                    </svg>
+                </button>
+                <svg class="day-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+            </div>
+        </div>
+        <div class="day-body">
+            ${(day.drive || day.camp) ? `
+            <div class="tags-row">
+                ${day.drive ? `<span class="tag">🚗 ${esc(day.drive)}</span>` : ''}
+                ${day.camp  ? `<span class="tag">⛺ ${esc(day.camp)}</span>` : ''}
+            </div>` : ''}
+            ${day.visits.length ? `<div class="section-title">Route & Visits</div>${buildItemList(day.visits)}` : ''}
+            ${day.recs.length   ? `<div class="section-title">Food & Drinks</div>${buildItemList(day.recs)}` : ''}
+            ${day.mapUrl ? `<a href="${day.mapUrl}" target="_blank" rel="noopener" class="map-link">📍 Open Route in Google Maps</a>` : ''}
+        </div>
+    `;
+
+    daysList.appendChild(card);
+});
+
+function toggleDay(n) {
+    const card = document.getElementById(`day-${n}`);
+    const isOpen = card.classList.contains('open');
+    document.querySelectorAll('.day-card.open').forEach(c => c.classList.remove('open'));
+    if (!isOpen) card.classList.add('open');
+}
+
+// =============================================
+// FULLSCREEN MODAL
+// =============================================
+const overlay   = document.getElementById('overlay');
+const modalTop  = document.getElementById('modal-top');
+const modalMap  = document.getElementById('modal-map');
+const modalBody = document.getElementById('modal-body');
+
+function openModal(n, e) {
+    if (e) e.stopPropagation();
+    const day = DAYS.find(d => d.n === n);
+    if (!day) return;
+
+    // Colour the sticky header via the day class (CSS vars cascade)
+    modalTop.className = `modal-top ${day.cls}`;
+    document.getElementById('modal-title').textContent = `Day ${day.n}: ${day.title}`;
+    document.getElementById('modal-meta').textContent  = [day.drive, day.camp].filter(Boolean).join(' · ');
+
+    // Map — OpenStreetMap area embed + Google Maps route button
+    if (day.osmBbox) {
+        const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${day.osmBbox}&layer=mapnik`;
+        modalMap.innerHTML = `
+            <iframe src="${osmUrl}" loading="lazy" title="Area map for Day ${day.n}"></iframe>
+            ${day.mapUrl
+                ? `<a href="${day.mapUrl}" target="_blank" rel="noopener" class="map-open-btn">📍 Open Route</a>`
+                : ''}
+        `;
+    } else {
+        modalMap.innerHTML = `<div class="no-map"><span style="font-size:1.6rem">📍</span><span>No route map for this day</span></div>`;
+    }
+
+    // Body content
+    modalBody.innerHTML = `
+        ${(day.drive || day.camp) ? `
+        <div class="tags-row">
+            ${day.drive ? `<span class="tag">🚗 ${esc(day.drive)}</span>` : ''}
+            ${day.camp  ? `<span class="tag">⛺ ${esc(day.camp)}</span>`  : ''}
+        </div>` : ''}
+        ${day.visits.length ? `<div class="section-title">Route & Visits</div>${buildItemList(day.visits)}` : ''}
+        ${day.recs.length   ? `<div class="section-title">Food & Drinks</div>${buildItemList(day.recs)}` : ''}
+    `;
+
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    modalMap.innerHTML = ''; // stop iframe loading
+}
+
+document.getElementById('btn-close').onclick = closeModal;
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// =============================================
+// PACKING LIST
+// =============================================
+const PACK_KEY = 'iceland_pack_v2';
+const DEFAULTS = [
+    "Thermals (Merino wool base layers)",
+    "Warm mid-layer (Fleece/Wool sweater)",
+    "Waterproof jacket (Windproof)",
+    "Waterproof pants (Essential for waterfalls!)",
+    "Waterproof hiking boots",
+    "Microspikes/Crampons (Ice on paths)",
+    "Warm beanie hat & scarf/buff",
+    "Waterproof gloves",
+    "Swimsuit & quick-dry towel",
+    "Power bank for phones",
+    "Lip balm & moisturizer",
+    "Headlamp (for campsites)"
+];
+
+let items = (() => {
+    try { const s = localStorage.getItem(PACK_KEY); if (s) return JSON.parse(s); } catch(e) {}
+    return DEFAULTS.map((text, i) => ({ id: i + 1, text, done: false }));
+})();
+let uid = items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
+
+const packList  = document.getElementById('pack-list');
+const progFill  = document.getElementById('prog-fill');
+const progLabel = document.getElementById('prog-label');
+const progPct   = document.getElementById('prog-pct');
+
+function save() { localStorage.setItem(PACK_KEY, JSON.stringify(items)); }
+
+function render() {
+    const total   = items.length;
+    const checked = items.filter(i => i.done).length;
+    const pct     = total ? Math.round(checked / total * 100) : 0;
+    progFill.style.width    = pct + '%';
+    progLabel.textContent   = `${checked} / ${total} packed`;
+    progPct.textContent     = pct + '%';
+
+    packList.innerHTML = '';
+    items.forEach(item => {
+        const div = document.createElement('div');
+        div.className  = 'pack-item';
+        div.dataset.id = item.id;
+        div.innerHTML = `
+            <input type="checkbox" ${item.done ? 'checked' : ''} />
+            <span class="pack-label ${item.done ? 'done' : ''}">${esc(item.text)}</span>
+            <div class="item-actions">
+                <button class="act-btn" data-action="edit" title="Edit">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+                <button class="act-btn del" data-action="del" title="Remove">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+
+        div.querySelector('input').onchange              = () => { item.done = !item.done; save(); render(); };
+        div.querySelector('[data-action="del"]').onclick  = () => { items = items.filter(i => i.id !== item.id); save(); render(); };
+        div.querySelector('[data-action="edit"]').onclick = () => startEdit(item.id);
+        div.querySelector('.pack-label').ondblclick      = () => startEdit(item.id);
+
+        packList.appendChild(div);
+    });
+}
+
+function startEdit(id) {
+    const item    = items.find(i => i.id === id);
+    const div     = packList.querySelector(`[data-id="${id}"]`);
+    const label   = div.querySelector('.pack-label');
+    const actions = div.querySelector('.item-actions');
+
+    const inp = document.createElement('input');
+    inp.type      = 'text';
+    inp.className = 'pack-edit-input';
+    inp.value     = item.text;
+    label.replaceWith(inp);
+    actions.style.visibility = 'hidden';
+    inp.focus(); inp.select();
+
+    const commit = () => { const v = inp.value.trim(); if (v) { item.text = v; save(); } render(); };
+    inp.onblur   = commit;
+    inp.onkeydown = e => {
+        if (e.key === 'Enter')  { e.preventDefault(); inp.blur(); }
+        if (e.key === 'Escape') render();
+    };
+}
+
+function addItem() {
+    const inp  = document.getElementById('new-item');
+    const text = inp.value.trim();
+    if (!text) return;
+    items.push({ id: uid++, text, done: false });
+    save(); render();
+    inp.value = ''; inp.focus();
+}
+
+document.getElementById('btn-add').onclick  = addItem;
+document.getElementById('new-item').onkeydown = e => { if (e.key === 'Enter') addItem(); };
+
+render();
+</script>
+</body>
+</html>
