@@ -384,7 +384,7 @@
       background: var(--bg);
       color: var(--text-ui);
       line-height: 1.5;
-      padding-bottom: 72px;
+      padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
     }
 
     .shell {
@@ -497,6 +497,149 @@
       margin: 11px 0 6px;
     }
 
+    .tab-shell {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1800;
+      display: flex;
+      justify-content: center;
+      padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      pointer-events: none;
+    }
+
+    .tab-bar {
+      width: min(680px, 100%);
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.34));
+      border: 1px solid rgba(255, 255, 255, 0.66);
+      border-radius: 20px;
+      box-shadow:
+        0 14px 32px rgba(9, 9, 11, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        inset 0 -1px 0 rgba(15, 23, 42, 0.08);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      padding: 7px 8px;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      pointer-events: auto;
+    }
+
+    .tab-bar::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 5px;
+      height: 38%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0));
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: rgba(63, 63, 70, 0.85);
+      border-radius: 14px;
+      padding: 7px 8px;
+      display: grid;
+      justify-items: center;
+      gap: 3px;
+      cursor: pointer;
+      transition: color 0.2s ease, transform 0.2s ease;
+      font-family: var(--font-ui);
+      min-height: 52px;
+      position: relative;
+      z-index: 1;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tab-btn::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 13px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.55));
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow:
+        0 6px 16px rgba(148, 163, 184, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(148, 163, 184, 0.2);
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      z-index: -1;
+    }
+
+    .tab-btn:hover {
+      color: #111827;
+      transform: translateY(-1px);
+    }
+
+    .tab-btn:hover::before {
+      opacity: 0.46;
+      transform: scale(0.98);
+    }
+
+    .tab-btn.active {
+      color: #0f172a;
+      transform: translateY(-1px);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .tab-btn.active::before {
+      opacity: 1;
+      transform: scale(1);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.76));
+      border-color: rgba(255, 255, 255, 0.95);
+      box-shadow:
+        0 9px 20px rgba(148, 163, 184, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.98),
+        inset 0 -1px 0 rgba(148, 163, 184, 0.24);
+    }
+
+    .tab-btn:focus-visible {
+      outline: 2px solid rgba(59, 130, 246, 0.75);
+      outline-offset: 2px;
+    }
+
+    .tab-icon {
+      width: 19px;
+      height: 19px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .tab-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .tab-label {
+      font-size: 0.67rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
     .prog-row {
       display: flex;
       justify-content: space-between;
@@ -536,6 +679,7 @@
       font-family: var(--font-ui);
       background: var(--bg);
       color: var(--text-ui);
+      min-width: 0;
       outline: none;
       transition: border-color 0.15s;
     }
@@ -598,6 +742,188 @@
     #packlist {
       display: block;
       background: #ffffff;
+    }
+
+    #budget-card {
+      background: var(--card-ui);
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      padding: 14px 16px;
+    }
+
+    .budget-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.74rem;
+      color: var(--muted-text-ui);
+      margin-bottom: 6px;
+    }
+
+    .budget-main {
+      color: var(--text-ui);
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+
+    .budget-main.over {
+      color: #b91c1c;
+    }
+
+    .budget-percent {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted-text-ui);
+      white-space: nowrap;
+    }
+
+    .budget-percent.over {
+      color: #b91c1c;
+    }
+
+    .budget-rate {
+      font-size: 0.7rem;
+      color: var(--muted-text-ui);
+      margin: -1px 0 10px;
+    }
+
+    .budget-rate.stale {
+      opacity: 0.78;
+    }
+
+    .budget-rate.loading {
+      font-style: italic;
+    }
+
+    .budget-form {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 9px;
+    }
+
+    #budget-max-form {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    #expense-form {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 150px) auto;
+    }
+
+    .budget-calc .budget-form {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .budget-amount-input {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+    }
+
+    #budget-list {
+      display: block;
+      background: #ffffff;
+      margin-top: 4px;
+    }
+
+    .expense-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border-ui);
+    }
+
+    .expense-item:last-child {
+      border-bottom: none;
+    }
+
+    .expense-item.base-expense {
+      background: color-mix(in srgb, var(--muted-ui) 45%, #ffffff);
+    }
+
+    .expense-main-wrap {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .expense-name {
+      font-size: 0.875rem;
+      line-height: 1.35;
+      color: var(--text-ui);
+      word-break: break-word;
+    }
+
+    .expense-eur {
+      font-size: 0.74rem;
+      color: var(--muted-text-ui);
+      margin-top: 1px;
+    }
+
+    .expense-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .expense-base-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 0.64rem;
+      font-weight: 600;
+      line-height: 1;
+      padding: 2px 7px;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+    }
+
+    .expense-isk {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-ui);
+      white-space: nowrap;
+    }
+
+    .budget-calc {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-ui);
+    }
+
+    #fx-card .budget-calc {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .budget-calc-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted-text-ui);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .budget-calc-output {
+      min-width: 112px;
+      border: 1px solid var(--border-ui);
+      border-radius: 8px;
+      background: var(--muted-ui);
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-ui);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
     }
 
     .pack-item {
@@ -844,7 +1170,7 @@
       align-items: flex-start;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 1200;
     }
 
     .fullscreen-title {
@@ -881,6 +1207,8 @@
     .fullscreen-body {
       padding: 15px;
       background: var(--card-ui);
+      position: relative;
+      z-index: 1;
     }
 
     .fullscreen-card {
@@ -898,6 +1226,8 @@
       border-radius: 0;
       background: var(--muted-ui);
       margin: 0 0 8px;
+      position: relative;
+      z-index: 1;
     }
 
     .route-strip {
@@ -948,11 +1278,61 @@
       font-weight: 600;
     }
 
+    .recommendation-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .recommendation-kind {
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.66rem;
+      font-weight: 600;
+      color: var(--muted-text-ui);
+      white-space: nowrap;
+    }
+
     .location-note,
     .recommendation-item p,
     .muted {
       font-size: 0.78rem;
       color: var(--muted-text-ui);
+    }
+
+    .recommendation-price {
+      margin-top: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #0f766e;
+    }
+
+    .recommendation-price.free {
+      color: #166534;
+    }
+
+    .recommendation-action {
+      margin-top: 7px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      color: var(--text-ui);
+      border-radius: 7px;
+      padding: 4px 9px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .recommendation-action:hover {
+      background: color-mix(in srgb, var(--muted-ui) 65%, #ffffff);
+      border-color: #a1a1aa;
     }
 
     .location-card.campsite-card {
@@ -970,8 +1350,45 @@
       transition: border-color 0.15s, background 0.15s;
     }
 
+    .location-discovery-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0 8px;
+    }
+
+    .discovery-link {
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      color: var(--muted-text-ui);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-decoration: none;
+      line-height: 1.35;
+    }
+
+    .discovery-link:hover {
+      border-color: #a1a1aa;
+      background: #ffffff;
+      color: var(--text-ui);
+    }
+
+    .location-title-link {
+      color: inherit;
+      text-decoration: none;
+      text-decoration-color: transparent;
+      text-underline-offset: 2px;
+    }
+
+    .location-title-link:hover {
+      text-decoration: underline;
+      text-decoration-color: currentColor;
+    }
+
     .route-stop,
-    .location-link {
+    .location-title-link {
       text-decoration: none;
       color: inherit;
     }
@@ -980,11 +1397,7 @@
       background: var(--border-ui);
     }
 
-    .location-link {
-      display: block;
-    }
-
-    .location-link:hover .location-card {
+    .location-card:hover {
       border-color: #a1a1aa;
       background: var(--muted-ui);
     }
@@ -1031,6 +1444,18 @@
       font-weight: 500;
     }
 
+    .itinerary-road-summary.road-link {
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .itinerary-road-summary.road-link:hover {
+      border-color: #a1a1aa;
+      color: var(--text-ui);
+      background: var(--muted-ui);
+    }
+
     .itinerary-road-summary.loading {
       opacity: 0.82;
       font-style: italic;
@@ -1044,6 +1469,40 @@
     @media (max-width: 640px) {
       .shell {
         width: 94vw;
+      }
+
+      #budget-max-form {
+        grid-template-columns: 1fr;
+      }
+
+      #expense-form {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+
+      #expense-form .btn-primary {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
+
+      .budget-calc .budget-form {
+        grid-template-columns: 1fr;
+      }
+
+      .budget-calc-output {
+        width: 100%;
+      }
+
+      .location-discovery-links {
+        gap: 5px;
+      }
+
+      .discovery-link {
+        font-size: 0.64rem;
+      }
+
+      .recommendation-action {
+        width: 100%;
+        justify-content: center;
       }
 
       .day-card summary {
@@ -1073,7 +1532,7 @@
   </header>
 
   <div class="shell">
-    <section class="card" aria-labelledby="flight-title">
+    <section id="flight-card" class="card" aria-labelledby="flight-title">
       <h2 id="flight-title" class="card-title">✈️ Flights</h2>
       <div class="flight-block">
         <div class="flight-badge">Outbound · Mar 4</div>
@@ -1105,8 +1564,82 @@
       <div id="packlist" aria-live="polite"></div>
     </section>
 
-    <h2 class="section-title">Itinerary Days</h2>
+    <section id="fx-card" class="card" aria-labelledby="fx-title">
+      <h2 id="fx-title" class="card-title">💱 ISK → EUR Calculator</h2>
+      <div class="budget-calc">
+        <div class="budget-calc-label">ISK → EUR Calculator</div>
+        <div class="budget-form" style="margin-bottom:0;">
+          <input id="budget-calc-isk-input" class="text-input budget-amount-input" type="number" min="0" step="1" placeholder="Amount in ISK" aria-label="Calculator amount in ISK">
+          <output id="budget-calc-output" class="budget-calc-output">€0.00</output>
+        </div>
+      </div>
+    </section>
+
+    <section id="budget-card" class="card" aria-labelledby="budget-title">
+      <h2 id="budget-title" class="card-title">💸 Budget</h2>
+      <div class="budget-summary">
+        <span id="budget-main" class="budget-main">0 ISK / 0 ISK</span>
+        <span id="budget-percent" class="budget-percent">0%</span>
+        <span id="budget-eur" class="muted">€0.00 / €0.00</span>
+      </div>
+      <div class="prog-bar" aria-hidden="true">
+        <div class="prog-fill" id="budget-progress"></div>
+      </div>
+      <div id="budget-rate" class="budget-rate loading">Loading ISK→EUR daily rate…</div>
+      <div id="budget-base-note" class="budget-rate"></div>
+
+      <form id="budget-max-form" class="budget-form">
+        <input id="budget-max-input" class="text-input budget-amount-input" type="number" min="0" step="100" placeholder="Max budget (ISK)" aria-label="Max budget in ISK">
+        <button class="btn-primary" type="submit">Set max</button>
+      </form>
+
+      <form id="expense-form" class="budget-form">
+        <input id="expense-name-input" class="text-input" type="text" maxlength="100" placeholder="Expense name" aria-label="Expense name">
+        <input id="expense-amount-input" class="text-input budget-amount-input" type="number" min="0" step="1" placeholder="Amount ISK" aria-label="Expense amount in ISK">
+        <button class="btn-primary" type="submit">Add</button>
+      </form>
+
+      <div id="budget-list" aria-live="polite"></div>
+    </section>
+
+    <h2 id="days-section-title" class="section-title">Itinerary Days</h2>
     <section id="days-container" aria-label="Iceland trip days"></section>
+  </div>
+
+  <div class="tab-shell" role="navigation" aria-label="Main tabs">
+    <div class="tab-bar" role="tablist" aria-label="Views">
+      <button class="tab-btn active" type="button" role="tab" aria-selected="true" data-tab="home">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M3 11.5 12 4l9 7.5"/>
+            <path d="M5.5 10.5V20h13V10.5"/>
+            <path d="M10 20v-5h4v5"/>
+          </svg>
+        </span>
+        <span class="tab-label">Home</span>
+      </button>
+      <button class="tab-btn" type="button" role="tab" aria-selected="false" data-tab="itinerary">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 3v18"/>
+            <path d="M12 6h7l-2 3 2 3h-7"/>
+            <path d="M12 10H5l2 3-2 3h7"/>
+          </svg>
+        </span>
+        <span class="tab-label">Itinerary</span>
+      </button>
+      <button class="tab-btn" type="button" role="tab" aria-selected="false" data-tab="tools">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M14.5 5.5 18.5 9.5"/>
+            <path d="m13 7 4 4"/>
+            <path d="M6 21 17 10"/>
+            <path d="M4.5 19.5a1.5 1.5 0 0 1 0-2.1l1.2-1.2 2.1 2.1-1.2 1.2a1.5 1.5 0 0 1-2.1 0z"/>
+          </svg>
+        </span>
+        <span class="tab-label">Tools</span>
+      </button>
+    </div>
   </div>
 
   <div id="fullscreen-modal" class="fullscreen-modal" role="dialog" aria-modal="true" aria-labelledby="fullscreen-title">
@@ -1116,7 +1649,7 @@
           <h3 id="fullscreen-title" class="fullscreen-title"></h3>
           <p id="fullscreen-subtitle" class="muted" style="color: rgba(255,255,255,0.92);"></p>
         </div>
-        <button id="close-fullscreen" class="btn btn-ghost" type="button">Close ✕</button>
+        <button id="close-fullscreen" class="btn btn-ghost" type="button">✕</button>
       </div>
       <div class="fullscreen-body">
         <div class="fullscreen-card">
@@ -1319,6 +1852,48 @@
 
       const query = encodeURIComponent((location.name || "Iceland") + ", Iceland");
       return "https://www.google.com/maps/search/?api=1&query=" + query;
+    }
+
+    function mapsSearchUrl(query) {
+      return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(query);
+    }
+
+    function bookingSearchUrl(query) {
+      return "https://www.getyourguide.com/s/?q=" + encodeURIComponent(query);
+    }
+
+    function mapsDirectionsUrl(fromLocation, toLocation, fromPoint, toPoint) {
+      const fromHasCoords = Array.isArray(fromPoint) && fromPoint.length === 2;
+      const toHasCoords = Array.isArray(toPoint) && toPoint.length === 2;
+
+      if (fromHasCoords && toHasCoords) {
+        return (
+          "https://www.google.com/maps/dir/?api=1" +
+          "&origin=" + encodeURIComponent(fromPoint[0] + "," + fromPoint[1]) +
+          "&destination=" + encodeURIComponent(toPoint[0] + "," + toPoint[1]) +
+          "&travelmode=driving"
+        );
+      }
+
+      const origin = String((fromLocation && fromLocation.name) || "Iceland").trim();
+      const destination = String((toLocation && toLocation.name) || "Iceland").trim();
+      return (
+        "https://www.google.com/maps/dir/?api=1" +
+        "&origin=" + encodeURIComponent(origin) +
+        "&destination=" + encodeURIComponent(destination) +
+        "&travelmode=driving"
+      );
+    }
+
+    function getLocationDiscoveryLinks(location) {
+      const placeName = String((location && location.name) || "Iceland").trim();
+      const base = placeName + ", Iceland";
+      return [
+        { label: "🍽 Restaurants", url: mapsSearchUrl("restaurants near " + base) },
+        { label: "☕ Cafes", url: mapsSearchUrl("cafes near " + base) },
+        { label: "🏛 Cultural", url: mapsSearchUrl("cultural sites near " + base) },
+        { label: "📍 Attractions", url: mapsSearchUrl("tourist attractions near " + base) }
+      ];
     }
 
     function normalizePlaceText(value) {
@@ -1524,6 +2099,10 @@
 
     function renderFullscreenSubtitle(day, driveLegSummaries = []) {
       const display = getDayDriveDisplay(day, driveLegSummaries);
+      const campPricing = getDayCampPricing(day);
+      const campPriceSuffix = campPricing
+        ? " · " + getCampPriceDisplayText(campPricing)
+        : "";
       const planHtml = display.planned
         ? "<span class=\"drive-plan\">plan: " + escapeHtml(display.planned) + "</span>"
         : "";
@@ -1531,7 +2110,8 @@
         "<span class=\"drive-main\">" + escapeHtml(display.main) + "</span>" +
         planHtml +
         " · ⛺ " +
-        escapeHtml(day.camp);
+        escapeHtml(day.camp) +
+        campPriceSuffix;
     }
 
     function formatDriveDuration(seconds) {
@@ -1770,7 +2350,7 @@
         day: 2,
         title: "Golden Circle Day",
         drive: "~3h Drive",
-        camp: "Gesthus Selfoss",
+        camp: "Gesthús Selfoss",
         mapLink: "https://www.google.com/maps/dir/Thingvellir+National+Park,+Selfoss,+Iceland/Geysir/Gullfoss+Falls/Keri%C3%B0+Crater,+Klausturholar,+Iceland/Hrunalaug+Hot+Spring,+S%C3%B3lheimar,+Fl%C3%BA%C3%B0ir,+Iceland/Gesth%C3%BAs+Selfoss,+Engjavegur+56,+Selfoss,+Iceland/data=!4m38!4m37!1m5!1m1!19sChIJe2kT-x-B1kgR8mKSB4tsdWs!2m2!1d-21.0764492!2d64.2821725!1m5!1m1!19sChIJP09CA5-j1kgRPyjiYhocdbQ!2m2!1d-20.3023605!2d64.310371899999993!1m5!1m1!19sChIJybZFr3Sl1kgRARZBC9tHYyw!2m2!1d-20.1199478!2d64.3270716!1m5!1m1!19sChIJV_L2VbeL1kgRB9kuweBEWlE!2m2!1d-20.8851466!2d64.04127849999999!1m5!1m1!19sChIJ24-g5ju-1kgRay4MayAeeUA!2m2!1d-20.2551249!2d64.1327657!1m5!1m1!19sChIJJyXX28lf1kgRJDG96H4pABQ!2m2!1d-20.988809099999997!2d63.933055599999996!3e0",
         mapEmbed: buildMapEmbed([-21.35,63.9,-20.05,64.38]),
         locations: [
@@ -1779,6 +2359,7 @@
           { name: "Gullfoss Waterfall", note: "Powerful canyon waterfall with multiple viewpoints.", image: imageFor("Gullfoss waterfall", 203), coords: [64.3266103, -20.1216821] },
           { name: "Kerid Crater", note: "Volcanic crater lake with vivid red and blue contrast.", image: imageFor("Kerid crater", 204), coords: [64.0417879, -20.8864810] },
           { name: "Hrunalaug Hot Spring", note: "Small rustic soak to close the day.", image: imageFor("Iceland hot spring", 205), coords: [64.1328671, -20.2549498] },
+          { name: "Gesthús Selfoss", note: "Campsite base for the night with amenities and easy morning departure.", image: imageFor("Gesthus Selfoss", 206), coords: [63.9330556, -20.9888091], isCamp: true },
         ],
         recommendations: [
           { title: "Fridheimar", text: "Book ahead for a greenhouse tomato lunch; warm and cozy even in harsh weather." },
@@ -1837,7 +2418,7 @@
           { name: "Vestrahorn", note: "Early light shots before heading north-east.", image: imageFor("Vestrahorn sunrise", 501), coords: [64.273333, -15.008611] },
           { name: "Lagarfljot", note: "Quiet lake break around Egilsstadir region.", image: imageFor("Lagarfljot", 502), coords: [65.1696214, -14.6333108] },
           { name: "Studlagil Canyon", note: "Basalt columns and turquoise river views.", image: imageFor("Studlagil canyon", 503), coords: [65.1623267, -15.3081247] },
-          { name: "Egilsstadir Camp", note: "Settle in and recover from the long driving day.", image: imageFor("Egilsstadir", 505), coords: [65.2609232, -14.3994394], isCamp: true }
+          { name: "Egilsstadir Camp", note: "Settle in and recover from the long driving day.", image: imageFor("Egilsstadir", 505), coords: [65.2583124, -14.4068894], isCamp: true }
         ],
         recommendations: [
           { title: "Salt Cafe & Bistro", text: "Solid comfort-food stop for refueling in East Iceland." },
@@ -1907,7 +2488,7 @@
         mapLink: "https://www.google.com/maps/dir/B%C3%BA%C3%B0ardalur,+Iceland/Reykjav%C3%ADk,+Iceland/Harpa,+Austurbakki+2,+101+Reykjav%C3%ADk,+Iceland/Perlan,+Varmahl%C3%AD%C3%B0+1,+105+Reykjav%C3%ADk,+Iceland",
         mapEmbed: buildMapEmbed([-22.05,64.03,-21.55,64.2]),
         locations: [
-          { name: "Van Return", note: "Drop-off logistics before city mode starts.", image: imageFor("Reykjavik van rental", 901), coords: [64.1466, -21.9426] },
+          { name: "Van Return", note: "Drop-off logistics before city mode starts. Return time: 11:00 AM.", image: imageFor("Reykjavik van rental", 901), coords: [64.1466, -21.9426] },
           { name: "Sun Voyager", note: "Iconic sculpture on the waterfront promenade.", image: imageFor("Sun Voyager Reykjavik", 902), coords: [64.1478, -21.9226] },
           { name: "Harpa Concert Hall", note: "Geometric glass facade and harbor views.", image: imageFor("Harpa Reykjavik", 903), coords: [64.1500, -21.9327] },
           { name: "Perlan", note: "Museum and hilltop panorama over Reykjavik.", image: imageFor("Perlan Reykjavik", 904), coords: [64.1293, -21.9219] }
@@ -1952,6 +2533,489 @@
         ]
       }
     ];
+
+    const ENHANCED_RECOMMENDATIONS_BY_DAY = {
+      1: [
+        {
+          title: "Thingvellir Rift Walk",
+          kind: "Natural spot",
+          text: "Walk the Almannagja fissure and Oxararfoss path at your own pace.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Silfra Snorkeling Tour",
+          kind: "Tour",
+          text: "Cold-water snorkeling between tectonic plates with certified guides.",
+          priceISK: 17990,
+          priceLabel: "From"
+        },
+        {
+          title: "FlyOver Iceland",
+          kind: "Activity",
+          text: "Immersive flying theater over Icelandic landscapes in Reykjavik.",
+          priceISK: 5690,
+          priceLabel: "From"
+        }
+      ],
+      2: [
+        {
+          title: "Gullfoss Upper Viewpoint",
+          kind: "Natural spot",
+          text: "Short walk to dramatic canyon-edge viewpoints above the falls.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Secret Lagoon",
+          kind: "Activity",
+          text: "Historic geothermal pool near Fludir for a relaxed soak.",
+          priceISK: 4200,
+          priceLabel: "Adult ticket"
+        },
+        {
+          title: "Langjokull Snowmobile Tour",
+          kind: "Tour",
+          text: "Guided glacier snowmobile ride departing from the Geysir area.",
+          priceISK: 33500,
+          priceLabel: "From"
+        }
+      ],
+      3: [
+        {
+          title: "Reynisfjara Black Sand Beach",
+          kind: "Natural spot",
+          text: "Basalt columns and ocean views; keep distance from sneaker waves.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Lava Show Vik",
+          kind: "Activity",
+          text: "Live molten lava demonstration with strong geology storytelling.",
+          priceISK: 6590,
+          priceLabel: "Adult ticket"
+        },
+        {
+          title: "Katla Ice Cave Fast Track",
+          kind: "Tour",
+          text: "Super-jeep transfer and glacier cave walk departing from Vik.",
+          priceISK: 22900,
+          priceLabel: "From"
+        }
+      ],
+      4: [
+        {
+          title: "Diamond Beach Sunrise",
+          kind: "Natural spot",
+          text: "Early light over black sand and ice fragments from Jokulsarlon.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Skaftafell Glacier Hike",
+          kind: "Tour",
+          text: "Entry-level guided glacier hike with safety gear included.",
+          priceISK: 9900,
+          priceLabel: "From"
+        },
+        {
+          title: "Jokulsarlon Zodiac Boat",
+          kind: "Tour",
+          text: "Fast lagoon boat ride weaving between iceberg formations.",
+          priceISK: 16900,
+          priceLabel: "Adult ticket"
+        }
+      ],
+      5: [
+        {
+          title: "Studlagil Canyon East Bank",
+          kind: "Natural spot",
+          text: "Basalt canyon viewpoints and river colors from the east side trail.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Vok Baths",
+          kind: "Activity",
+          text: "Floating geothermal pools on Lake Urridavatn near Egilsstadir.",
+          priceISK: 7690,
+          priceLabel: "From"
+        },
+        {
+          title: "Hengifoss Hike",
+          kind: "Natural spot",
+          text: "Layered-cliff waterfall hike with broad Eastfjords views.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        }
+      ],
+      6: [
+        {
+          title: "Godafoss Waterfall Trail",
+          kind: "Natural spot",
+          text: "Easy riverside trail on both banks of the waterfall.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Forest Lagoon",
+          kind: "Activity",
+          text: "Thermal pools in a pine setting above Eyjafjordur.",
+          priceISK: 6900,
+          priceLabel: "From"
+        },
+        {
+          title: "Akureyri Whale Watching",
+          kind: "Tour",
+          text: "Classic Eyjafjordur sailing with frequent humpback sightings.",
+          priceISK: 14500,
+          priceLabel: "From"
+        }
+      ],
+      7: [
+        {
+          title: "Fosslaug Hot Pot",
+          kind: "Natural spot",
+          text: "Natural riverside hot pool with mountain views.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Kolugljufur Canyon Stop",
+          kind: "Natural spot",
+          text: "Short detour to a deep canyon and clustered waterfalls.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Into the Glacier",
+          kind: "Tour",
+          text: "Man-made ice tunnel experience inside Langjokull glacier.",
+          priceISK: 23500,
+          priceLabel: "From"
+        }
+      ],
+      8: [
+        {
+          title: "Arnarstapi Coastal Walk",
+          kind: "Natural spot",
+          text: "Sea arches, bird cliffs, and lava coast viewpoints.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Vatnshellir Cave Tour",
+          kind: "Tour",
+          text: "Guided descent into an 8,000-year-old lava tube.",
+          priceISK: 5900,
+          priceLabel: "Adult ticket"
+        },
+        {
+          title: "Olafsvik Whale Watching",
+          kind: "Tour",
+          text: "Peninsula whale tour focused on orca and minke sightings.",
+          priceISK: 12500,
+          priceLabel: "From"
+        }
+      ],
+      9: [
+        {
+          title: "Sun Voyager Waterfront Walk",
+          kind: "Natural spot",
+          text: "Easy harbor walk combining sculpture stop and mountain backdrop.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Perlan Wonders of Iceland",
+          kind: "Activity",
+          text: "Ice cave exhibit, aurora film, and panoramic viewing deck.",
+          priceISK: 5990,
+          priceLabel: "From"
+        },
+        {
+          title: "Reykjavik Whale Watching",
+          kind: "Tour",
+          text: "Old-harbor departure for bay cruises around Faxafloi.",
+          priceISK: 14500,
+          priceLabel: "From"
+        }
+      ],
+      10: [
+        {
+          title: "Sky Lagoon",
+          kind: "Activity",
+          text: "Ocean-edge geothermal spa circuit with ritual access tiers.",
+          priceISK: 12990,
+          priceLabel: "From"
+        },
+        {
+          title: "Blue Lagoon Comfort",
+          kind: "Activity",
+          text: "Geothermal lagoon with silica mask and drink included.",
+          priceISK: 11990,
+          priceLabel: "From"
+        },
+        {
+          title: "Reykjadalur Hot River Hike",
+          kind: "Natural spot",
+          text: "Moderate hike to naturally warm river bathing valley.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        }
+      ],
+      11: [
+        {
+          title: "Bridge Between Continents",
+          kind: "Natural spot",
+          text: "Quick Reykjanes stop between North American and Eurasian plates.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Reykjanesviti Lighthouse Cliffs",
+          kind: "Natural spot",
+          text: "Final volcanic-coast viewpoints before heading to the airport.",
+          priceISK: 0,
+          priceLabel: "Free access"
+        },
+        {
+          title: "Blue Lagoon (Departure Option)",
+          kind: "Activity",
+          text: "Optional final soak if your airport timing allows.",
+          priceISK: 11990,
+          priceLabel: "From"
+        }
+      ]
+    };
+
+    const DISCOVERY_RECOMMENDATIONS_BY_DAY = {
+      1: [
+        { title: "Icelandic Street Food", kind: "Restaurant", text: "Cozy downtown stop for traditional soups and hearty bowls." },
+        { title: "Reykjavik Roasters", kind: "Cafe", text: "Specialty coffee with relaxed local vibe near central Reykjavik." },
+        { title: "Hallgrimskirkja", kind: "Cultural spot", text: "Iconic church and city landmark with a panoramic tower view." },
+        { title: "Harpa Concert Hall", kind: "Tourist attraction", text: "Waterfront glass architecture and one of Reykjavik's signature sights." }
+      ],
+      2: [
+        { title: "Fridheimar", kind: "Restaurant", text: "Greenhouse tomato-focused lunch stop in the Golden Circle region." },
+        { title: "Kaffi Krus", kind: "Cafe", text: "Selfoss cafe for pastries and quick road coffee." },
+        { title: "Skalholt Cathedral", kind: "Cultural spot", text: "Historic bishopric site with deep Icelandic heritage." },
+        { title: "Geysir Geothermal Area Visitor Zone", kind: "Tourist attraction", text: "Main geyser boardwalk and central sightseeing point." }
+      ],
+      3: [
+        { title: "Smidjan Brugghus", kind: "Restaurant", text: "Popular Vik burger and craft beer dinner option." },
+        { title: "Skool Beans Micro Roaster", kind: "Cafe", text: "Converted-school-bus coffee stop with strong local character." },
+        { title: "Vikurkirkja Church", kind: "Cultural spot", text: "Hilltop church overlooking Vik and black sand coast." },
+        { title: "Reynisfjara Basalt Columns", kind: "Tourist attraction", text: "Distinctive basalt formations by the Reynisfjara beach area." }
+      ],
+      4: [
+        { title: "Pakkhus Restaurant Hofn", kind: "Restaurant", text: "Seafood and langoustine-focused dining in Hofn." },
+        { title: "Hafnarbudin Cafe Hofn", kind: "Cafe", text: "Harbor-side coffee and bakery pause before evening drive." },
+        { title: "Hornafjordur Cultural Center", kind: "Cultural spot", text: "Small local exhibitions and insight into southeast Iceland life." },
+        { title: "Jokulsarlon Main Viewpoint", kind: "Tourist attraction", text: "Prime observation area for iceberg movement and lagoon views." }
+      ],
+      5: [
+        { title: "Salt Cafe & Bistro", kind: "Restaurant", text: "Comfort-food stop in East Iceland after long driving legs." },
+        { title: "Cafe Nielsen Egilsstadir", kind: "Cafe", text: "Classic town cafe and bakery break in Egilsstadir." },
+        { title: "East Iceland Heritage Museum", kind: "Cultural spot", text: "Regional history and local storytelling exhibits." },
+        { title: "Studlagil East Side Viewpoint", kind: "Tourist attraction", text: "Most scenic approach to Studlagil's basalt canyon walls." }
+      ],
+      6: [
+        { title: "Strikid Akureyri", kind: "Restaurant", text: "Rooftop dining with fjord and town views." },
+        { title: "Blaa Kannan Cafe", kind: "Cafe", text: "Colorful cafe in Akureyri center for coffee and cakes." },
+        { title: "Akureyri Church", kind: "Cultural spot", text: "Historic hilltop church designed by Gudjon Samuelsson." },
+        { title: "Akureyri Botanical Garden", kind: "Tourist attraction", text: "Compact botanical garden with Arctic-flora focus." }
+      ],
+      7: [
+        { title: "Saudarkrokur Bakery", kind: "Restaurant", text: "Casual bakery lunch and road snack stop." },
+        { title: "Erpsstadir Creamery", kind: "Cafe", text: "Farm creamery for coffee, skyr, and homemade ice cream." },
+        { title: "Eiriksstadir Viking Longhouse", kind: "Cultural spot", text: "Reconstructed Viking-era site tied to saga history." },
+        { title: "Gudrunarlaug Hot Spring", kind: "Tourist attraction", text: "Historic hot spring stop in the west Iceland region." }
+      ],
+      8: [
+        { title: "Arnarbaer Restaurant", kind: "Restaurant", text: "Well-known Snaefellsnes dining stop for fish and lamb dishes." },
+        { title: "Fjoruhusid Hellnar", kind: "Cafe", text: "Coastal cafe famous for waffles and ocean views." },
+        { title: "Bjarnarhofn Shark Museum", kind: "Cultural spot", text: "Traditional food and maritime heritage museum." },
+        { title: "Kirkjufell Viewpoint", kind: "Tourist attraction", text: "Classic photo stop at Iceland's iconic cone-shaped mountain." }
+      ],
+      9: [
+        { title: "Saegreifinn", kind: "Restaurant", text: "Harbor seafood stop, known for lobster soup." },
+        { title: "Braud & Co Reykjavik", kind: "Cafe", text: "Art-walled bakery with popular cinnamon pastries." },
+        { title: "National Museum of Iceland", kind: "Cultural spot", text: "Core museum for Iceland's history and identity." },
+        { title: "Sun Voyager Waterfront", kind: "Tourist attraction", text: "Signature sculpture walk on Reykjavik's seafront." }
+      ],
+      10: [
+        { title: "Kaffi Loki", kind: "Restaurant", text: "Traditional Icelandic comfort dishes near Hallgrimskirkja." },
+        { title: "Reykjavik Roasters Brautarholt", kind: "Cafe", text: "Specialty coffee stop before/after lagoon sessions." },
+        { title: "The Settlement Exhibition Reykjavik 871±2", kind: "Cultural spot", text: "Archaeological museum around a preserved Viking longhouse." },
+        { title: "Skolavordustigur Rainbow Street", kind: "Tourist attraction", text: "Colorful central street with shops and photo points." }
+      ],
+      11: [
+        { title: "Radhuskaffi Keflavik", kind: "Restaurant", text: "Reliable meal option before airport drop-off." },
+        { title: "Kaffi Duus", kind: "Cafe", text: "Harbor-side cafe/restaurant in Keflavik." },
+        { title: "Viking World Museum", kind: "Cultural spot", text: "Museum focused on Viking voyages and replicas." },
+        { title: "Gunnuhver Geothermal Area", kind: "Tourist attraction", text: "Rugged Reykjanes geothermal stop with steam vents." }
+      ]
+    };
+
+    const RECOMMENDATION_TITLE_PRICE_OVERRIDES = {
+      "hallgrimskirkja": { priceISK: 1500, priceLabel: "Tower ticket" },
+      "national museum of iceland": { priceISK: 2500, priceLabel: "Est. adult ticket" },
+      "the settlement exhibition reykjavik 871 2": { priceISK: 3000, priceLabel: "Est. adult ticket" },
+      "viking world museum": { priceISK: 2500, priceLabel: "Est. adult ticket" },
+      "kirkjufell viewpoint": { priceISK: 1200, priceLabel: "Parking (standard car)" },
+      "harpa concert hall": { priceISK: 0, priceLabel: "Free access" },
+      "skalholt cathedral": { priceISK: 0, priceLabel: "Free access" },
+      "vikurkirkja church": { priceISK: 0, priceLabel: "Free access" },
+      "akureyri church": { priceISK: 0, priceLabel: "Free access" }
+    };
+
+    const RECOMMENDATION_KIND_PRICE_DEFAULTS = {
+      "restaurant": { priceISK: 3900, priceLabel: "Avg meal" },
+      "cafe": { priceISK: 1400, priceLabel: "Avg order" },
+      "cultural spot": { priceISK: 2200, priceLabel: "Est. entry" },
+      "tourist attraction": { priceISK: 0, priceLabel: "Free access" },
+      "natural spot": { priceISK: 0, priceLabel: "Free access" },
+      "activity": { priceISK: 8900, priceLabel: "Est. from listings" },
+      "tour": { priceISK: 15900, priceLabel: "Est. from listings" }
+    };
+
+    function resolveRecommendationPricing(title, kind, priceISK, priceLabel) {
+      let resolvedPriceISK = priceISK;
+      let resolvedLabel = priceLabel;
+
+      if (resolvedPriceISK === null) {
+        const titleKey = normalizePlaceText(title);
+        const titleOverride = RECOMMENDATION_TITLE_PRICE_OVERRIDES[titleKey];
+        if (titleOverride) {
+          resolvedPriceISK = toNonNegativeInteger(titleOverride.priceISK);
+          if (!resolvedLabel) {
+            resolvedLabel = String(titleOverride.priceLabel || "").trim();
+          }
+        }
+      }
+
+      if (resolvedPriceISK === null) {
+        const kindKey = normalizePlaceText(kind);
+        const kindDefault = RECOMMENDATION_KIND_PRICE_DEFAULTS[kindKey];
+        if (kindDefault) {
+          resolvedPriceISK = toNonNegativeInteger(kindDefault.priceISK);
+          if (!resolvedLabel) {
+            resolvedLabel = String(kindDefault.priceLabel || "").trim();
+          }
+        }
+      }
+
+      if (resolvedPriceISK === 0 && !resolvedLabel) {
+        resolvedLabel = "Free access";
+      }
+      if (resolvedPriceISK !== null && !resolvedLabel) {
+        resolvedLabel = "Estimated";
+      }
+
+      return {
+        priceISK: resolvedPriceISK,
+        priceLabel: resolvedLabel
+      };
+    }
+
+    const CAMP_PRICE_BOOK = [
+      { matches: ["thingvellir", "reykjavik thingvellir"], displayName: "Thingvellir Campsite", perAdultISK: 1800, lodgingTaxISK: 400, includeBaseExpense: true },
+      { matches: ["gesthus selfoss"], displayName: "Gesthus Selfoss", perAdultISK: 2900, lodgingTaxISK: 400, includeBaseExpense: true },
+      { matches: ["vik campsite", "vik or thakgil", "thakgil"], displayName: "Vik Campsite", perAdultISK: 2100, lodgingTaxISK: 400, includeBaseExpense: true },
+      { matches: ["vestrahorn"], displayName: "Vestrahorn Campsite", perAdultISK: 2800, lodgingTaxISK: 400, includeBaseExpense: true },
+      { matches: ["egilsstadir"], displayName: "Camp Egilsstadir", perAdultISK: 2750, lodgingTaxISK: 400, includeBaseExpense: true },
+      { matches: ["hamrar", "akureyri"], displayName: "Hamrar (Akureyri)", perAdultISK: 2500, unitFeeISK: 500, lodgingTaxISK: 400, includeBaseExpense: true },
+      { matches: ["budardalur"], displayName: "Budardalur Campsite", perAdultISK: 2000, lodgingTaxISK: 400, includeBaseExpense: true },
+      { matches: ["snorrastadir"], displayName: "Snorrastadir Camp", perAdultISK: 2200, lodgingTaxISK: 400, includeBaseExpense: true },
+      { matches: ["home exchange"], displayName: "Home Exchange (Reykjavik)", perAdultISK: 0, includeBaseExpense: false },
+      { matches: ["departure"], displayName: "Departure", perAdultISK: 0, includeBaseExpense: false }
+    ];
+
+    function normalizeRecommendationItem(item) {
+      const rawPriceISK = Number(item && item.priceISK);
+      const normalizedPrice = Number.isFinite(rawPriceISK) && rawPriceISK >= 0
+        ? Math.round(rawPriceISK)
+        : null;
+      const title = String((item && item.title) || "Recommendation").trim();
+      const text = String((item && item.text) || "").trim();
+      const kind = String((item && item.kind) || "Activity").trim();
+      const resolvedPricing = resolveRecommendationPricing(
+        title,
+        kind,
+        normalizedPrice,
+        String((item && item.priceLabel) || "").trim()
+      );
+
+      return {
+        title,
+        text,
+        kind,
+        priceISK: resolvedPricing.priceISK,
+        priceLabel: resolvedPricing.priceLabel,
+        url: String((item && item.url) || "").trim()
+      };
+    }
+
+    function applyEnhancedRecommendations() {
+      days.forEach((day) => {
+        const enhanced = Array.isArray(ENHANCED_RECOMMENDATIONS_BY_DAY[day.day])
+          ? ENHANCED_RECOMMENDATIONS_BY_DAY[day.day]
+          : Array.isArray(day.recommendations)
+            ? day.recommendations
+            : [];
+        const discovery = Array.isArray(DISCOVERY_RECOMMENDATIONS_BY_DAY[day.day])
+          ? DISCOVERY_RECOMMENDATIONS_BY_DAY[day.day]
+          : [];
+        day.recommendations = [...enhanced, ...discovery].map(normalizeRecommendationItem);
+      });
+    }
+
+    function findCampPriceConfig(campName) {
+      const normalizedName = normalizePlaceText(campName);
+      if (!normalizedName) {
+        return null;
+      }
+      return (
+        CAMP_PRICE_BOOK.find((entry) =>
+          Array.isArray(entry.matches) &&
+          entry.matches.some((token) => normalizedName.includes(normalizePlaceText(token)))
+        ) || null
+      );
+    }
+
+    function getDayCampPricing(day) {
+      const config = findCampPriceConfig(day && day.camp);
+      if (!config) {
+        return null;
+      }
+
+      const adults = Number.isFinite(config.adults) && config.adults > 0
+        ? Math.round(config.adults)
+        : 2;
+      const perAdultISK = Number.isFinite(config.perAdultISK) && config.perAdultISK > 0
+        ? Math.round(config.perAdultISK)
+        : 0;
+      const unitFeeISK = Number.isFinite(config.unitFeeISK) && config.unitFeeISK > 0
+        ? Math.round(config.unitFeeISK)
+        : 0;
+      const lodgingTaxISK = Number.isFinite(config.lodgingTaxISK) && config.lodgingTaxISK > 0
+        ? Math.round(config.lodgingTaxISK)
+        : 0;
+
+      return {
+        displayName: config.displayName || String(day && day.camp ? day.camp : "Campsite"),
+        includeBaseExpense: Boolean(config.includeBaseExpense),
+        adults,
+        perAdultISK,
+        unitFeeISK,
+        lodgingTaxISK,
+        baseExpenseISK: perAdultISK * adults + unitFeeISK + lodgingTaxISK
+      };
+    }
+
+    applyEnhancedRecommendations();
 
     const PACK_STORAGE_KEY = "icelandPackListV2";
     const defaultPackItems = [
@@ -2152,6 +3216,422 @@
       newItemInputEl.focus();
     });
 
+    const BUDGET_STORAGE_KEY = "icelandBudgetV1";
+    const FX_STORAGE_KEY = "icelandFxIskEurV1";
+    const FX_API_URL = "https://open.er-api.com/v6/latest/ISK";
+    const DEFAULT_ISK_TO_EUR_RATE = 0.0069;
+
+    function toNonNegativeInteger(value) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric) || numeric < 0) {
+        return 0;
+      }
+      return Math.round(numeric);
+    }
+
+    function formatISKAmount(iskAmount) {
+      return (
+        new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(
+          toNonNegativeInteger(iskAmount)
+        ) + " ISK"
+      );
+    }
+
+    function formatEURAmount(eurAmount) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "EUR",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(Number.isFinite(eurAmount) ? eurAmount : 0);
+    }
+
+    function loadBudgetState() {
+      try {
+        const raw = localStorage.getItem(BUDGET_STORAGE_KEY);
+        if (!raw) {
+          return { maxBudgetISK: 0, expenses: [] };
+        }
+
+        const parsed = JSON.parse(raw);
+        const maxBudgetISK = toNonNegativeInteger(parsed && parsed.maxBudgetISK);
+        const expenses = Array.isArray(parsed && parsed.expenses)
+          ? parsed.expenses
+              .filter((item) => item && typeof item.name === "string")
+              .map((item, index) => ({
+                id: Number.isFinite(Number(item.id)) ? Number(item.id) : index + 1,
+                name: item.name.trim().slice(0, 100),
+                amountISK: toNonNegativeInteger(item.amountISK)
+              }))
+              .filter((item) => item.name.length > 0)
+          : [];
+
+        return { maxBudgetISK, expenses };
+      } catch {
+        return { maxBudgetISK: 0, expenses: [] };
+      }
+    }
+
+    function saveBudgetState() {
+      localStorage.setItem(
+        BUDGET_STORAGE_KEY,
+        JSON.stringify({
+          maxBudgetISK: budgetState.maxBudgetISK,
+          expenses: budgetState.expenses
+        })
+      );
+    }
+
+    function loadFxState() {
+      try {
+        const raw = localStorage.getItem(FX_STORAGE_KEY);
+        if (!raw) {
+          return {
+            rate: DEFAULT_ISK_TO_EUR_RATE,
+            updatedAt: null
+          };
+        }
+        const parsed = JSON.parse(raw);
+        const rate = Number(parsed && parsed.rate);
+        const updatedAt = Number(parsed && parsed.updatedAt);
+        return {
+          rate: Number.isFinite(rate) && rate > 0 ? rate : DEFAULT_ISK_TO_EUR_RATE,
+          updatedAt: Number.isFinite(updatedAt) ? updatedAt : null
+        };
+      } catch {
+        return {
+          rate: DEFAULT_ISK_TO_EUR_RATE,
+          updatedAt: null
+        };
+      }
+    }
+
+    function saveFxState() {
+      localStorage.setItem(
+        FX_STORAGE_KEY,
+        JSON.stringify({
+          rate: fxState.rate,
+          updatedAt: fxState.updatedAt
+        })
+      );
+    }
+
+    let budgetState = loadBudgetState();
+    let nextExpenseId = budgetState.expenses.length
+      ? Math.max(...budgetState.expenses.map((item) => item.id)) + 1
+      : 1;
+    let fxState = loadFxState();
+
+    const budgetMainEl = document.getElementById("budget-main");
+    const budgetPercentEl = document.getElementById("budget-percent");
+    const budgetEurEl = document.getElementById("budget-eur");
+    const budgetProgressEl = document.getElementById("budget-progress");
+    const budgetRateEl = document.getElementById("budget-rate");
+    const budgetBaseNoteEl = document.getElementById("budget-base-note");
+    const budgetMaxFormEl = document.getElementById("budget-max-form");
+    const budgetMaxInputEl = document.getElementById("budget-max-input");
+    const expenseFormEl = document.getElementById("expense-form");
+    const expenseNameInputEl = document.getElementById("expense-name-input");
+    const expenseAmountInputEl = document.getElementById("expense-amount-input");
+    const budgetListEl = document.getElementById("budget-list");
+    const budgetCalcInputEl = document.getElementById("budget-calc-isk-input");
+    const budgetCalcOutputEl = document.getElementById("budget-calc-output");
+
+    function eurFromISK(iskAmount) {
+      return toNonNegativeInteger(iskAmount) * fxState.rate;
+    }
+
+    function isBookingRecommendation(recommendation) {
+      const kind = normalizePlaceText(recommendation && recommendation.kind);
+      return kind.includes("tour") || kind.includes("activity");
+    }
+
+    function getRecommendationLink(recommendation) {
+      const explicitUrl = recommendation && typeof recommendation.url === "string"
+        ? recommendation.url.trim()
+        : "";
+      if (explicitUrl) {
+        return explicitUrl;
+      }
+
+      const title = String((recommendation && recommendation.title) || "Iceland").trim();
+      if (isBookingRecommendation(recommendation)) {
+        return bookingSearchUrl(title + " Iceland");
+      }
+      return mapsSearchUrl(title + ", Iceland");
+    }
+
+    function getRecommendationActionLabel(recommendation) {
+      return isBookingRecommendation(recommendation) ? "Book activity" : "Open in Maps";
+    }
+
+    function getRecommendationPriceText(recommendation) {
+      const priceISK = recommendation && Number.isFinite(recommendation.priceISK)
+        ? Math.max(0, Math.round(recommendation.priceISK))
+        : null;
+
+      if (priceISK === null) {
+        return "Price pending";
+      }
+      if (priceISK === 0) {
+        return "Free";
+      }
+
+      const prefix = recommendation && recommendation.priceLabel
+        ? recommendation.priceLabel.trim() + " "
+        : "";
+      return (
+        prefix +
+        formatISKAmount(priceISK) +
+        " · " +
+        formatEURAmount(eurFromISK(priceISK))
+      );
+    }
+
+    function getCampPriceDisplayText(campPricing) {
+      if (!campPricing) {
+        return "price unavailable";
+      }
+      if (!Number.isFinite(campPricing.perAdultISK) || campPricing.perAdultISK <= 0) {
+        return campPricing.includeBaseExpense ? "price unavailable" : "included stay";
+      }
+      return (
+        "from " +
+        formatISKAmount(campPricing.perAdultISK) +
+        " · " +
+        formatEURAmount(eurFromISK(campPricing.perAdultISK)) +
+        " / adult"
+      );
+    }
+
+    function getCampsiteBaseExpenses() {
+      return days
+        .map((day) => {
+          const pricing = getDayCampPricing(day);
+          if (!pricing || !pricing.includeBaseExpense || !pricing.baseExpenseISK) {
+            return null;
+          }
+          return {
+            key: "camp-base-" + day.day,
+            name: "Day " + day.day + " campsite - " + pricing.displayName,
+            amountISK: pricing.baseExpenseISK
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function renderFxRateLabel(isLoading = false) {
+      const formattedRate = "€" + fxState.rate.toFixed(5);
+      budgetRateEl.classList.toggle("loading", Boolean(isLoading));
+      const isStale =
+        !fxState.updatedAt || Date.now() - fxState.updatedAt > 36 * 60 * 60 * 1000;
+      budgetRateEl.classList.toggle("stale", isStale);
+
+      if (isLoading) {
+        budgetRateEl.textContent = "Updating ISK→EUR daily rate…";
+        return;
+      }
+
+      if (fxState.updatedAt) {
+        const dateLabel = new Date(fxState.updatedAt).toLocaleDateString();
+        budgetRateEl.textContent =
+          "Rate: 1 ISK = " + formattedRate + " · updated " + dateLabel;
+      } else {
+        budgetRateEl.textContent =
+          "Rate: 1 ISK = " + formattedRate + " · fallback rate";
+      }
+    }
+
+    function renderBudgetCalculator() {
+      const inputISK = toNonNegativeInteger(budgetCalcInputEl.value);
+      budgetCalcOutputEl.textContent = formatEURAmount(eurFromISK(inputISK));
+    }
+
+    function renderBudgetList() {
+      budgetListEl.innerHTML = "";
+      const baseExpenses = getCampsiteBaseExpenses();
+      const hasUserExpenses = budgetState.expenses.length > 0;
+
+      if (!baseExpenses.length && !hasUserExpenses) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No expenses yet. Add one above.";
+        budgetListEl.appendChild(empty);
+        return;
+      }
+
+      baseExpenses.forEach((expense) => {
+        const row = document.createElement("div");
+        row.className = "expense-item base-expense";
+        row.dataset.expenseId = expense.key;
+        row.innerHTML =
+          "<div class=\"expense-main-wrap\">" +
+            "<div class=\"expense-name\">" + escapeHtml(expense.name) + "</div>" +
+            "<div class=\"expense-meta\">" +
+              "<div class=\"expense-eur\">" + formatEURAmount(eurFromISK(expense.amountISK)) + "</div>" +
+              "<span class=\"expense-base-pill\">🔒 Base</span>" +
+            "</div>" +
+          "</div>" +
+          "<div class=\"expense-isk\">" + formatISKAmount(expense.amountISK) + "</div>";
+
+        budgetListEl.appendChild(row);
+      });
+
+      budgetState.expenses.forEach((expense) => {
+        const row = document.createElement("div");
+        row.className = "expense-item";
+        row.dataset.expenseId = String(expense.id);
+        row.innerHTML =
+          "<div class=\"expense-main-wrap\">" +
+            "<div class=\"expense-name\">" + escapeHtml(expense.name) + "</div>" +
+            "<div class=\"expense-eur\">" + formatEURAmount(eurFromISK(expense.amountISK)) + "</div>" +
+          "</div>" +
+          "<div class=\"expense-isk\">" + formatISKAmount(expense.amountISK) + "</div>" +
+          "<div class=\"item-actions\" style=\"opacity:1; margin-left:8px;\">" +
+            "<button class=\"act-btn\" type=\"button\" data-action=\"edit\" title=\"Edit expense\" aria-label=\"Edit expense\">" +
+              "<svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg>" +
+            "</button>" +
+            "<button class=\"act-btn del\" type=\"button\" data-action=\"del\" title=\"Remove expense\" aria-label=\"Remove expense\">" +
+              "<svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6M14 11v6\"/><path d=\"M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2\"/></svg>" +
+            "</button>" +
+          "</div>";
+
+        const editBtn = row.querySelector('[data-action="edit"]');
+        const delBtn = row.querySelector('[data-action="del"]');
+
+        editBtn.addEventListener("click", () => {
+          const nextName = window.prompt("Expense name", expense.name);
+          if (nextName === null) {
+            return;
+          }
+          const normalizedName = nextName.trim().slice(0, 100);
+          if (!normalizedName) {
+            return;
+          }
+
+          const nextAmountRaw = window.prompt("Amount in ISK", String(expense.amountISK));
+          if (nextAmountRaw === null) {
+            return;
+          }
+          const nextAmount = toNonNegativeInteger(nextAmountRaw);
+          if (!nextAmount) {
+            return;
+          }
+
+          expense.name = normalizedName;
+          expense.amountISK = nextAmount;
+          saveBudgetState();
+          renderBudgetCard();
+        });
+
+        delBtn.addEventListener("click", () => {
+          budgetState.expenses = budgetState.expenses.filter((item) => item.id !== expense.id);
+          saveBudgetState();
+          renderBudgetCard();
+        });
+
+        budgetListEl.appendChild(row);
+      });
+    }
+
+    function renderBudgetCard() {
+      const baseExpenses = getCampsiteBaseExpenses();
+      const baseISK = baseExpenses.reduce(
+        (sum, expense) => sum + toNonNegativeInteger(expense.amountISK),
+        0
+      );
+      const variableISK = budgetState.expenses.reduce(
+        (sum, expense) => sum + toNonNegativeInteger(expense.amountISK),
+        0
+      );
+      const spentISK = baseISK + variableISK;
+      const maxISK = toNonNegativeInteger(budgetState.maxBudgetISK);
+      const spentEUR = eurFromISK(spentISK);
+      const maxEUR = eurFromISK(maxISK);
+      const ratio = maxISK > 0 ? Math.round((spentISK / maxISK) * 100) : 0;
+      const progressRatio = maxISK > 0 ? Math.min(100, ratio) : 0;
+
+      budgetMainEl.textContent =
+        formatISKAmount(spentISK) + " / " + formatISKAmount(maxISK);
+      budgetPercentEl.textContent = maxISK > 0 ? ratio + "%" : "0%";
+      budgetEurEl.textContent = formatEURAmount(spentEUR) + " / " + formatEURAmount(maxEUR);
+      budgetMainEl.classList.toggle("over", maxISK > 0 && spentISK > maxISK);
+      budgetPercentEl.classList.toggle("over", maxISK > 0 && spentISK > maxISK);
+      budgetProgressEl.style.width = progressRatio + "%";
+      budgetProgressEl.style.background =
+        maxISK > 0 && spentISK > maxISK ? "#dc2626" : "var(--success-ui)";
+
+      if (document.activeElement !== budgetMaxInputEl) {
+        budgetMaxInputEl.value = maxISK ? String(maxISK) : "";
+      }
+
+      budgetBaseNoteEl.textContent = baseISK
+        ? "Includes campsite base expenses: " + formatISKAmount(baseISK) + " · " + formatEURAmount(eurFromISK(baseISK))
+        : "";
+
+      renderBudgetList();
+      renderBudgetCalculator();
+      renderFxRateLabel(false);
+    }
+
+    async function refreshIskEurRate() {
+      renderFxRateLabel(true);
+      try {
+        const response = await fetch(FX_API_URL, {
+          headers: { Accept: "application/json" }
+        });
+        if (!response.ok) {
+          throw new Error("FX API status " + response.status);
+        }
+
+        const data = await response.json();
+        const nextRate = Number(data && data.rates && data.rates.EUR);
+        const nextUpdatedAt = Number(data && data.time_last_update_unix);
+        if (!Number.isFinite(nextRate) || nextRate <= 0) {
+          throw new Error("Invalid EUR rate in response");
+        }
+
+        fxState.rate = nextRate;
+        fxState.updatedAt = Number.isFinite(nextUpdatedAt)
+          ? nextUpdatedAt * 1000
+          : Date.now();
+        saveFxState();
+      } catch (error) {
+        console.warn("FX refresh failed", error);
+      } finally {
+        renderBudgetCard();
+      }
+    }
+
+    budgetMaxFormEl.addEventListener("submit", (event) => {
+      event.preventDefault();
+      budgetState.maxBudgetISK = toNonNegativeInteger(budgetMaxInputEl.value);
+      saveBudgetState();
+      renderBudgetCard();
+    });
+
+    expenseFormEl.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = expenseNameInputEl.value.trim().slice(0, 100);
+      const amountISK = toNonNegativeInteger(expenseAmountInputEl.value);
+      if (!name || !amountISK) {
+        return;
+      }
+
+      budgetState.expenses.push({
+        id: nextExpenseId++,
+        name,
+        amountISK
+      });
+      saveBudgetState();
+      renderBudgetCard();
+      expenseNameInputEl.value = "";
+      expenseAmountInputEl.value = "";
+      expenseNameInputEl.focus();
+    });
+
+    budgetCalcInputEl.addEventListener("input", renderBudgetCalculator);
+
     const daysContainerEl = document.getElementById("days-container");
 
     function createDayCard(day, color) {
@@ -2169,7 +3649,28 @@
           return "<li><a class=\"location-link-inline\" href=\"" + locationUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + prefix + escapeHtml(location.name) + "</a></li>";
         })
         .join("");
-      const recosHTML = day.recommendations.map((rec) => "<li>" + rec.title + "</li>").join("");
+      const campPricing = getDayCampPricing(day);
+      const campPriceText = campPricing ? getCampPriceDisplayText(campPricing) : "price unavailable";
+      const recosHTML = day.recommendations
+        .map((rec) => {
+          const recommendationUrl = getRecommendationLink(rec);
+          const actionLabel = getRecommendationActionLabel(rec);
+          return (
+          "<li>" +
+            "<a class=\"location-link-inline\" href=\"" + escapeHtml(recommendationUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+              escapeHtml(rec.title) +
+            "</a>" +
+            " <span class=\"muted\">(" +
+            escapeHtml(rec.kind || "Activity") +
+            " · " +
+            escapeHtml(getRecommendationPriceText(rec)) +
+            " · " +
+            escapeHtml(actionLabel) +
+            ")</span>" +
+          "</li>"
+        );
+        })
+        .join("");
 
       details.innerHTML =
         "<summary>" +
@@ -2182,7 +3683,7 @@
         "<div class=\"day-content\">" +
           "<div class=\"meta-row\">" +
             "<span class=\"tag day-drive-tag\" data-day-drive=\"" + day.day + "\">🚗 <span class=\"drive-main\">" + escapeHtml(day.drive) + "</span></span>" +
-            "<span class=\"tag\">⛺ " + day.camp + "</span>" +
+            "<span class=\"tag\">⛺ " + escapeHtml(day.camp) + " · " + escapeHtml(campPriceText) + "</span>" +
           "</div>" +
           "<a class=\"map-link\" href=\"" + day.mapLink + "\" target=\"_blank\" rel=\"noopener noreferrer\">📍 Open Route Map</a>" +
           "<h4>Route &amp; Visits</h4>" +
@@ -2211,6 +3712,135 @@
             other.open = false;
           }
         });
+      });
+    });
+
+    const flightCardEl = document.getElementById("flight-card");
+    const daysSectionTitleEl = document.getElementById("days-section-title");
+    const packingCardEl = document.getElementById("packing-card");
+    const fxCardEl = document.getElementById("fx-card");
+    const budgetCardViewEl = document.getElementById("budget-card");
+    const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+
+    const TRIP_START_DATE = new Date(2026, 2, 4);
+    const TRIP_END_DATE = new Date(2026, 2, 14);
+
+    function startOfLocalDay(dateValue) {
+      const date = new Date(dateValue);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function getTripPhaseAndDay(now = new Date()) {
+      const today = startOfLocalDay(now);
+      const tripStart = startOfLocalDay(TRIP_START_DATE);
+      const tripEnd = startOfLocalDay(TRIP_END_DATE);
+
+      if (today < tripStart) {
+        return { phase: "before", dayNumber: 1 };
+      }
+
+      const rawDayNumber =
+        Math.floor((today.getTime() - tripStart.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+      const boundedDayNumber = Math.min(days.length, Math.max(1, rawDayNumber));
+
+      if (today > tripEnd) {
+        return { phase: "after", dayNumber: days.length };
+      }
+      return { phase: "during", dayNumber: boundedDayNumber };
+    }
+
+    function setElementVisibility(element, visible) {
+      if (!element) {
+        return;
+      }
+      element.style.display = visible ? "" : "none";
+    }
+
+    function showAllDayCards() {
+      allDayCards.forEach((card) => {
+        card.style.display = "";
+      });
+    }
+
+    function showSingleDayCard(dayNumber) {
+      allDayCards.forEach((card) => {
+        const cardDay = Number(card.dataset.day);
+        const isTarget = cardDay === dayNumber;
+        card.style.display = isTarget ? "" : "none";
+        card.open = Boolean(isTarget);
+      });
+    }
+
+    function setActiveTabButton(nextTab) {
+      tabButtons.forEach((button) => {
+        const isActive = button.dataset.tab === nextTab;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    }
+
+    function applyTabView(nextTab) {
+      const trip = getTripPhaseAndDay();
+      setActiveTabButton(nextTab);
+
+      if (nextTab === "itinerary") {
+        setElementVisibility(flightCardEl, true);
+        setElementVisibility(packingCardEl, false);
+        setElementVisibility(fxCardEl, false);
+        setElementVisibility(budgetCardViewEl, false);
+        setElementVisibility(daysSectionTitleEl, true);
+        setElementVisibility(daysContainerEl, true);
+        daysSectionTitleEl.textContent = "Itinerary Days";
+        showAllDayCards();
+        return;
+      }
+
+      if (nextTab === "tools") {
+        setElementVisibility(flightCardEl, false);
+        setElementVisibility(packingCardEl, false);
+        setElementVisibility(fxCardEl, true);
+        setElementVisibility(budgetCardViewEl, true);
+        setElementVisibility(daysSectionTitleEl, false);
+        setElementVisibility(daysContainerEl, false);
+        return;
+      }
+
+      if (trip.phase === "before") {
+        setElementVisibility(flightCardEl, true);
+        setElementVisibility(packingCardEl, true);
+        setElementVisibility(fxCardEl, false);
+        setElementVisibility(budgetCardViewEl, false);
+        setElementVisibility(daysSectionTitleEl, false);
+        setElementVisibility(daysContainerEl, false);
+        showAllDayCards();
+        return;
+      }
+
+      setElementVisibility(flightCardEl, false);
+      setElementVisibility(packingCardEl, false);
+      setElementVisibility(fxCardEl, false);
+      setElementVisibility(budgetCardViewEl, false);
+      setElementVisibility(daysSectionTitleEl, true);
+      setElementVisibility(daysContainerEl, true);
+
+      const todayDay = days.find((entry) => entry.day === trip.dayNumber);
+      if (trip.phase === "after") {
+        daysSectionTitleEl.textContent = "Last Trip Day";
+      } else {
+        daysSectionTitleEl.textContent = "Today";
+      }
+      if (todayDay) {
+        daysSectionTitleEl.textContent += " · Day " + todayDay.day + ": " + todayDay.title;
+      }
+      showSingleDayCard(trip.dayNumber);
+    }
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (modalEl.classList.contains("open")) {
+          closeDayFullscreen();
+        }
+        applyTabView(button.dataset.tab || "home");
       });
     });
 
@@ -2323,6 +3953,7 @@
     function renderItinerary(day, color, driveLegSummaries = [], isLoading = false) {
       const routePoints = getDayRoutePoints(day);
       const locations = getDisplayLocations(day, routePoints);
+      const dayCampPricing = getDayCampPricing(day);
       let html = "";
 
       locations.forEach((location, index) => {
@@ -2331,6 +3962,17 @@
         const iconPrefix = location.isCampsite ? "<span class=\"stop-icon\">🏠</span>" : "";
         const locationName = escapeHtml(location.name);
         const locationNote = escapeHtml(location.note);
+        const locationPrimaryLabel = location.isCampsite ? "Open campsite in Maps" : "Open location in Maps";
+        const campPriceLine = location.isCampsite && dayCampPricing
+          ? "<p class=\"location-note\">💳 " + escapeHtml(getCampPriceDisplayText(dayCampPricing)) + "</p>"
+          : "";
+        const discoveryLinksHtml = getLocationDiscoveryLinks(location)
+          .map((entry) => (
+            "<a class=\"discovery-link\" href=\"" + escapeHtml(entry.url) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+              escapeHtml(entry.label) +
+            "</a>"
+          ))
+          .join("");
         const imageKey = getLocationImageCacheKey(day.day, index, location.name);
         const imageSrc = escapeHtml(location.image);
         const cachedImageSrc = getCachedImageUrl(imageKey);
@@ -2343,13 +3985,17 @@
             "<div class=\"itinerary-rail\">" +
               "<span class=\"itinerary-dot\" style=\"--itinerary-color:" + color + "\"></span>" +
             "</div>" +
-            "<a class=\"location-link\" href=\"" + locationUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
-              "<div class=\"" + cardClass + "\">" +
-                "<h5 class=\"location-name\">" + (index + 1) + ". " + iconPrefix + locationName + "</h5>" +
+            "<div class=\"" + cardClass + "\">" +
+                "<h5 class=\"location-name\">" +
+                  "<a class=\"location-title-link\" href=\"" + locationUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"" + escapeHtml(locationPrimaryLabel) + "\">" +
+                    (index + 1) + ". " + iconPrefix + locationName +
+                  "</a>" +
+                "</h5>" +
                 "<p class=\"location-note\">" + locationNote + "</p>" +
+                campPriceLine +
+                "<div class=\"location-discovery-links\">" + discoveryLinksHtml + "</div>" +
                 "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\"" + cachedImageAttr + " data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
-              "</div>" +
-            "</a>" +
+            "</div>" +
           "</article>";
 
         if (index < locations.length - 1) {
@@ -2365,16 +4011,23 @@
               : fallbackDirection;
 
           let summaryClass = "itinerary-road-summary";
+          summaryClass += " road-link";
           if (isLoading && !legSummary) {
             summaryClass += " loading";
           }
+          const legDirectionsUrl = mapsDirectionsUrl(
+            locations[index],
+            locations[index + 1],
+            routePoints[index],
+            routePoints[index + 1]
+          );
 
           html +=
-            "<div class=\"" + summaryClass + "\">" +
+            "<a class=\"" + summaryClass + "\" href=\"" + escapeHtml(legDirectionsUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open driving itinerary between " + escapeHtml(locations[index].name) + " and " + escapeHtml(locations[index + 1].name) + "\">" +
               "<span>🛣️ Roads: " + escapeHtml(roadNumbers) + "</span>" +
               "<span>•</span>" +
               "<span>Direction: " + escapeHtml(directionText) + "</span>" +
-            "</div>";
+            "</a>";
 
           const durationValue = getLegDurationSeconds(
             day,
@@ -2405,12 +4058,25 @@
 
     function renderRecommendations(day) {
       modalRecoEl.innerHTML = day.recommendations
-        .map((rec) => (
+        .map((rec) => {
+          const recommendationUrl = getRecommendationLink(rec);
+          const actionLabel = getRecommendationActionLabel(rec);
+          return (
           "<article class=\"recommendation-item\">" +
-            "<h5>" + rec.title + "</h5>" +
-            "<p>" + rec.text + "</p>" +
+            "<div class=\"recommendation-head\">" +
+              "<h5>" + escapeHtml(rec.title) + "</h5>" +
+              "<span class=\"recommendation-kind\">" + escapeHtml(rec.kind || "Activity") + "</span>" +
+            "</div>" +
+            "<p>" + escapeHtml(rec.text) + "</p>" +
+            "<div class=\"recommendation-price" + (rec.priceISK === 0 ? " free" : "") + "\">" +
+              "💳 " + escapeHtml(getRecommendationPriceText(rec)) +
+            "</div>" +
+            "<a class=\"recommendation-action\" href=\"" + escapeHtml(recommendationUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+              escapeHtml(actionLabel) + " ↗" +
+            "</a>" +
           "</article>"
-        ))
+        );
+        })
         .join("");
     }
 
@@ -2489,6 +4155,9 @@
     });
 
     renderPackList();
+    renderBudgetCard();
+    refreshIskEurRate();
+    applyTabView("home");
 
     days.forEach((day) => {
       const cachedDurations = getCachedDrivingLegDurations(day);
