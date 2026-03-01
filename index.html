@@ -2394,15 +2394,59 @@
       }
     }
 
+    function rotateProviders(list, offset) {
+      const items = Array.isArray(list) ? list.slice() : [];
+      if (items.length <= 1) {
+        return items;
+      }
+      const normalizedOffset = ((offset % items.length) + items.length) % items.length;
+      if (!normalizedOffset) {
+        return items;
+      }
+      return items.slice(normalizedOffset).concat(items.slice(0, normalizedOffset));
+    }
+
+    function getFallbackProviderChain(img) {
+      const skipCached = img && img.dataset && img.dataset.skipCached === "1";
+      const spinOffset = Number.parseInt((img && img.dataset && img.dataset.providerSpin) || "0", 10) || 0;
+      const rotatingProviders = rotateProviders(["google", "wikimedia", "lorem"], spinOffset);
+      const chain = [];
+
+      if (!skipCached) {
+        chain.push("cached");
+      }
+      chain.push(...rotatingProviders, "picsum");
+      return chain;
+    }
+
     function continueImageFallback(img) {
       if (!img) {
         return;
       }
 
       const stage = Number.parseInt(img.dataset.fallbackStage || "0", 10);
+      const providers = getFallbackProviderChain(img);
+      if (stage >= providers.length) {
+        const media = img.closest(".location-media");
+        if (media) {
+          media.classList.remove("loading");
+        }
+        return;
+      }
+      const provider = providers[stage];
+      img.dataset.fallbackStage = String(stage + 1);
 
-      if (stage === 0) {
-        img.dataset.fallbackStage = "1";
+      if (provider === "cached") {
+        const cached = img.dataset.cachedSrc || "";
+        if (cached && cached !== img.src) {
+          img.src = cached;
+          return;
+        }
+        continueImageFallback(img);
+        return;
+      }
+
+      if (provider === "google") {
         const keyword = img.dataset.locationName || "Iceland";
         const seed = img.dataset.fallbackSeed || "iceland-fallback";
         fetchGooglePlacesFallbackImage(keyword, seed)
@@ -2419,22 +2463,7 @@
         return;
       }
 
-      if (stage <= 1) {
-        const skipCached = img.dataset.skipCached === "1";
-        if (skipCached) {
-          img.dataset.fallbackStage = "2";
-        } else {
-        const cached = img.dataset.cachedSrc || "";
-        if (cached && cached !== img.src) {
-          img.dataset.fallbackStage = "2";
-          img.src = cached;
-          return;
-        }
-        }
-      }
-
-      if (stage <= 2) {
-        img.dataset.fallbackStage = "3";
+      if (provider === "wikimedia") {
         const keyword = img.dataset.locationName || "Iceland";
         const seed = img.dataset.fallbackSeed || "iceland-fallback";
         fetchWikimediaFallbackImage(keyword, seed)
@@ -2451,22 +2480,13 @@
         return;
       }
 
-      if (stage <= 3) {
+      if (provider === "lorem") {
         const loremSrc = img.dataset.loremSrc || "";
         if (loremSrc && loremSrc !== img.src) {
-          img.dataset.fallbackStage = "4";
           img.src = loremSrc;
           return;
         }
-      }
-
-      if (stage <= 4) {
-        img.dataset.fallbackStage = "5";
-      } else {
-        const media = img.closest(".location-media");
-        if (media) {
-          media.classList.remove("loading");
-        }
+        continueImageFallback(img);
         return;
       }
 
@@ -2511,6 +2531,9 @@
 
       img.dataset.cachedSrc = "";
       img.dataset.skipCached = "1";
+      img.dataset.providerSpin = String(
+        (Number.parseInt(img.dataset.providerSpin || "0", 10) || 0) + 1
+      );
       img.dataset.loremSrc = buildLocationRefreshLoremUrl(locationName, dayNumber, stopIndex, nonce);
       img.dataset.fallbackSeed = dayNumber + "-" + (stopIndex + 1) + "-" + nonce;
       img.dataset.fallbackStage = "0";
@@ -4415,6 +4438,10 @@
 
     const allDayCards = Array.from(document.querySelectorAll(".day-card"));
     const appHeaderEl = document.querySelector(".app-header");
+    const HEADER_COMPACT_ENTER_Y = 64;
+    const HEADER_COMPACT_EXIT_Y = 2;
+    let isHeaderCompact = false;
+    let headerScrollRaf = 0;
 
     function getStickyHeaderHeight() {
       return appHeaderEl ? Math.ceil(appHeaderEl.getBoundingClientRect().height) : 0;
@@ -4437,10 +4464,31 @@
       if (!appHeaderEl) {
         return;
       }
-      appHeaderEl.classList.toggle("compact", window.scrollY > 26);
+
+      const scrollY = Math.max(
+        0,
+        window.scrollY || document.documentElement.scrollTop || 0
+      );
+      if (!isHeaderCompact && scrollY >= HEADER_COMPACT_ENTER_Y) {
+        isHeaderCompact = true;
+      } else if (isHeaderCompact && scrollY <= HEADER_COMPACT_EXIT_Y) {
+        isHeaderCompact = false;
+      }
+
+      appHeaderEl.classList.toggle("compact", isHeaderCompact);
     }
 
-    window.addEventListener("scroll", updateHeaderCompactState, { passive: true });
+    function scheduleHeaderCompactUpdate() {
+      if (headerScrollRaf) {
+        return;
+      }
+      headerScrollRaf = window.requestAnimationFrame(() => {
+        headerScrollRaf = 0;
+        updateHeaderCompactState();
+      });
+    }
+
+    window.addEventListener("scroll", scheduleHeaderCompactUpdate, { passive: true });
     window.addEventListener("resize", updateHeaderCompactState);
 
     allDayCards.forEach((detail) => {
