@@ -409,24 +409,124 @@
       box-shadow: none;
       backdrop-filter: none;
       margin-bottom: 0;
+      transition: height 0.24s ease, padding 0.24s ease, background 0.24s ease;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .app-header.home-hero {
+      min-height: 230px;
+      padding: 54px 16px 18px;
+    }
+
+    .header-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 42%;
+      z-index: 0;
+      transform: scale(1.08);
+      filter: saturate(1.3) contrast(1.12) brightness(0.84);
+      pointer-events: none;
+    }
+
+    .header-video-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        linear-gradient(160deg, rgba(10, 25, 47, 0.44) 0%, rgba(22, 40, 63, 0.66) 100%),
+        radial-gradient(circle at 82% -10%, rgba(98, 255, 245, 0.24), transparent 42%),
+        radial-gradient(circle at 18% 8%, rgba(244, 114, 182, 0.14), transparent 34%);
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 2;
+      color: rgba(247, 250, 252, 0.97);
+    }
+
+    .app-header.home-hero .header-content {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .header-title-text {
+      color: rgba(247, 250, 252, 0.95);
     }
 
     .app-header h1 {
       font-size: 1.55rem;
       font-weight: 700;
       letter-spacing: -0.3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      line-height: 1;
+      transition: font-size 0.2s ease;
+    }
+
+    .app-header .header-flag {
+      display: inline-flex;
+      line-height: 1;
     }
 
     .app-header .dates {
       font-size: 0.83rem;
       color: rgba(255, 255, 255, 0.72);
       margin-top: 5px;
+      transition: font-size 0.2s ease, margin-top 0.2s ease;
     }
 
     .app-header .couple {
       font-size: 0.82rem;
       color: rgba(255, 255, 255, 0.55);
       margin-top: 2px;
+      transition: opacity 0.18s ease, margin-top 0.18s ease;
+    }
+
+    .app-header.compact {
+      height: 32px;
+      min-height: 32px;
+      padding: 0 12px;
+      background: linear-gradient(155deg, #10264b 0%, #1e3a5f 100%);
+    }
+
+    .app-header.compact .header-content {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .app-header.compact h1 {
+      font-size: 0.95rem;
+      margin: 0;
+      gap: 0;
+    }
+
+    .app-header.compact .header-title-text {
+      display: none;
+    }
+
+    .app-header.compact .dates {
+      margin-top: 0;
+      font-size: 0.72rem;
+      line-height: 1;
+    }
+
+    .app-header.compact .couple {
+      display: none;
+    }
+
+    .app-header.compact #departure-countdown-card {
+      display: none !important;
     }
 
     .card {
@@ -443,24 +543,39 @@
       padding: 16px;
     }
 
+    #departure-countdown-card {
+      position: relative;
+      z-index: 2;
+      width: min(560px, calc(100% - 8px));
+      margin: 14px auto 0;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(7, 14, 26, 0.26);
+      backdrop-filter: blur(14px) saturate(1.2);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+      color: #f8fafc;
+    }
+
     .countdown-days {
       font-size: 1.7rem;
       font-weight: 800;
       letter-spacing: -0.02em;
       line-height: 1.05;
+      color: #ffffff;
     }
 
     .countdown-sub {
       margin-top: 5px;
       font-size: 0.9rem;
-      color: var(--muted-text-ui);
+      color: rgba(241, 245, 249, 0.94);
       font-weight: 600;
     }
 
     .countdown-caption {
       margin-top: 7px;
       font-size: 0.76rem;
-      color: var(--muted-text-ui);
+      color: rgba(226, 232, 240, 0.9);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-weight: 700;
@@ -1135,6 +1250,14 @@
       padding: 5px 9px;
       font-size: 0.72rem;
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .fullscreen-trigger .open-icon {
+      font-size: 0.8rem;
+      line-height: 1;
     }
 
     .fullscreen-trigger:hover {
@@ -1417,11 +1540,54 @@
     .location-image {
       border: 1px solid var(--border-ui);
       border-radius: 8px;
-      transition: border-color 0.15s, background 0.15s;
+      transition: border-color 0.15s, background 0.15s, opacity 0.25s ease;
+      position: relative;
+      z-index: 1;
     }
 
     .location-media {
       position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--muted-ui);
+    }
+
+    .location-media.loading .location-image {
+      opacity: 0;
+    }
+
+    .image-loader {
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--border-ui);
+      border-radius: 8px;
+      background:
+        linear-gradient(
+          100deg,
+          rgba(228, 228, 231, 0.65) 8%,
+          rgba(244, 244, 245, 0.95) 18%,
+          rgba(228, 228, 231, 0.65) 33%
+        ),
+        var(--muted-ui);
+      background-size: 220% 100%;
+      animation: imageLoaderShimmer 1.2s linear infinite;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .location-media.loading .image-loader {
+      opacity: 1;
+    }
+
+    @keyframes imageLoaderShimmer {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -20% 0;
+      }
     }
 
     .img-refresh-btn {
@@ -1439,6 +1605,7 @@
       cursor: pointer;
       backdrop-filter: blur(3px);
       -webkit-backdrop-filter: blur(3px);
+      z-index: 2;
     }
 
     .img-refresh-btn:hover {
@@ -1626,18 +1793,24 @@
 </head>
 <body>
   <header class="app-header">
-    <h1>🇮🇸 Iceland Epic</h1>
-    <p class="dates">March 4 – 14, 2026</p>
-    <p class="couple">You &amp; Ebba ❤️</p>
-  </header>
-
-  <div class="shell">
+    <video id="header-video" class="header-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+      <source src="https://videos.pexels.com/video-files/31280471/13358080_1920_1080_25fps.mp4" type="video/mp4">
+      <source src="https://upload.wikimedia.org/wikipedia/commons/f/ff/Aurora-Iceland_Northern_Lights_timelapse_2026-02-06.hd.webm" type="video/webm">
+    </video>
+    <div class="header-video-overlay" aria-hidden="true"></div>
+    <div class="header-content">
+      <h1><span class="header-flag" aria-hidden="true">🇮🇸</span><span class="header-title-text">Iceland Epic</span></h1>
+      <p class="dates">March 4 – 14, 2026</p>
+      <p class="couple">You &amp; Ebba ❤️</p>
+    </div>
     <section id="departure-countdown-card" class="card countdown-card" aria-label="Countdown to departure">
       <div id="departure-countdown-days" class="countdown-days">0 days</div>
       <div id="departure-countdown-time" class="countdown-sub">00h 00m</div>
       <div class="countdown-caption">before the great north</div>
     </section>
+  </header>
 
+  <div class="shell">
     <section id="flight-card" class="card" aria-labelledby="flight-title">
       <h2 id="flight-title" class="card-title">✈️ Flights</h2>
       <div id="outbound-flight-block" class="flight-block outbound-flight-block">
@@ -1849,8 +2022,11 @@
     const IMAGE_CACHE_MAX_ITEMS = 240;
     const DRIVE_CACHE_MAX_ITEMS = 180;
     const WIKIMEDIA_SEARCH_LIMIT = 16;
+    const HEADER_VIDEO_CACHE_NAME = "icelandMediaCacheV1";
+    const HEADER_VIDEO_PRIMARY_URL = "https://videos.pexels.com/video-files/31280471/13358080_1920_1080_25fps.mp4";
     const GOOGLE_PLACES_API_KEY = "AIzaSyBxwWsUASKhG8zALOa_V73RTlAj7lgDfNU";
     const GOOGLE_PLACES_STORAGE_KEY = "icelandGooglePlacesApiKey";
+    let headerVideoBlobUrl = "";
 
     function readLocalStorageObject(key) {
       try {
@@ -1870,6 +2046,77 @@
         localStorage.setItem(key, JSON.stringify(value));
       } catch {
         // localStorage might be unavailable/quota-limited; skip persistence.
+      }
+    }
+
+    function playHeaderVideo(videoEl) {
+      if (!videoEl || typeof videoEl.play !== "function") {
+        return;
+      }
+      const playPromise = videoEl.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+    }
+
+    async function applyCachedHeaderVideoResponse(videoEl, response) {
+      if (!videoEl || !response) {
+        return;
+      }
+
+      const blob = await response.blob();
+      if (!blob || !blob.size) {
+        return;
+      }
+
+      if (headerVideoBlobUrl) {
+        URL.revokeObjectURL(headerVideoBlobUrl);
+      }
+      headerVideoBlobUrl = URL.createObjectURL(blob);
+      videoEl.src = headerVideoBlobUrl;
+      videoEl.load();
+      playHeaderVideo(videoEl);
+    }
+
+    async function refreshHeaderVideoCache(cache, request) {
+      try {
+        const networkResponse = await fetch(request, { cache: "no-store" });
+        if (!networkResponse || !networkResponse.ok) {
+          return;
+        }
+        const contentType = String(networkResponse.headers.get("content-type") || "");
+        if (!contentType.includes("video/")) {
+          return;
+        }
+        await cache.put(request, networkResponse.clone());
+      } catch {
+        // network/cache failures are non-blocking for header playback.
+      }
+    }
+
+    async function cacheHeaderVideo() {
+      const videoEl = document.getElementById("header-video");
+      if (!videoEl || !("caches" in window)) {
+        return;
+      }
+
+      try {
+        const cache = await caches.open(HEADER_VIDEO_CACHE_NAME);
+        const request = new Request(HEADER_VIDEO_PRIMARY_URL, {
+          mode: "cors",
+          credentials: "omit"
+        });
+        const cached = await cache.match(request, { ignoreVary: true });
+
+        if (cached) {
+          await applyCachedHeaderVideoResponse(videoEl, cached.clone());
+          refreshHeaderVideoCache(cache, request);
+          return;
+        }
+
+        refreshHeaderVideoCache(cache, request);
+      } catch {
+        // keep native source loading if cache API is unavailable or fails.
       }
     }
 
@@ -2141,6 +2388,10 @@
       }
       img.dataset.skipCached = "0";
       img.dataset.fallbackStage = "0";
+      const media = img.closest(".location-media");
+      if (media) {
+        media.classList.remove("loading");
+      }
     }
 
     function continueImageFallback(img) {
@@ -2212,6 +2463,10 @@
       if (stage <= 4) {
         img.dataset.fallbackStage = "5";
       } else {
+        const media = img.closest(".location-media");
+        if (media) {
+          media.classList.remove("loading");
+        }
         return;
       }
 
@@ -2252,6 +2507,7 @@
       button.setAttribute("aria-busy", "true");
       img.addEventListener("load", unlock, { once: true });
       img.addEventListener("error", unlock, { once: true });
+      media.classList.add("loading");
 
       img.dataset.cachedSrc = "";
       img.dataset.skipCached = "1";
@@ -4135,7 +4391,7 @@
             "<span class=\"day-number\">" + day.day + "</span>" +
             "<span class=\"day-title\">" + day.title + "</span>" +
           "</div>" +
-          "<button class=\"btn btn-ghost fullscreen-trigger\" type=\"button\" aria-label=\"Open Day " + day.day + " fullscreen\">Fullscreen</button>" +
+          "<button class=\"btn btn-ghost fullscreen-trigger\" type=\"button\" aria-label=\"Open Day " + day.day + " fullscreen\"><span class=\"open-icon\" aria-hidden=\"true\">↗</span><span>Open</span></button>" +
         "</summary>" +
         "<div class=\"day-content\">" +
           "<div class=\"meta-row\">" +
@@ -4158,9 +4414,37 @@
     });
 
     const allDayCards = Array.from(document.querySelectorAll(".day-card"));
+    const appHeaderEl = document.querySelector(".app-header");
+
+    function getStickyHeaderHeight() {
+      return appHeaderEl ? Math.ceil(appHeaderEl.getBoundingClientRect().height) : 0;
+    }
+
+    function scrollDayCardIntoView(detail) {
+      if (!detail) {
+        return;
+      }
+      const topMargin = 10;
+      const offset = getStickyHeaderHeight() + topMargin;
+      const targetY = Math.max(
+        0,
+        Math.round(window.scrollY + detail.getBoundingClientRect().top - offset)
+      );
+      window.scrollTo({ top: targetY, left: 0, behavior: "smooth" });
+    }
+
+    function updateHeaderCompactState() {
+      if (!appHeaderEl) {
+        return;
+      }
+      appHeaderEl.classList.toggle("compact", window.scrollY > 26);
+    }
+
+    window.addEventListener("scroll", updateHeaderCompactState, { passive: true });
+    window.addEventListener("resize", updateHeaderCompactState);
 
     allDayCards.forEach((detail) => {
-      detail.addEventListener("toggle", () => {
+      detail.addEventListener("toggle", (event) => {
         if (!detail.open) {
           return;
         }
@@ -4169,6 +4453,11 @@
             other.open = false;
           }
         });
+        if (event.isTrusted) {
+          requestAnimationFrame(() => {
+            scrollDayCardIntoView(detail);
+          });
+        }
       });
     });
 
@@ -4286,6 +4575,9 @@
       const now = Date.now();
       const shouldShowCountdown = activeTab === "home" && now < COUNTDOWN_HIDE_DATE.getTime();
       setElementVisibility(departureCountdownCardEl, shouldShowCountdown);
+      if (appHeaderEl) {
+        appHeaderEl.classList.toggle("home-hero", shouldShowCountdown);
+      }
 
       const hideOutbound = now >= OUTBOUND_HIDE_DATE.getTime();
       if (outboundFlightBlockEl) {
@@ -4532,7 +4824,8 @@
                 "<p class=\"location-note\">" + locationNote + "</p>" +
                 campPriceLine +
                 "<div class=\"location-discovery-links\">" + discoveryLinksHtml + "</div>" +
-                "<div class=\"location-media\">" +
+                "<div class=\"location-media loading\">" +
+                  "<div class=\"image-loader\" aria-hidden=\"true\"></div>" +
                   "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\" data-location-name=\"" + locationName + "\" data-day-number=\"" + day.day + "\" data-stop-index=\"" + index + "\"" + cachedImageAttr + " data-lorem-src=\"" + loremFallbackSrc + "\" data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
                   "<button class=\"img-refresh-btn\" type=\"button\" onclick=\"refetchLocationImage(this)\" aria-label=\"Refresh photo for " + locationName + "\" title=\"Fetch another photo\">↻ New photo</button>" +
                 "</div>" +
@@ -4703,7 +4996,16 @@
     renderPackList();
     renderBudgetCard();
     refreshIskEurRate();
+    cacheHeaderVideo();
     applyTabView("home");
+    updateHeaderCompactState();
+
+    window.addEventListener("pagehide", () => {
+      if (headerVideoBlobUrl) {
+        URL.revokeObjectURL(headerVideoBlobUrl);
+        headerVideoBlobUrl = "";
+      }
+    });
 
     days.forEach((day) => {
       const cachedDurations = getCachedDrivingLegDurations(day);
