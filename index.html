@@ -1651,7 +1651,9 @@
       border: 1px solid rgba(255, 255, 255, 0.42);
       border-left: 4px solid var(--day-color, transparent);
       padding: 18px 15px 15px;
-      align-items: flex-start;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       position: sticky;
       top: 0;
       z-index: 1200;
@@ -1662,6 +1664,33 @@
       -webkit-backdrop-filter: blur(14px) saturate(1.16);
     }
 
+    .fullscreen-head-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .fullscreen-head-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fullscreen-head-meta {
+      width: 100%;
+    }
+
+    .fullscreen-date {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: color-mix(in srgb, var(--day-color, #2563eb) 22%, #334155 78%);
+      letter-spacing: 0.02em;
+      margin: 0 0 3px;
+    }
+
     .fullscreen-title {
       font-size: 1.05rem;
       font-weight: 700;
@@ -1669,14 +1698,69 @@
     }
 
     #fullscreen-subtitle {
-      color: var(--muted-text-ui) !important;
-      font-size: 0.75rem;
-      margin-top: 3px;
+      margin-top: 0;
+      color: inherit !important;
+      font-size: inherit;
+      width: 100%;
     }
 
-    #fullscreen-subtitle .drive-plan {
-      font-size: 0.7rem;
-      margin-left: 6px;
+    .fullscreen-meta-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .fullscreen-meta-col {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .fullscreen-meta-col.right {
+      text-align: right;
+      justify-items: end;
+    }
+
+    .fullscreen-meta-label {
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-text-ui);
+      opacity: 0.9;
+    }
+
+    .fullscreen-meta-main {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-ui);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fullscreen-meta-col:not(.right) .fullscreen-meta-main {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    .fullscreen-meta-col.right .fullscreen-meta-main {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    .fullscreen-meta-sub {
+      font-size: 0.68rem;
+      color: var(--muted-text-ui);
+      opacity: 0.9;
+    }
+
+    .fullscreen-meta-col.right .fullscreen-meta-sub {
+      white-space: normal;
     }
 
     #close-fullscreen {
@@ -2702,11 +2786,16 @@
   <div id="fullscreen-modal" class="fullscreen-modal" role="dialog" aria-modal="true" aria-labelledby="fullscreen-title">
     <div class="fullscreen-panel">
       <div id="fullscreen-head" class="fullscreen-head">
-        <div>
-          <h3 id="fullscreen-title" class="fullscreen-title"></h3>
-          <p id="fullscreen-subtitle" class="muted" style="color: rgba(255,255,255,0.92);"></p>
+        <div class="fullscreen-head-top">
+          <div class="fullscreen-head-main">
+            <p id="fullscreen-date" class="fullscreen-date"></p>
+            <h3 id="fullscreen-title" class="fullscreen-title"></h3>
+          </div>
+          <button id="close-fullscreen" class="btn btn-ghost" type="button">✕</button>
         </div>
-        <button id="close-fullscreen" class="btn btn-ghost" type="button">✕</button>
+        <div class="fullscreen-head-meta">
+          <div id="fullscreen-subtitle"></div>
+        </div>
       </div>
       <div class="fullscreen-body">
         <div class="fullscreen-card">
@@ -3691,21 +3780,67 @@
         planHtml;
     }
 
+    function ordinalSuffix(dayOfMonth) {
+      const value = Math.abs(Number(dayOfMonth) || 0);
+      const mod100 = value % 100;
+      if (mod100 >= 11 && mod100 <= 13) {
+        return "th";
+      }
+      const mod10 = value % 10;
+      if (mod10 === 1) {
+        return "st";
+      }
+      if (mod10 === 2) {
+        return "nd";
+      }
+      if (mod10 === 3) {
+        return "rd";
+      }
+      return "th";
+    }
+
+    function getTripDayDate(dayNumber) {
+      const start = new Date(TRIP_START_DATE);
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() + (Math.max(1, Number(dayNumber) || 1) - 1));
+      return start;
+    }
+
+    function formatTripDayDateLabel(dayNumber) {
+      const dayDate = getTripDayDate(dayNumber);
+      const weekday = dayDate.toLocaleDateString("en-US", { weekday: "long" });
+      const month = dayDate.toLocaleDateString("en-US", { month: "long" });
+      const dayOfMonth = dayDate.getDate();
+      return (
+        weekday +
+        ", " +
+        month +
+        " " +
+        dayOfMonth +
+        ordinalSuffix(dayOfMonth)
+      );
+    }
+
     function renderFullscreenSubtitle(day, driveLegSummaries = []) {
       const display = getDayDriveDisplay(day, driveLegSummaries);
       const campPricing = getDayCampPricing(day);
-      const campPriceSuffix = campPricing
-        ? " · " + getCampPriceDisplayText(campPricing)
-        : "";
-      const planHtml = display.planned
-        ? "<span class=\"drive-plan\">plan: " + escapeHtml(display.planned) + "</span>"
-        : "";
+      const campPriceText = campPricing
+        ? getCampPriceDisplayText(campPricing)
+        : "Price pending";
+      const plannedText = display.planned ? display.planned : "No plan";
       modalSubtitleEl.innerHTML =
-        "<span class=\"drive-main\">" + escapeHtml(display.main) + "</span>" +
-        planHtml +
-        " · ⛺ " +
-        escapeHtml(day.camp) +
-        campPriceSuffix;
+        "<div class=\"fullscreen-meta-grid\">" +
+          "<div class=\"fullscreen-meta-col\">" +
+            "<span class=\"fullscreen-meta-label\">Drive</span>" +
+            "<span class=\"fullscreen-meta-main\">🚗 " + escapeHtml(display.main) + "</span>" +
+            "<span class=\"fullscreen-meta-sub\">Plan: " + escapeHtml(plannedText) + "</span>" +
+          "</div>" +
+          "<div class=\"fullscreen-meta-col right\">" +
+            "<span class=\"fullscreen-meta-label\">Campsite</span>" +
+            "<span class=\"fullscreen-meta-main\">⛺ " + escapeHtml(day.camp) + "</span>" +
+            "<span class=\"fullscreen-meta-sub\">💳 " + escapeHtml(campPriceText) + "</span>" +
+          "</div>" +
+        "</div>";
     }
 
     function formatDriveDuration(seconds) {
@@ -8050,6 +8185,7 @@
 
     const modalEl = document.getElementById("fullscreen-modal");
     const modalHeadEl = document.getElementById("fullscreen-head");
+    const modalDateEl = document.getElementById("fullscreen-date");
     const modalTitleEl = document.getElementById("fullscreen-title");
     const modalSubtitleEl = document.getElementById("fullscreen-subtitle");
     const modalMapEl = document.getElementById("fullscreen-map");
@@ -8392,6 +8528,9 @@
 
       const color = dayColors[(day.day - 1) % dayColors.length];
       modalHeadEl.style.setProperty("--day-color", color);
+      if (modalDateEl) {
+        modalDateEl.textContent = formatTripDayDateLabel(day.day);
+      }
       modalTitleEl.textContent = "Day " + day.day + ": " + day.title;
       renderFullscreenSubtitle(day, cachedDriveSummaries);
 
