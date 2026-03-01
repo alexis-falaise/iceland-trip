@@ -1647,7 +1647,7 @@
           color-mix(in srgb, var(--day-color, #2563eb) 34%, transparent) 0%,
           color-mix(in srgb, var(--day-color, #2563eb) 20%, transparent) 100%
         ),
-        rgba(255, 255, 255, 0.35);
+        rgba(255, 255, 255, 0.55);
       border: 1px solid rgba(255, 255, 255, 0.42);
       border-left: 4px solid var(--day-color, transparent);
       padding: 18px 15px 15px;
@@ -1824,9 +1824,16 @@
       width: 100%;
       padding: 10px 10px 12px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-      background: rgba(15, 23, 42, 0.44);
-      backdrop-filter: blur(12px) saturate(1.12);
-      -webkit-backdrop-filter: blur(12px) saturate(1.12);
+      background:
+        linear-gradient(
+          180deg,
+          rgba(15, 23, 42, 0.62) 0%,
+          rgba(15, 23, 42, 0.46) 62%,
+          rgba(15, 23, 42, 0.2) 86%,
+          rgba(15, 23, 42, 0.02) 100%
+        );
+      backdrop-filter: blur(4px) saturate(1.4);
+      -webkit-backdrop-filter: blur(4px) saturate(1.12);
     }
 
     .location-name,
@@ -2002,25 +2009,21 @@
       justify-content: center;
       min-width: 1.3em;
       height: 1.3em;
-      border-radius: 999px;
       font-size: 0.64rem;
       line-height: 1;
-      background: var(--muted-ui);
+      background: transparent;
       color: var(--muted-text-ui);
     }
 
     .location-step-icon.departure {
-      background: #ecfeff;
       color: #0f766e;
     }
 
     .location-step-icon.end {
-      background: #fff7ed;
       color: #9a3412;
     }
 
     .location-step-icon.camp {
-      background: #eff6ff;
       color: #1e3a8a;
     }
 
@@ -7890,6 +7893,16 @@
       activeTab = nextTab;
       setActiveTabButton(nextTab);
 
+      if (nextTab === "home") {
+        setModuleCollapsed("packing", false, packingToggleEl, packingExpandedEl, null, {
+          animate: false
+        });
+      } else if (nextTab === "tools") {
+        setModuleCollapsed("packing", true, packingToggleEl, packingExpandedEl, null, {
+          animate: false
+        });
+      }
+
       if (nextTab === "itinerary") {
         setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(dailyLimitCardEl, false);
@@ -8015,7 +8028,7 @@
       packingToggleEl,
       packingExpandedEl,
       null,
-      true
+      false
     );
 
     window.addEventListener("resize", () => {
@@ -8379,7 +8392,6 @@
 
       const color = dayColors[(day.day - 1) % dayColors.length];
       modalHeadEl.style.setProperty("--day-color", color);
-      modalHeadEl.style.background = "color-mix(in srgb, " + color + " 18%, white)";
       modalTitleEl.textContent = "Day " + day.day + ": " + day.title;
       renderFullscreenSubtitle(day, cachedDriveSummaries);
 
