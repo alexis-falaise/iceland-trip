@@ -995,6 +995,78 @@
       padding: 14px 16px;
     }
 
+    #nearby-service-card {
+      background: var(--card-ui);
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      padding: 14px 16px;
+    }
+
+    .nearby-service-status {
+      margin: 2px 0 8px;
+      font-size: 0.72rem;
+      color: var(--muted-text-ui);
+      line-height: 1.35;
+    }
+
+    .nearby-service-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .nearby-service-label {
+      font-size: 0.69rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-text-ui);
+      margin-bottom: 5px;
+    }
+
+    .nearby-service-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nearby-service-item {
+      display: block;
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .nearby-service-item:hover {
+      border-color: #a1a1aa;
+      background: #ffffff;
+    }
+
+    .nearby-service-main {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-ui);
+      line-height: 1.25;
+    }
+
+    .nearby-service-sub {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.7rem;
+      color: var(--muted-text-ui);
+      line-height: 1.25;
+    }
+
+    .nearby-service-note {
+      margin: 8px 0 0;
+      font-size: 0.67rem;
+      color: var(--muted-text-ui);
+      line-height: 1.35;
+    }
+
     .today-overview-day {
       font-size: 0.96rem;
       font-weight: 700;
@@ -2341,6 +2413,29 @@
       font-style: italic;
     }
 
+    .itinerary-gas-chip {
+      margin: 0;
+      width: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      background: #ecfdf5;
+      color: #065f46;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .itinerary-gas-chip:hover {
+      background: #d1fae5;
+      color: #064e3b;
+    }
+
     .itinerary-overview-map {
       min-height: 300px;
       border: 1px solid var(--border-ui);
@@ -2575,6 +2670,32 @@
         </div>
         <div id="today-overview-updated" class="today-overview-updated">Refreshing automatically.</div>
       </div>
+    </section>
+
+    <section id="nearby-service-card" class="card" aria-labelledby="nearby-service-title" style="display:none;">
+      <h2 id="nearby-service-title" class="card-title">⛽ Nearby Fuel &amp; Groceries</h2>
+      <p id="nearby-service-status" class="nearby-service-status">Checking your location to find closest stops…</p>
+      <div class="nearby-service-grid">
+        <div>
+          <div class="nearby-service-label">Nearest gas stations</div>
+          <div id="nearby-gas-list" class="nearby-service-list">
+            <div class="nearby-service-item">
+              <span class="nearby-service-main">Location required</span>
+              <span class="nearby-service-sub">Allow location access to show nearby fuel stops.</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="nearby-service-label">Nearest supermarkets</div>
+          <div id="nearby-supermarket-list" class="nearby-service-list">
+            <div class="nearby-service-item">
+              <span class="nearby-service-main">Location required</span>
+              <span class="nearby-service-sub">Allow location access to show nearby grocery stops.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="nearby-service-note">Live distances from your current phone location using your shared map list.</p>
     </section>
 
     <section id="daily-limit-card" class="card" aria-labelledby="daily-limit-title" style="display:none;">
@@ -2820,7 +2941,16 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./src/runtime-globals.js"></script>
+  <script src="./src/gas-supermarket-points.js"></script>
   <script>
+    const {
+      createAppRuntime,
+      createPackingFeature,
+      DEFAULT_PACK_ITEMS,
+      sanitizePackItems
+    } = window.IcelandTripRuntimeLib || {};
+
     const dayColors = [
       "var(--day-1)",
       "var(--day-2)",
@@ -2861,30 +2991,95 @@
     const TODAY_OVERVIEW_ROAD_STATUS_CACHE_KEY = "icelandTodayOverviewRoadStatusV1";
     const TODAY_OVERVIEW_ROAD_STATUS_TTL_MS = 8 * 60 * 1000;
     const TODAY_OVERVIEW_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+    const NEARBY_SERVICE_LIST_LIMIT = 3;
+    const NEARBY_SERVICE_REFRESH_INTERVAL_MS = 90 * 1000;
+    const SAFE_FUEL_RANGE_KM = 600;
     const MODULE_COLLAPSE_STORAGE_KEY = "icelandModuleCollapseV1";
     const UMFERDIN_ROAD_STATUS_PROXY_URL =
       SYNC_SUPABASE_URL + "/functions/v1/umferdin-road-status";
+    const SERVICE_POINTS = Array.isArray(window.ICELAND_SERVICE_POINTS)
+      ? window.ICELAND_SERVICE_POINTS
+      : [];
+    const GAS_STATION_POINTS = SERVICE_POINTS.filter(
+      (entry) =>
+        entry &&
+        entry.type === "gas" &&
+        Array.isArray(entry.coords) &&
+        entry.coords.length === 2 &&
+        Number.isFinite(Number(entry.coords[0])) &&
+        Number.isFinite(Number(entry.coords[1]))
+    );
+    const SUPERMARKET_POINTS = SERVICE_POINTS.filter(
+      (entry) =>
+        entry &&
+        entry.type === "supermarket" &&
+        Array.isArray(entry.coords) &&
+        entry.coords.length === 2 &&
+        Number.isFinite(Number(entry.coords[0])) &&
+        Number.isFinite(Number(entry.coords[1]))
+    );
+    const IS_SMOKE_MODE =
+      new URLSearchParams(window.location.search || "").get("__smoke") === "1";
+    const appRuntime = createAppRuntime({
+      schemaVersion: SYNC_SCHEMA_VERSION
+    });
+    const appStore = appRuntime.store;
+    const appActions = appRuntime.actions;
+    const appPersistence = appRuntime.persistence;
+    const localStorageAdapter = appRuntime.adapters.localStorage;
+    window.icelandTripRuntime = appRuntime;
+
+    let packItems = [];
+    let budgetState = { maxBudgetISK: 0, expenses: [] };
+    let activeTab = "home";
+    let moduleCollapseState = {};
+    let syncSettings = { tripId: "", autoSync: true };
+
+    function syncStateRefs(nextState = appStore.getState()) {
+      packItems = Array.isArray(nextState.packItems) ? nextState.packItems : [];
+      budgetState = nextState.budget && typeof nextState.budget === "object"
+        ? nextState.budget
+        : { maxBudgetISK: 0, expenses: [] };
+      activeTab = typeof nextState.activeTab === "string"
+        ? nextState.activeTab
+        : "home";
+      moduleCollapseState =
+        nextState.moduleCollapse && typeof nextState.moduleCollapse === "object"
+          ? nextState.moduleCollapse
+          : {};
+      syncSettings =
+        nextState.syncSettings && typeof nextState.syncSettings === "object"
+          ? nextState.syncSettings
+          : { tripId: "", autoSync: true };
+    }
+
+    syncStateRefs();
+    appStore.subscribe((nextState) => {
+      syncStateRefs(nextState);
+      appPersistence.saveAppSnapshot({
+        schemaVersion: SYNC_SCHEMA_VERSION,
+        packItems: nextState.packItems,
+        budget: nextState.budget,
+        activeTab: nextState.activeTab,
+        moduleCollapse: nextState.moduleCollapse,
+        syncSettings: nextState.syncSettings,
+        todayOverview: {
+          status: nextState.todayOverview && nextState.todayOverview.status,
+          dayNumber: nextState.todayOverview && nextState.todayOverview.dayNumber,
+          lastUpdatedAt: nextState.todayOverview && nextState.todayOverview.lastUpdatedAt
+        }
+      });
+    });
+
     let headerVideoBlobUrl = "";
 
     function readLocalStorageObject(key) {
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) {
-          return {};
-        }
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === "object" ? parsed : {};
-      } catch {
-        return {};
-      }
+      const parsed = localStorageAdapter.load(key);
+      return parsed && typeof parsed === "object" ? parsed : {};
     }
 
     function writeLocalStorageObject(key, value) {
-      try {
-        localStorage.setItem(key, JSON.stringify(value));
-      } catch {
-        // localStorage might be unavailable/quota-limited; skip persistence.
-      }
+      localStorageAdapter.save(key, value);
     }
 
     function playHeaderVideo(videoEl) {
@@ -3487,6 +3682,10 @@
       img.src = buildLocationRefreshImageUrl(locationName, dayNumber, stopIndex, nonce);
     }
 
+    window.imageLoaded = imageLoaded;
+    window.imageFallback = imageFallback;
+    window.refetchLocationImage = refetchLocationImage;
+
     function buildMapEmbed(bounds) {
       const encoded = bounds.join("%2C");
       return "https://www.openstreetmap.org/export/embed.html?bbox=" + encoded + "&layer=mapnik";
@@ -3566,6 +3765,94 @@
         "&destination=" + encodeURIComponent(destination) +
         "&travelmode=driving"
       );
+    }
+
+    function mapsDirectionsWithWaypointUrl(fromLocation, waypointLocation, toLocation, fromPoint, waypointPoint, toPoint) {
+      const fromHasCoords = Array.isArray(fromPoint) && fromPoint.length === 2;
+      const waypointHasCoords = Array.isArray(waypointPoint) && waypointPoint.length === 2;
+      const toHasCoords = Array.isArray(toPoint) && toPoint.length === 2;
+
+      const origin = fromHasCoords
+        ? fromPoint[0] + "," + fromPoint[1]
+        : String((fromLocation && fromLocation.name) || "Iceland").trim();
+      const waypoint = waypointHasCoords
+        ? waypointPoint[0] + "," + waypointPoint[1]
+        : String((waypointLocation && waypointLocation.name) || "fuel station").trim();
+      const destination = toHasCoords
+        ? toPoint[0] + "," + toPoint[1]
+        : String((toLocation && toLocation.name) || "Iceland").trim();
+
+      return (
+        "https://www.google.com/maps/dir/?api=1" +
+        "&origin=" + encodeURIComponent(origin) +
+        "&destination=" + encodeURIComponent(destination) +
+        "&waypoints=" + encodeURIComponent(waypoint) +
+        "&travelmode=driving"
+      );
+    }
+
+    function resolveCoords(primaryPoint, fallbackPoint) {
+      const point =
+        (Array.isArray(primaryPoint) && primaryPoint.length === 2 && primaryPoint) ||
+        (Array.isArray(fallbackPoint) && fallbackPoint.length === 2 && fallbackPoint) ||
+        null;
+      if (!point) {
+        return null;
+      }
+      const lat = Number(point[0]);
+      const lon = Number(point[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return null;
+      }
+      return [lat, lon];
+    }
+
+    function haversineDistanceKm(fromPoint, toPoint) {
+      if (
+        !Array.isArray(fromPoint) ||
+        !Array.isArray(toPoint) ||
+        fromPoint.length !== 2 ||
+        toPoint.length !== 2
+      ) {
+        return null;
+      }
+      const lat1 = Number(fromPoint[0]);
+      const lon1 = Number(fromPoint[1]);
+      const lat2 = Number(toPoint[0]);
+      const lon2 = Number(toPoint[1]);
+      if (
+        !Number.isFinite(lat1) ||
+        !Number.isFinite(lon1) ||
+        !Number.isFinite(lat2) ||
+        !Number.isFinite(lon2)
+      ) {
+        return null;
+      }
+
+      const radians = Math.PI / 180;
+      const dLat = (lat2 - lat1) * radians;
+      const dLon = (lon2 - lon1) * radians;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * radians) *
+          Math.cos(lat2 * radians) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return 6371 * c;
+    }
+
+    function formatDistanceKm(distanceKm) {
+      if (!Number.isFinite(distanceKm) || distanceKm < 0) {
+        return "Unknown";
+      }
+      if (distanceKm < 1) {
+        return Math.max(50, Math.round(distanceKm * 1000 / 50) * 50) + " m";
+      }
+      if (distanceKm < 10) {
+        return distanceKm.toFixed(1) + " km";
+      }
+      return Math.round(distanceKm) + " km";
     }
 
     function getLocationDiscoveryLinks(location) {
@@ -3711,6 +3998,143 @@
         return legSummary.duration;
       }
       return null;
+    }
+
+    function getLegDistanceKm(fromLocation, toLocation, fromPoint, toPoint, legSummary) {
+      if (legSummary && Number.isFinite(legSummary.distance) && legSummary.distance > 0) {
+        return legSummary.distance / 1000;
+      }
+      const resolvedFrom = resolveCoords(
+        fromLocation && fromLocation.coords,
+        fromPoint
+      );
+      const resolvedTo = resolveCoords(
+        toLocation && toLocation.coords,
+        toPoint
+      );
+      const fallbackDistanceKm = haversineDistanceKm(resolvedFrom, resolvedTo);
+      return Number.isFinite(fallbackDistanceKm) ? fallbackDistanceKm : null;
+    }
+
+    function findNearestGasStationForLeg(fromLocation, toLocation, fromPoint, toPoint) {
+      const resolvedFrom = resolveCoords(fromLocation && fromLocation.coords, fromPoint);
+      const resolvedTo = resolveCoords(toLocation && toLocation.coords, toPoint);
+      if (!resolvedFrom || !resolvedTo || !GAS_STATION_POINTS.length) {
+        return null;
+      }
+
+      const baseDistanceKm = haversineDistanceKm(resolvedFrom, resolvedTo);
+      if (!Number.isFinite(baseDistanceKm)) {
+        return null;
+      }
+
+      let best = null;
+
+      GAS_STATION_POINTS.forEach((station) => {
+        const stationPoint = resolveCoords(station && station.coords);
+        if (!stationPoint) {
+          return;
+        }
+
+        const fromToStationKm = haversineDistanceKm(resolvedFrom, stationPoint);
+        const stationToEndKm = haversineDistanceKm(stationPoint, resolvedTo);
+        if (!Number.isFinite(fromToStationKm) || !Number.isFinite(stationToEndKm)) {
+          return;
+        }
+
+        const detourKm = Math.max(0, fromToStationKm + stationToEndKm - baseDistanceKm);
+        if (!best || detourKm < best.detourKm) {
+          best = {
+            station,
+            stationPoint,
+            detourKm,
+            distanceFromStartKm: fromToStationKm,
+            distanceToEndKm: stationToEndKm
+          };
+        }
+      });
+
+      if (!best) {
+        return null;
+      }
+
+      return {
+        ...best,
+        directionsUrl: mapsDirectionsWithWaypointUrl(
+          fromLocation,
+          best.station,
+          toLocation,
+          resolvedFrom,
+          best.stationPoint,
+          resolvedTo
+        )
+      };
+    }
+
+    function computeGasSuggestionsForDay(targetDay, targetLegSummaries = []) {
+      const suggestionsByLeg = new Map();
+      if (!targetDay || !Number.isFinite(targetDay.day)) {
+        return suggestionsByLeg;
+      }
+
+      let distanceSinceRefuelKm = 0;
+
+      for (const day of days) {
+        if (day.day > targetDay.day) {
+          break;
+        }
+
+        const routePoints = getDayRoutePoints(day);
+        const locations = getDisplayLocations(day, routePoints);
+        const summaries =
+          day.day === targetDay.day
+            ? targetLegSummaries
+            : getCachedDrivingLegDurations(day);
+
+        for (let index = 0; index < locations.length - 1; index += 1) {
+          const fromLocation = locations[index];
+          const toLocation = locations[index + 1];
+          const fromPoint = routePoints[index];
+          const toPoint = routePoints[index + 1];
+          const legSummary = summaries[index];
+
+          const legDistanceKm = getLegDistanceKm(
+            fromLocation,
+            toLocation,
+            fromPoint,
+            toPoint,
+            legSummary
+          );
+          if (!Number.isFinite(legDistanceKm) || legDistanceKm <= 0) {
+            continue;
+          }
+
+          const projectedDistanceKm = distanceSinceRefuelKm + legDistanceKm;
+          if (projectedDistanceKm >= SAFE_FUEL_RANGE_KM) {
+            const suggestion = findNearestGasStationForLeg(
+              fromLocation,
+              toLocation,
+              fromPoint,
+              toPoint
+            );
+
+            if (suggestion) {
+              if (day.day === targetDay.day) {
+                suggestionsByLeg.set(index, {
+                  ...suggestion,
+                  projectedDistanceKm
+                });
+              }
+              distanceSinceRefuelKm = Math.max(0, suggestion.distanceToEndKm);
+              continue;
+            }
+          }
+
+          distanceSinceRefuelKm = projectedDistanceKm;
+        }
+      }
+
+      return suggestionsByLeg;
     }
 
     function getDayDriveAggregate(day, driveLegSummaries = []) {
@@ -3935,6 +4359,7 @@
     function summarizeDrivingLeg(leg, fromPoint, toPoint) {
       return {
         duration: Number.isFinite(leg && leg.duration) ? leg.duration : null,
+        distance: Number.isFinite(leg && leg.distance) ? leg.distance : null,
         roads: extractRoadNumbersFromLeg(leg),
         direction: getCardinalDirection(fromPoint, toPoint)
       };
@@ -3958,6 +4383,10 @@
         duration:
           entry && Number.isFinite(entry.duration)
             ? Number(entry.duration)
+            : null,
+        distance:
+          entry && Number.isFinite(entry.distance)
+            ? Number(entry.distance)
             : null,
         roads:
           entry && Array.isArray(entry.roads)
@@ -4879,59 +5308,15 @@
     applyEnhancedRecommendations();
 
     const PACK_STORAGE_KEY = "icelandPackListV2";
-    const defaultPackItems = [
-      "Thermals (merino wool base layers)",
-      "Warm mid-layer (fleece/wool sweater)",
-      "Waterproof jacket (windproof)",
-      "Waterproof pants (essential for waterfalls)",
-      "Waterproof hiking boots",
-      "Microspikes/Crampons",
-      "Warm beanie hat & scarf/buff",
-      "Waterproof gloves",
-      "Swimsuit & quick-dry towel",
-      "Power bank for phones",
-      "Lip balm & moisturizer",
-      "Headlamp (for campsites)"
-    ];
 
     function loadPackItems() {
-      try {
-        const raw = localStorage.getItem(PACK_STORAGE_KEY);
-        if (!raw) {
-          return defaultPackItems.map((text, index) => ({ id: index + 1, text, done: false }));
-        }
-
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) {
-          return defaultPackItems.map((text, index) => ({ id: index + 1, text, done: false }));
-        }
-
-        let fallbackId = 1;
-        const items = parsed
-          .filter((item) => item && (typeof item.text === "string" || typeof item.label === "string"))
-          .map((item) => {
-            const text = String(item.text ?? item.label).trim().slice(0, 100);
-            const rawId = Number(item.id);
-            const id = Number.isFinite(rawId) && rawId > 0 ? rawId : fallbackId++;
-            return {
-              id,
-              text,
-              done: Boolean(item.done ?? item.checked)
-            };
-          })
-          .filter((item) => item.text.length > 0);
-
-        if (items.length > 0) {
-          return items;
-        }
-        return defaultPackItems.map((text, index) => ({ id: index + 1, text, done: false }));
-      } catch {
-        return defaultPackItems.map((text, index) => ({ id: index + 1, text, done: false }));
-      }
+      return sanitizePackItems(
+        appPersistence.loadDomain(PACK_STORAGE_KEY, []),
+        DEFAULT_PACK_ITEMS
+      );
     }
 
-    let packItems = loadPackItems();
-    let nextPackId = packItems.length ? Math.max(...packItems.map((item) => item.id)) + 1 : 1;
+    appActions.setPackItems(loadPackItems());
 
     const packListEl = document.getElementById("packlist");
     const progressEl = document.getElementById("pack-progress");
@@ -4941,144 +5326,33 @@
     const newItemInputEl = document.getElementById("new-item-input");
 
     function savePackItems(options = {}) {
-      localStorage.setItem(PACK_STORAGE_KEY, JSON.stringify(packItems));
+      appPersistence.saveDomain(PACK_STORAGE_KEY, packItems);
       if (!options.skipSync) {
         markSyncLocalChange();
       }
     }
 
-    function updatePackProgress() {
-      const total = packItems.length;
-      const checked = packItems.filter((item) => item.done).length;
-      const ratio = total === 0 ? 0 : (checked / total) * 100;
-      progressEl.style.width = ratio + "%";
-      progLabelEl.textContent = checked + " / " + total + " packed";
-      progPctEl.textContent = Math.round(ratio) + "%";
-    }
+    const packingFeature = createPackingFeature({
+      listEl: packListEl,
+      progressEl,
+      progressLabelEl: progLabelEl,
+      progressPctEl: progPctEl,
+      addItemFormEl,
+      newItemInputEl,
+      getItems: () => appStore.getState().packItems,
+      actions: appActions,
+      onPersist: (options = {}) => {
+        savePackItems(options);
+      }
+    });
 
     function renderPackList() {
-      packListEl.innerHTML = "";
-
-      packItems.forEach((item) => {
-        const row = document.createElement("div");
-        row.className = "pack-item";
-        row.dataset.id = String(item.id);
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = item.done;
-        checkbox.setAttribute("aria-label", "Mark item packed");
-
-        const label = document.createElement("span");
-        label.className = "pack-label" + (item.done ? " done" : "");
-        label.textContent = item.text;
-
-        const actions = document.createElement("div");
-        actions.className = "item-actions";
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "act-btn";
-        editBtn.type = "button";
-        editBtn.title = "Edit item";
-        editBtn.setAttribute("aria-label", "Edit item");
-        editBtn.innerHTML = "<svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg>";
-
-        const removeBtn = document.createElement("button");
-        removeBtn.className = "act-btn del";
-        removeBtn.type = "button";
-        removeBtn.title = "Remove item";
-        removeBtn.setAttribute("aria-label", "Remove item");
-        removeBtn.innerHTML = "<svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6M14 11v6\"/><path d=\"M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2\"/></svg>";
-
-        checkbox.addEventListener("change", () => {
-          item.done = checkbox.checked;
-          savePackItems();
-          renderPackList();
-        });
-
-        editBtn.addEventListener("click", () => {
-          startPackItemEdit(item.id);
-        });
-
-        removeBtn.addEventListener("click", () => {
-          packItems = packItems.filter((entry) => entry.id !== item.id);
-          savePackItems();
-          renderPackList();
-        });
-
-        label.addEventListener("dblclick", () => {
-          startPackItemEdit(item.id);
-        });
-
-        actions.appendChild(editBtn);
-        actions.appendChild(removeBtn);
-
-        row.appendChild(checkbox);
-        row.appendChild(label);
-        row.appendChild(actions);
-        packListEl.appendChild(row);
-      });
-
-      updatePackProgress();
+      packingFeature.render();
     }
 
     function startPackItemEdit(id) {
-      const item = packItems.find((entry) => entry.id === id);
-      const row = packListEl.querySelector('[data-id="' + id + '"]');
-      if (!item || !row) {
-        return;
-      }
-
-      const label = row.querySelector(".pack-label");
-      const actions = row.querySelector(".item-actions");
-      if (!label || !actions) {
-        return;
-      }
-
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "pack-edit-input";
-      input.value = item.text;
-      input.maxLength = 100;
-
-      label.replaceWith(input);
-      actions.style.visibility = "hidden";
-      input.focus();
-      input.select();
-
-      const commit = () => {
-        const value = input.value.trim();
-        if (value) {
-          item.text = value;
-          savePackItems();
-        }
-        renderPackList();
-      };
-
-      input.addEventListener("blur", commit);
-      input.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          input.blur();
-        }
-        if (event.key === "Escape") {
-          renderPackList();
-        }
-      });
+      packingFeature.startEdit(id);
     }
-
-    addItemFormEl.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const value = newItemInputEl.value.trim().slice(0, 100);
-      if (!value) {
-        return;
-      }
-      packItems.push({ id: nextPackId++, text: value, done: false });
-      savePackItems();
-      renderPackList();
-      newItemInputEl.value = "";
-      newItemInputEl.focus();
-    });
 
     const BUDGET_STORAGE_KEY = "icelandBudgetV1";
     const FX_STORAGE_KEY = "icelandFxIskEurV1";
@@ -5111,80 +5385,57 @@
     }
 
     function loadBudgetState() {
-      try {
-        const raw = localStorage.getItem(BUDGET_STORAGE_KEY);
-        if (!raw) {
-          return { maxBudgetISK: 0, expenses: [] };
-        }
+      const parsed = appPersistence.loadDomain(BUDGET_STORAGE_KEY, null);
+      const maxBudgetISK = toNonNegativeInteger(parsed && parsed.maxBudgetISK);
+      const expenses = Array.isArray(parsed && parsed.expenses)
+        ? parsed.expenses
+            .filter((item) => item && typeof item.name === "string")
+            .map((item, index) => ({
+              id: Number.isFinite(Number(item.id)) ? Number(item.id) : index + 1,
+              name: item.name.trim().slice(0, 100),
+              amountISK: toNonNegativeInteger(item.amountISK),
+              createdAt: Number.isFinite(Number(item.createdAt)) ? Number(item.createdAt) : null
+            }))
+            .filter((item) => item.name.length > 0)
+        : [];
 
-        const parsed = JSON.parse(raw);
-        const maxBudgetISK = toNonNegativeInteger(parsed && parsed.maxBudgetISK);
-        const expenses = Array.isArray(parsed && parsed.expenses)
-          ? parsed.expenses
-              .filter((item) => item && typeof item.name === "string")
-              .map((item, index) => ({
-                id: Number.isFinite(Number(item.id)) ? Number(item.id) : index + 1,
-                name: item.name.trim().slice(0, 100),
-                amountISK: toNonNegativeInteger(item.amountISK),
-                createdAt: Number.isFinite(Number(item.createdAt)) ? Number(item.createdAt) : null
-              }))
-              .filter((item) => item.name.length > 0)
-          : [];
-
-        return { maxBudgetISK, expenses };
-      } catch {
-        return { maxBudgetISK: 0, expenses: [] };
-      }
+      return { maxBudgetISK, expenses };
     }
 
     function saveBudgetState(options = {}) {
-      localStorage.setItem(
-        BUDGET_STORAGE_KEY,
-        JSON.stringify({
-          maxBudgetISK: budgetState.maxBudgetISK,
-          expenses: budgetState.expenses
-        })
-      );
+      appPersistence.saveDomain(BUDGET_STORAGE_KEY, {
+        maxBudgetISK: budgetState.maxBudgetISK,
+        expenses: budgetState.expenses
+      });
       if (!options.skipSync) {
         markSyncLocalChange();
       }
     }
 
     function loadFxState() {
-      try {
-        const raw = localStorage.getItem(FX_STORAGE_KEY);
-        if (!raw) {
-          return {
-            rate: DEFAULT_ISK_TO_EUR_RATE,
-            updatedAt: null
-          };
-        }
-        const parsed = JSON.parse(raw);
-        const rate = Number(parsed && parsed.rate);
-        const updatedAt = Number(parsed && parsed.updatedAt);
-        return {
-          rate: Number.isFinite(rate) && rate > 0 ? rate : DEFAULT_ISK_TO_EUR_RATE,
-          updatedAt: Number.isFinite(updatedAt) ? updatedAt : null
-        };
-      } catch {
+      const parsed = appPersistence.loadDomain(FX_STORAGE_KEY, null);
+      const rate = Number(parsed && parsed.rate);
+      const updatedAt = Number(parsed && parsed.updatedAt);
+      if (!parsed || typeof parsed !== "object") {
         return {
           rate: DEFAULT_ISK_TO_EUR_RATE,
           updatedAt: null
         };
       }
+      return {
+        rate: Number.isFinite(rate) && rate > 0 ? rate : DEFAULT_ISK_TO_EUR_RATE,
+        updatedAt: Number.isFinite(updatedAt) ? updatedAt : null
+      };
     }
 
     function saveFxState() {
-      localStorage.setItem(
-        FX_STORAGE_KEY,
-        JSON.stringify({
-          rate: fxState.rate,
-          updatedAt: fxState.updatedAt
-        })
-      );
+      appPersistence.saveDomain(FX_STORAGE_KEY, {
+        rate: fxState.rate,
+        updatedAt: fxState.updatedAt
+      });
     }
 
-    let budgetState = loadBudgetState();
+    appActions.setBudget(loadBudgetState());
     let nextExpenseId = budgetState.expenses.length
       ? Math.max(...budgetState.expenses.map((item) => item.id)) + 1
       : 1;
@@ -5218,6 +5469,10 @@
     const todayOverviewRoadsEl = document.getElementById("today-overview-roads");
     const todayOverviewAdviceEl = document.getElementById("today-overview-advice");
     const todayOverviewUpdatedEl = document.getElementById("today-overview-updated");
+    const nearbyServiceCardEl = document.getElementById("nearby-service-card");
+    const nearbyServiceStatusEl = document.getElementById("nearby-service-status");
+    const nearbyGasListEl = document.getElementById("nearby-gas-list");
+    const nearbySupermarketListEl = document.getElementById("nearby-supermarket-list");
     const dailyLimitMainEl = document.getElementById("daily-limit-main");
     const dailyLimitSubEl = document.getElementById("daily-limit-sub");
     const dailyLimitPaceValueEl = document.getElementById("daily-limit-pace-value");
@@ -5233,78 +5488,47 @@
     const packingExpandedEl = document.getElementById("packing-expanded");
 
     function loadSyncSettings() {
-      try {
-        const raw = localStorage.getItem(SYNC_SETTINGS_STORAGE_KEY);
-        if (!raw) {
-          return {
-            tripId: "",
-            autoSync: true
-          };
-        }
-        const parsed = JSON.parse(raw);
-        return {
-          tripId: normalizeTripCode(parsed && parsed.tripId),
-          autoSync: parsed && parsed.autoSync !== false
-        };
-      } catch {
-        return {
-          tripId: "",
-          autoSync: true
-        };
-      }
+      const parsed = appPersistence.loadDomain(SYNC_SETTINGS_STORAGE_KEY, null);
+      return {
+        tripId: normalizeTripCode(parsed && parsed.tripId),
+        autoSync: !parsed || parsed.autoSync !== false
+      };
     }
 
     function saveSyncSettings() {
-      localStorage.setItem(SYNC_SETTINGS_STORAGE_KEY, JSON.stringify(syncSettings));
+      appPersistence.saveDomain(SYNC_SETTINGS_STORAGE_KEY, syncSettings);
     }
 
     function loadSyncMeta() {
-      try {
-        const raw = localStorage.getItem(SYNC_META_STORAGE_KEY);
-        if (!raw) {
-          return { localUpdatedAtMs: 0 };
-        }
-        const parsed = JSON.parse(raw);
-        const localUpdatedAtMs = Number(parsed && parsed.localUpdatedAtMs);
-        return {
-          localUpdatedAtMs: Number.isFinite(localUpdatedAtMs) && localUpdatedAtMs > 0
-            ? localUpdatedAtMs
-            : 0
-        };
-      } catch {
-        return { localUpdatedAtMs: 0 };
-      }
+      const parsed = appPersistence.loadDomain(SYNC_META_STORAGE_KEY, null);
+      const localUpdatedAtMs = Number(parsed && parsed.localUpdatedAtMs);
+      return {
+        localUpdatedAtMs: Number.isFinite(localUpdatedAtMs) && localUpdatedAtMs > 0
+          ? localUpdatedAtMs
+          : 0
+      };
     }
 
     function saveSyncMeta() {
-      localStorage.setItem(
-        SYNC_META_STORAGE_KEY,
-        JSON.stringify({
-          localUpdatedAtMs: syncLocalUpdatedAtMs
-        })
-      );
+      appPersistence.saveDomain(SYNC_META_STORAGE_KEY, {
+        localUpdatedAtMs: syncLocalUpdatedAtMs
+      });
     }
 
     function getOrCreateSyncDeviceId() {
-      try {
-        const existing = String(localStorage.getItem(SYNC_DEVICE_STORAGE_KEY) || "").trim();
-        if (existing) {
-          return existing;
-        }
-      } catch {
-        // Continue with generated id.
+      const existing = String(
+        appPersistence.loadDomain(SYNC_DEVICE_STORAGE_KEY, "") || ""
+      ).trim();
+      if (existing) {
+        return existing;
       }
 
       const generated = "device-" + Math.random().toString(36).slice(2, 10);
-      try {
-        localStorage.setItem(SYNC_DEVICE_STORAGE_KEY, generated);
-      } catch {
-        // Ignore storage failures.
-      }
+      appPersistence.saveDomain(SYNC_DEVICE_STORAGE_KEY, generated);
       return generated;
     }
 
-    let syncSettings = loadSyncSettings();
+    appActions.setSyncSettings(loadSyncSettings());
     const syncMeta = loadSyncMeta();
     const syncDeviceId = getOrCreateSyncDeviceId();
     let syncLocalUpdatedAtMs = syncMeta.localUpdatedAtMs;
@@ -5550,14 +5774,16 @@
     }
 
     function createSyncPayload() {
+      const state = appStore.getState();
       return {
         schemaVersion: SYNC_SCHEMA_VERSION,
         sourceDeviceId: syncDeviceId,
-        packItems,
+        packItems: state.packItems,
         budgetState: {
-          maxBudgetISK: toNonNegativeInteger(budgetState.maxBudgetISK),
-          expenses: budgetState.expenses
-        }
+          maxBudgetISK: toNonNegativeInteger(state.budget.maxBudgetISK),
+          expenses: state.budget.expenses
+        },
+        syncSettings: state.syncSettings
       };
     }
 
@@ -5566,22 +5792,23 @@
         return false;
       }
 
-      const nextPackItems = sanitizeSyncedPackItems(payload.packItems);
-      const nextBudgetState = sanitizeSyncedBudgetState(payload.budgetState);
+      const migratedPayload = appRuntime.migrateSyncedPayload(payload);
+      const nextPackItems = sanitizeSyncedPackItems(migratedPayload.packItems);
+      const nextBudgetState = sanitizeSyncedBudgetState(migratedPayload.budgetState);
 
       syncApplyingRemote = true;
       try {
-        packItems = nextPackItems;
-        nextPackId = packItems.length ? Math.max(...packItems.map((item) => item.id)) + 1 : 1;
-        savePackItems({ skipSync: true });
-        renderPackList();
-
-        budgetState = nextBudgetState;
+        packingFeature.setItems(nextPackItems, { skipSync: true });
+        appActions.setBudget(nextBudgetState);
         nextExpenseId = budgetState.expenses.length
           ? Math.max(...budgetState.expenses.map((item) => item.id)) + 1
           : 1;
         saveBudgetState({ skipSync: true });
         renderBudgetCard();
+        if (migratedPayload.syncSettings && typeof migratedPayload.syncSettings === "object") {
+          appActions.setSyncSettings(migratedPayload.syncSettings);
+          saveSyncSettings();
+        }
       } finally {
         syncApplyingRemote = false;
       }
@@ -5830,7 +6057,7 @@
     }
 
     function saveSyncSettingsFromInputs() {
-      syncSettings = readSyncSettingsFromInputs();
+      appActions.setSyncSettings(readSyncSettingsFromInputs());
       saveSyncSettings();
 
       if (!hasSyncConfig()) {
@@ -5861,7 +6088,10 @@
       }
       if (syncAutoInputEl) {
         syncAutoInputEl.addEventListener("change", () => {
-          syncSettings.autoSync = Boolean(syncAutoInputEl.checked);
+          appActions.setSyncSettings((current) => ({
+            ...current,
+            autoSync: Boolean(syncAutoInputEl.checked)
+          }));
           saveSyncSettings();
           setSyncStatus(syncSettings.autoSync ? "Auto-push enabled." : "Auto-push disabled.");
         });
@@ -6751,6 +6981,11 @@
       if (!todayOverviewCardEl) {
         return;
       }
+      appActions.setTodayOverview({
+        status: "loading",
+        dayNumber: day && day.day ? day.day : null,
+        lastUpdatedAt: Date.now()
+      });
       if (todayOverviewDayEl && day) {
         todayOverviewDayEl.textContent = "Day " + day.day + " · " + day.title;
       }
@@ -6795,6 +7030,33 @@
 
     async function refreshTodayOverview(options = {}) {
       if (!todayOverviewCardEl || activeTab !== "home") {
+        return;
+      }
+      if (IS_SMOKE_MODE) {
+        const day = getTodayOverviewTargetDay();
+        if (todayOverviewDayEl && day) {
+          todayOverviewDayEl.textContent = "Day " + day.day + " · " + day.title;
+        }
+        if (todayOverviewWeatherEl) {
+          todayOverviewWeatherEl.innerHTML =
+            "<div class=\"today-overview-weather-item\"><span class=\"today-overview-main\">Smoke mode</span></div>";
+        }
+        if (todayOverviewRoadsEl) {
+          todayOverviewRoadsEl.innerHTML =
+            "<div class=\"today-overview-road-item level-unknown\"><span class=\"today-overview-main\">Smoke mode</span></div>";
+        }
+        if (todayOverviewAdviceEl) {
+          todayOverviewAdviceEl.innerHTML =
+            "<p class=\"today-overview-advice-paragraph\">Smoke mode.</p>";
+        }
+        if (todayOverviewUpdatedEl) {
+          todayOverviewUpdatedEl.textContent = "Smoke mode";
+        }
+        appActions.setTodayOverview({
+          status: "smoke",
+          dayNumber: day ? day.day : null,
+          lastUpdatedAt: Date.now()
+        });
         return;
       }
 
@@ -6985,6 +7247,156 @@
         todayOverviewUpdatedEl.textContent =
           "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       }
+      appActions.setTodayOverview({
+        status: "ready",
+        dayNumber: day.day,
+        weatherSnapshots,
+        roadAssessments,
+        lastUpdatedAt: Date.now()
+      });
+    }
+
+    let nearbyGeolocationWatchId = null;
+    let nearbyLastCoords = null;
+    let nearbyLastRenderedAtMs = 0;
+
+    function getServicePointLabel(point) {
+      const name = String((point && point.name) || "Stop").trim();
+      const location = String((point && point.location) || "").trim();
+      return location ? name + " · " + location : name;
+    }
+
+    function getServicePointMapsUrl(point) {
+      const coords = resolveCoords(point && point.coords);
+      if (!coords) {
+        return mapsSearchUrl(getServicePointLabel(point) + ", Iceland");
+      }
+      return mapsSearchUrl(coords[0] + "," + coords[1]);
+    }
+
+    function getNearestServicePoints(userCoords, points, limit = NEARBY_SERVICE_LIST_LIMIT) {
+      if (!Array.isArray(points) || !Array.isArray(userCoords) || userCoords.length !== 2) {
+        return [];
+      }
+      return points
+        .map((point) => ({
+          ...point,
+          distanceKm: haversineDistanceKm(userCoords, point.coords)
+        }))
+        .filter((point) => Number.isFinite(point.distanceKm))
+        .sort((left, right) => left.distanceKm - right.distanceKm)
+        .slice(0, Math.max(1, Number(limit) || 1));
+    }
+
+    function renderNearbyServiceList(listEl, entries, emptyText) {
+      if (!listEl) {
+        return;
+      }
+      if (!Array.isArray(entries) || !entries.length) {
+        listEl.innerHTML =
+          "<div class=\"nearby-service-item\">" +
+            "<span class=\"nearby-service-main\">" + escapeHtml(emptyText) + "</span>" +
+          "</div>";
+        return;
+      }
+
+      listEl.innerHTML = entries
+        .map((entry) => {
+          const fuelPriceText =
+            Number.isFinite(entry.fuel95ISK) && entry.fuel95ISK > 0
+              ? " · 95: " + escapeHtml(String(entry.fuel95ISK.toFixed(1))) + " ISK"
+              : "";
+          return (
+            "<a class=\"nearby-service-item\" href=\"" + escapeHtml(getServicePointMapsUrl(entry)) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+              "<span class=\"nearby-service-main\">" + escapeHtml(getServicePointLabel(entry)) + "</span>" +
+              "<span class=\"nearby-service-sub\">" +
+                "📍 " + escapeHtml(formatDistanceKm(entry.distanceKm)) +
+                fuelPriceText +
+              "</span>" +
+            "</a>"
+          );
+        })
+        .join("");
+    }
+
+    function renderNearbyServicesFromCoords(coords) {
+      if (!Array.isArray(coords) || coords.length !== 2) {
+        return;
+      }
+      const gasNearest = getNearestServicePoints(coords, GAS_STATION_POINTS);
+      const supermarketNearest = getNearestServicePoints(coords, SUPERMARKET_POINTS);
+      renderNearbyServiceList(
+        nearbyGasListEl,
+        gasNearest,
+        "No nearby gas station found in this list."
+      );
+      renderNearbyServiceList(
+        nearbySupermarketListEl,
+        supermarketNearest,
+        "No nearby supermarket found in this list."
+      );
+      if (nearbyServiceStatusEl) {
+        nearbyServiceStatusEl.textContent =
+          "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+      nearbyLastCoords = coords;
+      nearbyLastRenderedAtMs = Date.now();
+    }
+
+    function shouldRefreshNearbyForCoords(coords) {
+      if (!nearbyLastCoords) {
+        return true;
+      }
+      const movedKm = haversineDistanceKm(nearbyLastCoords, coords);
+      if (Number.isFinite(movedKm) && movedKm >= 0.2) {
+        return true;
+      }
+      return Date.now() - nearbyLastRenderedAtMs >= NEARBY_SERVICE_REFRESH_INTERVAL_MS;
+    }
+
+    function startNearbyServiceWatcher() {
+      if (!nearbyServiceCardEl || IS_SMOKE_MODE) {
+        return;
+      }
+      if (!navigator.geolocation) {
+        if (nearbyServiceStatusEl) {
+          nearbyServiceStatusEl.textContent = "Geolocation is not available on this browser.";
+        }
+        return;
+      }
+
+      const onSuccess = (position) => {
+        const coords = [Number(position.coords.latitude), Number(position.coords.longitude)];
+        if (!shouldRefreshNearbyForCoords(coords)) {
+          return;
+        }
+        renderNearbyServicesFromCoords(coords);
+      };
+
+      const onError = (error) => {
+        if (!nearbyServiceStatusEl) {
+          return;
+        }
+        if (error && error.code === 1) {
+          nearbyServiceStatusEl.textContent = "Location permission denied. Enable location to see closest stops.";
+          return;
+        }
+        nearbyServiceStatusEl.textContent = "Unable to get current location right now.";
+      };
+
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+        enableHighAccuracy: false,
+        timeout: 12000,
+        maximumAge: 5 * 60 * 1000
+      });
+
+      if (nearbyGeolocationWatchId === null) {
+        nearbyGeolocationWatchId = navigator.geolocation.watchPosition(onSuccess, onError, {
+          enableHighAccuracy: false,
+          timeout: 20000,
+          maximumAge: 2 * 60 * 1000
+        });
+      }
     }
 
     function renderFxRateLabel(isLoading = false) {
@@ -7085,14 +7497,16 @@
             return;
           }
 
-          expense.name = normalizedName;
-          expense.amountISK = nextAmount;
+          appActions.updateExpense(expense.id, {
+            name: normalizedName,
+            amountISK: nextAmount
+          });
           saveBudgetState();
           renderBudgetCard();
         });
 
         delBtn.addEventListener("click", () => {
-          budgetState.expenses = budgetState.expenses.filter((item) => item.id !== expense.id);
+          appActions.removeExpense(expense.id);
           saveBudgetState();
           renderBudgetCard();
         });
@@ -7166,7 +7580,7 @@
 
     budgetMaxFormEl.addEventListener("submit", (event) => {
       event.preventDefault();
-      budgetState.maxBudgetISK = toNonNegativeInteger(budgetMaxInputEl.value);
+      appActions.setBudgetMaxISK(toNonNegativeInteger(budgetMaxInputEl.value));
       saveBudgetState();
       renderBudgetCard();
     });
@@ -7179,7 +7593,7 @@
         return;
       }
 
-      budgetState.expenses.push({
+      appActions.addExpense({
         id: nextExpenseId++,
         name,
         amountISK,
@@ -7506,7 +7920,6 @@
     const OUTBOUND_DEPARTURE_DATE = new Date("2026-03-04T14:25:00+01:00");
     const COUNTDOWN_HIDE_DATE = new Date("2026-03-05T00:00:00+00:00");
     const OUTBOUND_HIDE_DATE = new Date("2026-03-04T17:15:00+00:00");
-    let activeTab = "home";
     let itineraryOverviewMap = null;
     let itineraryOverviewLayerGroup = null;
     let itineraryOverviewHasFitted = false;
@@ -7542,10 +7955,15 @@
       element.style.display = visible ? "" : "none";
     }
 
-    let moduleCollapseState = readLocalStorageObject(MODULE_COLLAPSE_STORAGE_KEY);
+    appActions.setModuleCollapseState(
+      readLocalStorageObject(MODULE_COLLAPSE_STORAGE_KEY)
+    );
 
     function saveModuleCollapseState() {
-      writeLocalStorageObject(MODULE_COLLAPSE_STORAGE_KEY, moduleCollapseState);
+      writeLocalStorageObject(
+        MODULE_COLLAPSE_STORAGE_KEY,
+        appStore.getState().moduleCollapse
+      );
     }
 
     function stopModuleAnimation(element) {
@@ -7673,7 +8091,7 @@
 
     function setModuleCollapsed(moduleKey, collapsed, toggleEl, expandedEl, collapsedEl, options = {}) {
       const shouldAnimate = options.animate !== false;
-      moduleCollapseState[moduleKey] = Boolean(collapsed);
+      appActions.setModuleCollapsed(moduleKey, Boolean(collapsed));
       animateModuleSection(expandedEl, !Boolean(collapsed), shouldAnimate);
       animateModuleSection(collapsedEl, Boolean(collapsed), shouldAnimate);
       if (toggleEl) {
@@ -7995,6 +8413,10 @@
       const today = startOfLocalDay(now);
       const shouldShowOverview = activeTab === "home";
       setElementVisibility(todayOverviewCardEl, shouldShowOverview);
+      setElementVisibility(nearbyServiceCardEl, shouldShowOverview);
+      if (shouldShowOverview) {
+        startNearbyServiceWatcher();
+      }
 
       const shouldShowCountdown = activeTab === "home" && now < COUNTDOWN_HIDE_DATE.getTime();
       setElementVisibility(departureCountdownCardEl, shouldShowCountdown);
@@ -8025,7 +8447,7 @@
       if (nextTab !== "home") {
         todayOverviewRequestId += 1;
       }
-      activeTab = nextTab;
+      appActions.setActiveTab(nextTab);
       setActiveTabButton(nextTab);
 
       if (nextTab === "home") {
@@ -8042,6 +8464,7 @@
         setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(todayOverviewCardEl, false);
+        setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(itineraryOverviewCardEl, true);
         setElementVisibility(packingCardEl, false);
@@ -8062,6 +8485,7 @@
         setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(todayOverviewCardEl, false);
+        setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, false);
         setElementVisibility(itineraryOverviewCardEl, false);
         setElementVisibility(packingCardEl, true);
@@ -8079,6 +8503,7 @@
         setElementVisibility(departureCountdownCardEl, true);
         setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(todayOverviewCardEl, true);
+        setElementVisibility(nearbyServiceCardEl, true);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(itineraryOverviewCardEl, false);
         setElementVisibility(packingCardEl, true);
@@ -8090,12 +8515,14 @@
         setElementVisibility(daysContainerEl, false);
         showAllDayCards();
         updateTimeAwareVisibility();
+        startNearbyServiceWatcher();
         refreshTodayOverview();
         return;
       }
 
       setElementVisibility(departureCountdownCardEl, true);
       setElementVisibility(todayOverviewCardEl, true);
+      setElementVisibility(nearbyServiceCardEl, true);
       setElementVisibility(flightCardEl, false);
       setElementVisibility(itineraryOverviewCardEl, false);
       setElementVisibility(packingCardEl, false);
@@ -8117,6 +8544,7 @@
       }
       showSingleDayCard(trip.dayNumber);
       updateTimeAwareVisibility();
+      startNearbyServiceWatcher();
       refreshTodayOverview();
     }
 
@@ -8295,6 +8723,7 @@
     function renderItinerary(day, color, driveLegSummaries = [], isLoading = false) {
       const routePoints = getDayRoutePoints(day);
       const locations = getDisplayLocations(day, routePoints);
+      const gasSuggestionsByLeg = computeGasSuggestionsForDay(day, driveLegSummaries);
       const dayCampPricing = getDayCampPricing(day);
       const intermediateStops = Math.max(0, locations.length - 2);
       if (modalItineraryTitleEl) {
@@ -8423,6 +8852,19 @@
               "<span>🚗</span>" +
               "<span>" + durationText + "</span>" +
             "</div>" +
+            (gasSuggestionsByLeg.has(index)
+              ? (
+                "<a class=\"itinerary-gas-chip\" href=\"" +
+                  escapeHtml(gasSuggestionsByLeg.get(index).directionsUrl) +
+                  "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open suggested gas-stop detour between " + escapeHtml(locations[index].name) + " and " + escapeHtml(locations[index + 1].name) + "\">" +
+                  "⛽ " +
+                  escapeHtml(getServicePointLabel(gasSuggestionsByLeg.get(index).station)) +
+                  " · +" +
+                  escapeHtml(formatDistanceKm(gasSuggestionsByLeg.get(index).detourKm)) +
+                  " detour" +
+                "</a>"
+              )
+              : "") +
             "<span class=\"itinerary-leg-line\" aria-hidden=\"true\"></span>" +
           "</div>";
         }
@@ -8601,11 +9043,60 @@
 
     renderPackList();
     renderBudgetCard();
-    initializeSyncCard();
-    refreshIskEurRate();
-    cacheHeaderVideo();
+    if (!IS_SMOKE_MODE) {
+      initializeSyncCard();
+      refreshIskEurRate();
+      cacheHeaderVideo();
+    } else {
+      setSyncStatus("Smoke mode.");
+    }
     applyTabView("home");
     updateHeaderCompactState();
+    function isElementActuallyVisible(element) {
+      if (!element) {
+        return false;
+      }
+      const style = window.getComputedStyle(element);
+      return style.display !== "none" && style.visibility !== "hidden" && !element.hidden;
+    }
+
+    function emitSmokeReportIfRequested() {
+      const params = new URLSearchParams(window.location.search || "");
+      if (params.get("__smoke") !== "1") {
+        return;
+      }
+
+      const requestedTab = String(params.get("tab") || "").trim();
+      if (requestedTab === "home" || requestedTab === "itinerary" || requestedTab === "tools") {
+        applyTabView(requestedTab);
+      }
+
+      const report = {
+        activeTab,
+        countdownDaysText: departureCountdownDaysEl ? String(departureCountdownDaysEl.textContent || "").trim() : "",
+        tabButtonCount: tabButtons.length,
+        activeTabButtonCount: tabButtons.filter((button) => button.classList.contains("active")).length,
+        packItemCount: document.querySelectorAll("#packlist .pack-item").length,
+        todayOverviewExists: Boolean(todayOverviewCardEl),
+        todayOverviewVisible: isElementActuallyVisible(todayOverviewCardEl),
+        itineraryOverviewVisible: isElementActuallyVisible(itineraryOverviewCardEl),
+        daysContainerVisible: isElementActuallyVisible(daysContainerEl),
+        packingVisible: isElementActuallyVisible(packingCardEl),
+        budgetVisible: isElementActuallyVisible(budgetCardViewEl),
+        budgetMainText: budgetMainEl ? String(budgetMainEl.textContent || "").trim() : ""
+      };
+
+      let reportEl = document.getElementById("__smoke-report");
+      if (!reportEl) {
+        reportEl = document.createElement("pre");
+        reportEl.id = "__smoke-report";
+        reportEl.hidden = true;
+        document.body.appendChild(reportEl);
+      }
+      reportEl.textContent = JSON.stringify(report);
+    }
+
+    window.setTimeout(emitSmokeReportIfRequested, 300);
 
     window.addEventListener("pagehide", () => {
       if (headerVideoBlobUrl) {
@@ -8614,21 +9105,23 @@
       }
     });
 
-    days.forEach((day) => {
-      const cachedDurations = getCachedDrivingLegDurations(day);
-      if (cachedDurations.length) {
-        renderDayDriveTag(day, cachedDurations);
-      }
-
-      fetchDrivingLegDurations(day).then((durations) => {
-        renderDayDriveTag(day, durations);
-        if (modalEl.classList.contains("open") && activeFullscreenDay === day.day) {
-          renderFullscreenSubtitle(day, durations);
-          const color = dayColors[(day.day - 1) % dayColors.length];
-          renderItinerary(day, color, durations, false);
+    if (!IS_SMOKE_MODE) {
+      days.forEach((day) => {
+        const cachedDurations = getCachedDrivingLegDurations(day);
+        if (cachedDurations.length) {
+          renderDayDriveTag(day, cachedDurations);
         }
+
+        fetchDrivingLegDurations(day).then((durations) => {
+          renderDayDriveTag(day, durations);
+          if (modalEl.classList.contains("open") && activeFullscreenDay === day.day) {
+            renderFullscreenSubtitle(day, durations);
+            const color = dayColors[(day.day - 1) % dayColors.length];
+            renderItinerary(day, color, durations, false);
+          }
+        });
       });
-    });
+    }
   </script>
 </body>
 </html>
