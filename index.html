@@ -376,6 +376,7 @@
       --muted-text-ui: #71717a;
       --success-ui: #16a34a;
       --radius-ui: 10px;
+      --tab-bar-safe-height: 112px;
       --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
     }
 
@@ -384,7 +385,7 @@
       background: var(--bg);
       color: var(--text-ui);
       line-height: 1.5;
-      padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(var(--tab-bar-safe-height) + env(safe-area-inset-bottom, 0px));
     }
 
     .shell {
@@ -1205,7 +1206,7 @@
     }
 
     .fullscreen-body {
-      padding: 15px;
+      padding: 15px 15px calc(15px + var(--tab-bar-safe-height) + env(safe-area-inset-bottom, 0px));
       background: var(--card-ui);
       position: relative;
       z-index: 1;
@@ -1736,12 +1737,30 @@
       return trimmed;
     }
 
-    function imageFor(keyword, seed) {
-      const tags = ("iceland," + String(keyword).toLowerCase())
+    function imageTagsFor(keyword) {
+      return ("iceland," + String(keyword).toLowerCase())
         .replace(/[^a-z0-9]+/g, ",")
         .replace(/,+/g, ",")
         .replace(/^,|,$/g, "");
+    }
+
+    function instagramRelatedImageFor(keyword, seed) {
+      const tags = imageTagsFor(keyword);
+      return (
+        "https://source.unsplash.com/featured/1200x800/?" +
+        encodeURIComponent("instagram," + tags) +
+        "&sig=" +
+        encodeURIComponent(String(seed))
+      );
+    }
+
+    function loremImageFor(keyword, seed) {
+      const tags = imageTagsFor(keyword);
       return "https://loremflickr.com/1200/800/" + tags + "?lock=" + seed;
+    }
+
+    function imageFor(keyword, seed) {
+      return instagramRelatedImageFor(keyword, seed);
     }
 
     function getLocationImageCacheKey(dayNumber, stopIndex, locationName) {
@@ -1795,7 +1814,16 @@
       }
 
       if (stage <= 1) {
-        img.dataset.fallbackStage = "2";
+        const loremSrc = img.dataset.loremSrc || "";
+        if (loremSrc && loremSrc !== img.src) {
+          img.dataset.fallbackStage = "2";
+          img.src = loremSrc;
+          return;
+        }
+      }
+
+      if (stage <= 2) {
+        img.dataset.fallbackStage = "3";
       } else {
         return;
       }
@@ -3779,6 +3807,10 @@
       });
     }
 
+    function scrollPageToTop() {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+
     function applyTabView(nextTab) {
       const trip = getTripPhaseAndDay();
       setActiveTabButton(nextTab);
@@ -3841,6 +3873,7 @@
           closeDayFullscreen();
         }
         applyTabView(button.dataset.tab || "home");
+        scrollPageToTop();
       });
     });
 
@@ -3854,6 +3887,7 @@
     const modalItineraryEl = document.getElementById("fullscreen-itinerary");
     const modalRecoEl = document.getElementById("fullscreen-reco");
     const closeModalBtnEl = document.getElementById("close-fullscreen");
+    const modalBodyEl = modalEl.querySelector(".fullscreen-body");
 
     let fullscreenMap = null;
     let mapRouteLayer = null;
@@ -3975,6 +4009,7 @@
           .join("");
         const imageKey = getLocationImageCacheKey(day.day, index, location.name);
         const imageSrc = escapeHtml(location.image);
+        const loremFallbackSrc = escapeHtml(loremImageFor(location.name, day.day * 1000 + index + 1));
         const cachedImageSrc = getCachedImageUrl(imageKey);
         const cachedImageAttr = cachedImageSrc
           ? " data-cached-src=\"" + escapeHtml(cachedImageSrc) + "\""
@@ -3994,7 +4029,7 @@
                 "<p class=\"location-note\">" + locationNote + "</p>" +
                 campPriceLine +
                 "<div class=\"location-discovery-links\">" + discoveryLinksHtml + "</div>" +
-                "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\"" + cachedImageAttr + " data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
+                "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\"" + cachedImageAttr + " data-lorem-src=\"" + loremFallbackSrc + "\" data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
             "</div>" +
           "</article>";
 
@@ -4098,6 +4133,11 @@
 
       modalEl.classList.add("open");
       document.body.classList.add("modal-open");
+      scrollPageToTop();
+      if (modalBodyEl) {
+        modalBodyEl.scrollTop = 0;
+      }
+      modalEl.scrollTop = 0;
 
       const colorHex = resolveDayColorHex(day.day);
       renderFullscreenMap(day, colorHex);
