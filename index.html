@@ -1456,8 +1456,7 @@
       margin-top: 6px;
     }
 
-    .location-card,
-    .recommendation-item {
+    .location-card {
       border: 1px solid var(--border-ui);
       border-radius: 8px;
       box-shadow: none;
@@ -1471,6 +1470,81 @@
       font-weight: 600;
     }
 
+    .recommendation-item {
+      position: relative;
+      overflow: hidden;
+      min-height: 248px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(9, 9, 11, 0.2);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(56, 189, 248, 0.24), transparent 44%),
+        linear-gradient(160deg, #13243d 0%, #1f3555 60%, #243e63 100%);
+      padding: 0;
+      display: flex;
+      align-items: flex-end;
+      isolation: isolate;
+    }
+
+    .recommendation-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image: var(--recommendation-bg-image);
+      background-size: cover;
+      background-position: center;
+      transform: scale(1.03);
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+
+    .recommendation-item.has-image::before {
+      opacity: 0.92;
+    }
+
+    .recommendation-item::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.1) 24%, rgba(2, 6, 23, 0.72) 100%);
+    }
+
+    .recommendation-item.loading::after {
+      background:
+        linear-gradient(
+          104deg,
+          rgba(148, 163, 184, 0.14) 8%,
+          rgba(226, 232, 240, 0.32) 22%,
+          rgba(148, 163, 184, 0.14) 36%
+        ),
+        linear-gradient(180deg, rgba(2, 6, 23, 0.16) 26%, rgba(2, 6, 23, 0.74) 100%);
+      background-size: 220% 100%, 100% 100%;
+      animation: recommendationLoaderShimmer 1.25s linear infinite;
+    }
+
+    @keyframes recommendationLoaderShimmer {
+      0% {
+        background-position: 200% 0, 0 0;
+      }
+      100% {
+        background-position: -20% 0, 0 0;
+      }
+    }
+
+    .recommendation-content {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      padding: 10px 10px 11px;
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(12px) saturate(1.15);
+      -webkit-backdrop-filter: blur(12px) saturate(1.15);
+    }
+
     .recommendation-head {
       display: flex;
       align-items: center;
@@ -1480,14 +1554,16 @@
     }
 
     .recommendation-kind {
-      border: 1px solid var(--border-ui);
-      background: var(--muted-ui);
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      background: rgba(15, 23, 42, 0.42);
       border-radius: 999px;
       padding: 2px 8px;
       font-size: 0.66rem;
       font-weight: 600;
-      color: var(--muted-text-ui);
+      color: rgba(248, 250, 252, 0.98);
       white-space: nowrap;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .location-note,
@@ -1497,15 +1573,20 @@
       color: var(--muted-text-ui);
     }
 
+    .recommendation-item h5,
+    .recommendation-item p {
+      color: rgba(248, 250, 252, 0.98);
+    }
+
     .recommendation-price {
       margin-top: 6px;
       font-size: 0.72rem;
       font-weight: 600;
-      color: #0f766e;
+      color: rgba(236, 253, 245, 0.95);
     }
 
     .recommendation-price.free {
-      color: #166534;
+      color: rgba(187, 247, 208, 0.98);
     }
 
     .recommendation-action {
@@ -1513,19 +1594,21 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      border: 1px solid var(--border-ui);
-      background: var(--muted-ui);
-      color: var(--text-ui);
+      border: 1px solid rgba(255, 255, 255, 0.36);
+      background: rgba(15, 23, 42, 0.55);
+      color: rgba(248, 250, 252, 0.98);
       border-radius: 7px;
       padding: 4px 9px;
       font-size: 0.72rem;
       font-weight: 600;
       text-decoration: none;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .recommendation-action:hover {
-      background: color-mix(in srgb, var(--muted-ui) 65%, #ffffff);
-      border-color: #a1a1aa;
+      background: rgba(15, 23, 42, 0.72);
+      border-color: rgba(255, 255, 255, 0.56);
     }
 
     .location-card.campsite-card {
@@ -2018,8 +2101,10 @@
     ];
 
     const IMAGE_CACHE_STORAGE_KEY = "icelandImageUrlCacheV1";
+    const RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY = "icelandRecommendationImageCacheV1";
     const DRIVE_CACHE_STORAGE_KEY = "icelandDriveLegCacheV1";
     const IMAGE_CACHE_MAX_ITEMS = 240;
+    const RECOMMENDATION_IMAGE_CACHE_MAX_ITEMS = 240;
     const DRIVE_CACHE_MAX_ITEMS = 180;
     const WIKIMEDIA_SEARCH_LIMIT = 16;
     const HEADER_VIDEO_CACHE_NAME = "icelandMediaCacheV1";
@@ -2121,6 +2206,7 @@
     }
 
     let imageUrlCache = readLocalStorageObject(IMAGE_CACHE_STORAGE_KEY);
+    let recommendationImageCache = readLocalStorageObject(RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY);
     let driveTimesStorageCache = readLocalStorageObject(DRIVE_CACHE_STORAGE_KEY);
     const wikimediaImageSearchCache = {};
     const googlePlacesImageSearchCache = {};
@@ -2360,6 +2446,14 @@
       return "d" + dayNumber + "-s" + (stopIndex + 1) + "-" + normalizedName;
     }
 
+    function getRecommendationImageCacheKey(dayNumber, recommendationIndex, recommendationTitle) {
+      const normalizedTitle = String(recommendationTitle || "recommendation")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      return "d" + dayNumber + "-r" + (recommendationIndex + 1) + "-" + normalizedTitle;
+    }
+
     function getCachedImageUrl(imageKey) {
       const cached = imageUrlCache[imageKey];
       return cached && typeof cached.url === "string" ? cached.url : "";
@@ -2376,6 +2470,104 @@
       };
       imageUrlCache = compactObjectCache(imageUrlCache, IMAGE_CACHE_MAX_ITEMS);
       writeLocalStorageObject(IMAGE_CACHE_STORAGE_KEY, imageUrlCache);
+    }
+
+    function getCachedRecommendationImageUrl(imageKey) {
+      const cached = recommendationImageCache[imageKey];
+      return cached && typeof cached.url === "string" ? cached.url : "";
+    }
+
+    function removeCachedRecommendationImageUrl(imageKey) {
+      if (!imageKey || !recommendationImageCache[imageKey]) {
+        return;
+      }
+      delete recommendationImageCache[imageKey];
+      writeLocalStorageObject(RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY, recommendationImageCache);
+    }
+
+    function saveCachedRecommendationImageUrl(imageKey, imageUrl) {
+      if (!imageKey || typeof imageUrl !== "string" || !imageUrl.trim()) {
+        return;
+      }
+
+      recommendationImageCache[imageKey] = {
+        url: imageUrl,
+        updatedAt: Date.now()
+      };
+      recommendationImageCache = compactObjectCache(
+        recommendationImageCache,
+        RECOMMENDATION_IMAGE_CACHE_MAX_ITEMS
+      );
+      writeLocalStorageObject(RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY, recommendationImageCache);
+    }
+
+    function preloadImageUrl(url, timeoutMs = 7000) {
+      return new Promise((resolve) => {
+        if (!url) {
+          resolve("");
+          return;
+        }
+
+        const probe = new Image();
+        let settled = false;
+        const timeout = setTimeout(() => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          probe.onload = null;
+          probe.onerror = null;
+          resolve("");
+        }, timeoutMs);
+
+        probe.onload = () => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeout);
+          resolve(url);
+        };
+        probe.onerror = () => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeout);
+          resolve("");
+        };
+        probe.decoding = "async";
+        probe.referrerPolicy = "no-referrer";
+        probe.src = url;
+      });
+    }
+
+    async function resolveRecommendationImageUrl(query, seed) {
+      const googleCandidate = await fetchGooglePlacesFallbackImage(query, seed);
+      const googleValid = await preloadImageUrl(googleCandidate, 5500);
+      if (googleValid) {
+        return googleValid;
+      }
+
+      const wikimediaCandidate = await fetchWikimediaFallbackImage(query, seed);
+      const wikimediaValid = await preloadImageUrl(wikimediaCandidate, 5500);
+      if (wikimediaValid) {
+        return wikimediaValid;
+      }
+
+      const unsplashCandidate = imageFor(query, seed + 17);
+      const unsplashValid = await preloadImageUrl(unsplashCandidate, 5500);
+      if (unsplashValid) {
+        return unsplashValid;
+      }
+
+      const loremCandidate = loremImageFor(query, seed + 31);
+      const loremValid = await preloadImageUrl(loremCandidate, 5500);
+      if (loremValid) {
+        return loremValid;
+      }
+
+      return "";
     }
 
     function imageLoaded(event) {
@@ -5028,28 +5220,91 @@
       modalItineraryEl.innerHTML = html;
     }
 
+    function setRecommendationCardBackground(card, imageUrl) {
+      if (!card) {
+        return;
+      }
+
+      if (!imageUrl) {
+        card.classList.remove("has-image");
+        card.classList.remove("loading");
+        card.style.removeProperty("--recommendation-bg-image");
+        return;
+      }
+
+      const safeUrl = String(imageUrl).replace(/"/g, "%22");
+      card.style.setProperty("--recommendation-bg-image", 'url("' + safeUrl + '")');
+      card.classList.add("has-image");
+      card.classList.remove("loading");
+    }
+
+    function populateRecommendationImages(day) {
+      const recommendationCards = Array.from(
+        modalRecoEl.querySelectorAll(".recommendation-item[data-rec-image-key]")
+      );
+      if (!recommendationCards.length) {
+        return;
+      }
+
+      recommendationCards.forEach((card, index) => {
+        (async () => {
+          const cacheKey = card.dataset.recImageKey || "";
+          const query = card.dataset.recImageQuery || "";
+          const cachedUrl = getCachedRecommendationImageUrl(cacheKey);
+          const lookupSeed = day.day * 100 + index + 1;
+
+          if (cachedUrl) {
+            const validatedCached = await preloadImageUrl(cachedUrl, 4000);
+            if (validatedCached) {
+              if (modalEl.classList.contains("open") && activeFullscreenDay === day.day) {
+                setRecommendationCardBackground(card, validatedCached);
+              }
+              return;
+            }
+            removeCachedRecommendationImageUrl(cacheKey);
+          }
+
+          const resolvedUrl = await resolveRecommendationImageUrl(query, lookupSeed);
+          if (!modalEl.classList.contains("open") || activeFullscreenDay !== day.day) {
+            return;
+          }
+          if (!resolvedUrl) {
+            card.classList.remove("loading");
+            return;
+          }
+          saveCachedRecommendationImageUrl(cacheKey, resolvedUrl);
+          setRecommendationCardBackground(card, resolvedUrl);
+        })();
+      });
+    }
+
     function renderRecommendations(day) {
       modalRecoEl.innerHTML = day.recommendations
-        .map((rec) => {
+        .map((rec, index) => {
           const recommendationUrl = getRecommendationLink(rec);
           const actionLabel = getRecommendationActionLabel(rec);
+          const recommendationImageKey = getRecommendationImageCacheKey(day.day, index, rec.title);
+          const recommendationImageQuery = (rec.title || "Iceland") + ", Iceland";
           return (
-          "<article class=\"recommendation-item\">" +
-            "<div class=\"recommendation-head\">" +
-              "<h5>" + escapeHtml(rec.title) + "</h5>" +
-              "<span class=\"recommendation-kind\">" + escapeHtml(rec.kind || "Activity") + "</span>" +
+          "<article class=\"recommendation-item loading\" data-rec-image-key=\"" + escapeHtml(recommendationImageKey) + "\" data-rec-image-query=\"" + escapeHtml(recommendationImageQuery) + "\">" +
+            "<div class=\"recommendation-content\">" +
+              "<div class=\"recommendation-head\">" +
+                "<h5>" + escapeHtml(rec.title) + "</h5>" +
+                "<span class=\"recommendation-kind\">" + escapeHtml(rec.kind || "Activity") + "</span>" +
+              "</div>" +
+              "<p>" + escapeHtml(rec.text) + "</p>" +
+              "<div class=\"recommendation-price" + (rec.priceISK === 0 ? " free" : "") + "\">" +
+                "💳 " + escapeHtml(getRecommendationPriceText(rec)) +
+              "</div>" +
+              "<a class=\"recommendation-action\" href=\"" + escapeHtml(recommendationUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+                escapeHtml(actionLabel) + " ↗" +
+              "</a>" +
             "</div>" +
-            "<p>" + escapeHtml(rec.text) + "</p>" +
-            "<div class=\"recommendation-price" + (rec.priceISK === 0 ? " free" : "") + "\">" +
-              "💳 " + escapeHtml(getRecommendationPriceText(rec)) +
-            "</div>" +
-            "<a class=\"recommendation-action\" href=\"" + escapeHtml(recommendationUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
-              escapeHtml(actionLabel) + " ↗" +
-            "</a>" +
           "</article>"
         );
         })
         .join("");
+      populateRecommendationImages(day);
     }
 
     function openDayFullscreen(dayNumber) {
