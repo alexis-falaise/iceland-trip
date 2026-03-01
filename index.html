@@ -3093,8 +3093,8 @@
           { name: "Thingvellir National Park", note: "Short morning walk before heading deeper inland.", image: imageFor("Thingvellir Iceland", 201), coords: [64.2786081, -21.0819412] },
           { name: "Strokkur Geyser", note: "Erupts every few minutes, ideal for repeated photo attempts.", image: imageFor("Strokkur geyser", 202), coords: [64.3126964, -20.3007733] },
           { name: "Gullfoss Waterfall", note: "Powerful canyon waterfall with multiple viewpoints.", image: imageFor("Gullfoss waterfall", 203), coords: [64.3266103, -20.1216821] },
-          { name: "Kerid Crater", note: "Volcanic crater lake with vivid red and blue contrast.", image: imageFor("Kerid crater", 204), coords: [64.0417879, -20.8864810] },
           { name: "Hrunalaug Hot Spring", note: "Small rustic soak to close the day.", image: imageFor("Iceland hot spring", 205), coords: [64.1328671, -20.2549498] },
+          { name: "Kerid Crater", note: "Volcanic crater lake with vivid red and blue contrast.", image: imageFor("Kerid crater", 204), coords: [64.0417879, -20.8864810] },
           { name: "Gesthús Selfoss", note: "Campsite base for the night with amenities and easy morning departure.", image: imageFor("Selfoss Iceland", 206), coords: [63.9330556, -20.9888091], isCamp: true },
         ],
         recommendations: [
@@ -3269,6 +3269,20 @@
         ]
       }
     ];
+
+    function extractLegacyRecommendationsByDay(dayList) {
+      const byDay = {};
+      dayList.forEach((day) => {
+        if (!Array.isArray(day.recommendations) || !day.recommendations.length) {
+          return;
+        }
+        byDay[day.day] = day.recommendations.map((item) => ({ ...item }));
+        day.recommendations = [];
+      });
+      return byDay;
+    }
+
+    const LEGACY_RECOMMENDATIONS_BY_DAY = extractLegacyRecommendationsByDay(days);
 
     const ENHANCED_RECOMMENDATIONS_BY_DAY = {
       1: [
@@ -3604,7 +3618,38 @@
       "harpa concert hall": { priceISK: 0, priceLabel: "Free access" },
       "skalholt cathedral": { priceISK: 0, priceLabel: "Free access" },
       "vikurkirkja church": { priceISK: 0, priceLabel: "Free access" },
-      "akureyri church": { priceISK: 0, priceLabel: "Free access" }
+      "akureyri church": { priceISK: 0, priceLabel: "Free access" },
+      "braud co": { priceISK: 1200, priceLabel: "Avg order" },
+      "baejarins beztu pylsur": { priceISK: 750, priceLabel: "Avg order" },
+      "efstidalur ii": { priceISK: 1800, priceLabel: "Avg order" },
+      "mia s country van": { priceISK: 3900, priceLabel: "Avg meal" },
+      "systrakaffi": { priceISK: 4200, priceLabel: "Avg meal" },
+      "pakkhus": { priceISK: 6900, priceLabel: "Avg meal" },
+      "vogafjos farm resort": { priceISK: 4700, priceLabel: "Avg meal" },
+      "rub23": { priceISK: 8900, priceLabel: "Avg meal" },
+      "fjoruhusid hellnum": { priceISK: 1800, priceLabel: "Avg order" },
+      "lava restaurant": { priceISK: 12900, priceLabel: "Avg meal" },
+      "airport snack run": { priceISK: 2200, priceLabel: "Est. spend" },
+      "tax free check": { priceISK: 0, priceLabel: "Free" }
+    };
+
+    const RECOMMENDATION_TITLE_KIND_OVERRIDES = {
+      "braud co": "Cafe",
+      "baejarins beztu pylsur": "Restaurant",
+      "efstidalur ii": "Cafe",
+      "mia s country van": "Restaurant",
+      "systrakaffi": "Restaurant",
+      "pakkhus": "Restaurant",
+      "vogafjos farm resort": "Restaurant",
+      "rub23": "Restaurant",
+      "fjoruhusid hellnum": "Cafe",
+      "airport snack run": "Restaurant",
+      "tax free check": "Tourist attraction"
+    };
+
+    const RECOMMENDATION_TITLE_DEDUP_ALIASES = {
+      "pakkhus": "pakkhus restaurant hofn",
+      "fjoruhusid hellnum": "fjoruhusid hellnar"
     };
 
     const RECOMMENDATION_KIND_PRICE_DEFAULTS = {
@@ -3616,6 +3661,39 @@
       "activity": { priceISK: 8900, priceLabel: "Est. from listings" },
       "tour": { priceISK: 15900, priceLabel: "Est. from listings" }
     };
+
+    function recommendationDedupKey(title) {
+      const normalizedTitle = normalizePlaceText(title);
+      return RECOMMENDATION_TITLE_DEDUP_ALIASES[normalizedTitle] || normalizedTitle;
+    }
+
+    function inferRecommendationKind(title, text, kind) {
+      const explicitKind = String(kind || "").trim();
+      if (explicitKind) {
+        return explicitKind;
+      }
+
+      const titleKey = normalizePlaceText(title);
+      const titleOverrideKind = RECOMMENDATION_TITLE_KIND_OVERRIDES[titleKey];
+      if (titleOverrideKind) {
+        return titleOverrideKind;
+      }
+
+      const combined = normalizePlaceText(String(title || "") + " " + String(text || ""));
+      if (/(cafe|coffee|bakery|creamery|roaster|kaffi)/.test(combined)) {
+        return "Cafe";
+      }
+      if (/(restaurant|food|dinner|lunch|burger|pylsur|bistro)/.test(combined)) {
+        return "Restaurant";
+      }
+      if (/(museum|church|cathedral|exhibition|heritage|cultural)/.test(combined)) {
+        return "Cultural spot";
+      }
+      if (/(viewpoint|walk|cliffs|waterfall|beach|canyon|landmark|spot)/.test(combined)) {
+        return "Tourist attraction";
+      }
+      return "Activity";
+    }
 
     function resolveRecommendationPricing(title, kind, priceISK, priceLabel) {
       let resolvedPriceISK = priceISK;
@@ -3676,7 +3754,7 @@
         : null;
       const title = String((item && item.title) || "Recommendation").trim();
       const text = String((item && item.text) || "").trim();
-      const kind = String((item && item.kind) || "Activity").trim();
+      const kind = inferRecommendationKind(title, text, item && item.kind);
       const resolvedPricing = resolveRecommendationPricing(
         title,
         kind,
@@ -3698,13 +3776,25 @@
       days.forEach((day) => {
         const enhanced = Array.isArray(ENHANCED_RECOMMENDATIONS_BY_DAY[day.day])
           ? ENHANCED_RECOMMENDATIONS_BY_DAY[day.day]
-          : Array.isArray(day.recommendations)
-            ? day.recommendations
-            : [];
+          : [];
         const discovery = Array.isArray(DISCOVERY_RECOMMENDATIONS_BY_DAY[day.day])
           ? DISCOVERY_RECOMMENDATIONS_BY_DAY[day.day]
           : [];
-        day.recommendations = [...enhanced, ...discovery].map(normalizeRecommendationItem);
+        const legacy = Array.isArray(LEGACY_RECOMMENDATIONS_BY_DAY[day.day])
+          ? LEGACY_RECOMMENDATIONS_BY_DAY[day.day]
+          : [];
+
+        const merged = [...enhanced, ...discovery, ...legacy]
+          .map(normalizeRecommendationItem);
+        const seen = new Set();
+        day.recommendations = merged.filter((item) => {
+          const key = recommendationDedupKey(item.title);
+          if (!key || seen.has(key)) {
+            return false;
+          }
+          seen.add(key);
+          return true;
+        });
       });
     }
 
