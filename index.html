@@ -981,6 +981,106 @@
       font-style: italic;
     }
 
+    #fuel-planner-card {
+      background: var(--card-ui);
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      padding: 14px 16px;
+    }
+
+    .fuel-planner-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      margin-top: 2px;
+    }
+
+    .fuel-planner-field {
+      display: grid;
+      gap: 4px;
+      font-size: 0.7rem;
+      color: var(--muted-text-ui);
+    }
+
+    .fuel-planner-field input {
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border-ui);
+      background: #ffffff;
+      color: var(--text-ui);
+      padding: 0 10px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .fuel-planner-field input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+    }
+
+    .fuel-range-main {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-ui);
+      letter-spacing: -0.01em;
+    }
+
+    .fuel-range-sub {
+      margin: 3px 0 0;
+      font-size: 0.71rem;
+      color: var(--muted-text-ui);
+      line-height: 1.35;
+    }
+
+    .fuel-planner-actions {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .fuel-refuel-btn {
+      border: none;
+      border-radius: 8px;
+      background: #16a34a;
+      color: #ffffff;
+      min-height: 34px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .fuel-refuel-btn:hover {
+      opacity: 0.9;
+    }
+
+    .fuel-refuel-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .fuel-override-row {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .fuel-override-input {
+      min-height: 34px;
+      max-width: 120px;
+    }
+
+    .fuel-manual-event {
+      margin: 0;
+      font-size: 0.69rem;
+      color: var(--muted-text-ui);
+      line-height: 1.35;
+    }
+
     #daily-limit-card {
       background: var(--card-ui);
       border: 1px solid var(--border-ui);
@@ -1895,6 +1995,23 @@
       white-space: nowrap;
     }
 
+    .itinerary-fuel-panel {
+      margin: 8px 0 10px;
+      border: 1px solid var(--border-ui);
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 8px 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .itinerary-fuel-status {
+      font-size: 0.73rem;
+      color: var(--text-ui);
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
     .map-embed {
       min-height: 260px;
       border: none;
@@ -2333,6 +2450,27 @@
       filter: brightness(1.04);
     }
 
+    .location-passed-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 4;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: rgba(22, 163, 74, 0.92);
+      color: #ffffff;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      line-height: 1;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);
+      pointer-events: none;
+    }
+
     .location-link-inline {
       color: inherit;
       text-decoration: underline;
@@ -2762,6 +2900,30 @@
       </div>
     </section>
 
+    <section id="fuel-planner-card" class="card" aria-labelledby="fuel-planner-title" style="display:none;">
+      <h2 id="fuel-planner-title" class="card-title">⛽ Fuel Planner</h2>
+      <div class="fuel-planner-grid">
+        <label class="fuel-planner-field">
+          <span>Tank capacity (L)</span>
+          <input id="fuel-tank-capacity-input" type="number" min="10" max="200" step="0.5" inputmode="decimal" placeholder="48">
+        </label>
+        <label class="fuel-planner-field">
+          <span>Avg consumption (L / 100km)</span>
+          <input id="fuel-consumption-input" type="number" min="1" max="30" step="0.1" inputmode="decimal" placeholder="8.0">
+        </label>
+      </div>
+      <div id="fuel-range-main" class="fuel-range-main">Estimated fuel: 100% - 540 km</div>
+      <p id="fuel-range-sub" class="fuel-range-sub">Safety range uses a 10% margin and updates from live trip progress when in Iceland.</p>
+      <div class="fuel-planner-actions">
+        <button id="fuel-refuel-btn" class="fuel-refuel-btn" type="button">Refuel (100%)</button>
+        <div class="fuel-override-row">
+          <input id="fuel-override-input" class="text-input fuel-override-input" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="Tank %">
+          <button id="fuel-override-save" class="btn" type="button">Save</button>
+        </div>
+        <p id="fuel-manual-event" class="fuel-manual-event">No manual override yet. Estimation starts at 100% from trip start.</p>
+      </div>
+    </section>
+
     <section id="sync-card" class="card" aria-labelledby="sync-title">
       <h2 id="sync-title" class="card-title">🔄 Couple Sync</h2>
       <div class="sync-form">
@@ -2771,7 +2933,7 @@
           Auto-push local changes
         </label>
         <p id="sync-status" class="sync-status" aria-live="polite"></p>
-        <p class="sync-note">Syncs packing + budget only. Enter the same trip code on both phones.</p>
+        <p class="sync-note">Syncs packing + budget + fuel planner. Enter the same trip code on both phones.</p>
       </div>
     </section>
 
@@ -2928,6 +3090,9 @@
 
         <div class="fullscreen-card itinerary-section-card">
           <h4 id="fullscreen-itinerary-title">Itinerary</h4>
+          <div id="fullscreen-fuel-panel" class="itinerary-fuel-panel">
+            <div id="fullscreen-fuel-status" class="itinerary-fuel-status">Fuel estimate unavailable.</div>
+          </div>
           <div id="fullscreen-itinerary" class="itinerary-list"></div>
         </div>
 
@@ -2993,7 +3158,18 @@
     const TODAY_OVERVIEW_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
     const NEARBY_SERVICE_LIST_LIMIT = 3;
     const NEARBY_SERVICE_REFRESH_INTERVAL_MS = 90 * 1000;
-    const SAFE_FUEL_RANGE_KM = 600;
+    const PASSED_STOP_PROGRESS_BUFFER_KM = 0.1;
+    const FUEL_SETTINGS_STORAGE_KEY = "icelandFuelPlannerV1";
+    const FUEL_EVENT_HISTORY_LIMIT = 240;
+    const DEFAULT_TANK_CAPACITY_L = 48;
+    const DEFAULT_AVG_CONSUMPTION_L_PER_100KM = 8;
+    const FUEL_SAFETY_MARGIN_RATIO = 0.9;
+    const ICELAND_GEO_BOUNDS = {
+      minLat: 62.8,
+      maxLat: 67.4,
+      minLon: -25.3,
+      maxLon: -12.2
+    };
     const MODULE_COLLAPSE_STORAGE_KEY = "icelandModuleCollapseV1";
     const UMFERDIN_ROAD_STATUS_PROXY_URL =
       SYNC_SUPABASE_URL + "/functions/v1/umferdin-road-status";
@@ -4016,6 +4192,64 @@
       return Number.isFinite(fallbackDistanceKm) ? fallbackDistanceKm : null;
     }
 
+    function parseFuelPriceISK(value) {
+      const numeric = Number(value);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        return numeric;
+      }
+      if (typeof value === "string") {
+        const normalized = value.trim().replace(",", ".");
+        const parsed = Number(normalized);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          return parsed;
+        }
+      }
+      return null;
+    }
+
+    function resolveGasPricePriority(station) {
+      const dieselCandidates = [
+        station && station.dieselISK,
+        station && station.dieselPriceISK,
+        station && station.diesel,
+        station && station.Diesel,
+        station && station.DieselISK
+      ];
+
+      for (const candidate of dieselCandidates) {
+        const parsed = parseFuelPriceISK(candidate);
+        if (Number.isFinite(parsed)) {
+          return {
+            value: parsed,
+            source: "diesel"
+          };
+        }
+      }
+
+      const fallback95 = parseFuelPriceISK(station && station.fuel95ISK);
+      if (Number.isFinite(fallback95)) {
+        return {
+          value: fallback95,
+          source: "fuel95"
+        };
+      }
+
+      return {
+        value: null,
+        source: null
+      };
+    }
+
+    function formatGasPriceLabel(priceInfo) {
+      if (!priceInfo || !Number.isFinite(priceInfo.value) || priceInfo.value <= 0) {
+        return "";
+      }
+      if (priceInfo.source === "diesel") {
+        return "Diesel: " + priceInfo.value.toFixed(1) + " ISK";
+      }
+      return "Price: " + priceInfo.value.toFixed(1) + " ISK";
+    }
+
     function findNearestGasStationForLeg(fromLocation, toLocation, fromPoint, toPoint) {
       const resolvedFrom = resolveCoords(fromLocation && fromLocation.coords, fromPoint);
       const resolvedTo = resolveCoords(toLocation && toLocation.coords, toPoint);
@@ -4028,7 +4262,7 @@
         return null;
       }
 
-      let best = null;
+      const candidates = [];
 
       GAS_STATION_POINTS.forEach((station) => {
         const stationPoint = resolveCoords(station && station.coords);
@@ -4043,17 +4277,36 @@
         }
 
         const detourKm = Math.max(0, fromToStationKm + stationToEndKm - baseDistanceKm);
-        if (!best || detourKm < best.detourKm) {
-          best = {
-            station,
-            stationPoint,
-            detourKm,
-            distanceFromStartKm: fromToStationKm,
-            distanceToEndKm: stationToEndKm
-          };
-        }
+        const priceInfo = resolveGasPricePriority(station);
+
+        candidates.push({
+          station,
+          stationPoint,
+          detourKm,
+          distanceFromStartKm: fromToStationKm,
+          distanceToEndKm: stationToEndKm,
+          gasPriceISK: priceInfo.value,
+          gasPriceSource: priceInfo.source
+        });
       });
 
+      candidates.sort((left, right) => {
+        const leftPrice = Number.isFinite(left.gasPriceISK)
+          ? left.gasPriceISK
+          : Number.POSITIVE_INFINITY;
+        const rightPrice = Number.isFinite(right.gasPriceISK)
+          ? right.gasPriceISK
+          : Number.POSITIVE_INFINITY;
+        if (leftPrice !== rightPrice) {
+          return leftPrice - rightPrice;
+        }
+        if (left.detourKm !== right.detourKm) {
+          return left.detourKm - right.detourKm;
+        }
+        return left.distanceFromStartKm - right.distanceFromStartKm;
+      });
+
+      const best = candidates[0] || null;
       if (!best) {
         return null;
       }
@@ -4071,23 +4324,18 @@
       };
     }
 
-    function computeGasSuggestionsForDay(targetDay, targetLegSummaries = []) {
-      const suggestionsByLeg = new Map();
-      if (!targetDay || !Number.isFinite(targetDay.day)) {
-        return suggestionsByLeg;
-      }
-
-      let distanceSinceRefuelKm = 0;
+    function buildTripLegRecords(targetDay = null, targetLegSummaries = []) {
+      const legRecords = [];
+      let cumulativeKm = 0;
 
       for (const day of days) {
-        if (day.day > targetDay.day) {
+        if (targetDay && day.day > targetDay.day) {
           break;
         }
-
         const routePoints = getDayRoutePoints(day);
         const locations = getDisplayLocations(day, routePoints);
         const summaries =
-          day.day === targetDay.day
+          targetDay && day.day === targetDay.day
             ? targetLegSummaries
             : getCachedDrivingLegDurations(day);
 
@@ -4097,7 +4345,6 @@
           const fromPoint = routePoints[index];
           const toPoint = routePoints[index + 1];
           const legSummary = summaries[index];
-
           const legDistanceKm = getLegDistanceKm(
             fromLocation,
             toLocation,
@@ -4109,30 +4356,263 @@
             continue;
           }
 
-          const projectedDistanceKm = distanceSinceRefuelKm + legDistanceKm;
-          if (projectedDistanceKm >= SAFE_FUEL_RANGE_KM) {
-            const suggestion = findNearestGasStationForLeg(
-              fromLocation,
-              toLocation,
-              fromPoint,
-              toPoint
-            );
-
-            if (suggestion) {
-              if (day.day === targetDay.day) {
-                suggestionsByLeg.set(index, {
-                  ...suggestion,
-                  projectedDistanceKm
-                });
-              }
-              distanceSinceRefuelKm = Math.max(0, suggestion.distanceToEndKm);
-              continue;
-            }
-          }
-
-          distanceSinceRefuelKm = projectedDistanceKm;
+          const startKm = cumulativeKm;
+          cumulativeKm += legDistanceKm;
+          legRecords.push({
+            dayNumber: day.day,
+            index,
+            fromLocation,
+            toLocation,
+            fromPoint,
+            toPoint,
+            distanceKm: legDistanceKm,
+            startKm,
+            endKm: cumulativeKm
+          });
         }
       }
+
+      return { legRecords, totalKm: cumulativeKm };
+    }
+
+    function estimateDayProgressFromLocation(dayNumber, userCoords, legRecords, dayDistanceKm) {
+      if (!Number.isFinite(dayDistanceKm) || dayDistanceKm <= 0) {
+        return 0;
+      }
+      if (!Array.isArray(userCoords) || userCoords.length !== 2) {
+        return 0;
+      }
+
+      const dayLegs = legRecords.filter((leg) => leg.dayNumber === dayNumber);
+      if (!dayLegs.length) {
+        return 0;
+      }
+
+      let nearestStop = null;
+      dayLegs.forEach((leg) => {
+        const startDistance = haversineDistanceKm(userCoords, leg.fromPoint);
+        if (!nearestStop || startDistance < nearestStop.distanceKm) {
+          nearestStop = {
+            distanceKm: startDistance,
+            progressKm: leg.startKm
+          };
+        }
+      });
+      const lastLeg = dayLegs[dayLegs.length - 1];
+      const endDistance = haversineDistanceKm(userCoords, lastLeg.toPoint);
+      if (!nearestStop || endDistance < nearestStop.distanceKm) {
+        nearestStop = {
+          distanceKm: endDistance,
+          progressKm: lastLeg.endKm
+        };
+      }
+
+      if (nearestStop && Number.isFinite(nearestStop.distanceKm) && nearestStop.distanceKm <= 8) {
+        const dayStartKm = dayLegs[0].startKm;
+        return Math.max(0, Math.min(dayDistanceKm, nearestStop.progressKm - dayStartKm));
+      }
+
+      let closestLeg = null;
+      dayLegs.forEach((leg) => {
+        const toStart = haversineDistanceKm(userCoords, leg.fromPoint);
+        const toEnd = haversineDistanceKm(userCoords, leg.toPoint);
+        if (!Number.isFinite(toStart) || !Number.isFinite(toEnd)) {
+          return;
+        }
+        const proximityKm = Math.max(0, toStart + toEnd - leg.distanceKm);
+        if (!closestLeg || proximityKm < closestLeg.proximityKm) {
+          closestLeg = {
+            leg,
+            toStart,
+            toEnd,
+            proximityKm
+          };
+        }
+      });
+
+      if (closestLeg && closestLeg.proximityKm <= 12) {
+        const totalToStops = Math.max(0.001, closestLeg.toStart + closestLeg.toEnd);
+        const legProgressRatio = clampNumber(
+          closestLeg.toStart / totalToStops,
+          0,
+          1,
+          0
+        );
+        const absoluteProgressKm =
+          closestLeg.leg.startKm + closestLeg.leg.distanceKm * legProgressRatio;
+        const dayStartKm = dayLegs[0].startKm;
+        return Math.max(0, Math.min(dayDistanceKm, absoluteProgressKm - dayStartKm));
+      }
+
+      return nearestStop
+        ? Math.max(0, Math.min(dayDistanceKm, nearestStop.progressKm - dayLegs[0].startKm))
+        : 0;
+    }
+
+    function estimateTripProgressKmAt(now = new Date(), userCoords = getLatestKnownCoords()) {
+      const { legRecords, totalKm } = buildTripLegRecords();
+      if (!legRecords.length) {
+        return 0;
+      }
+
+      const trip = getTripPhaseAndDay(now);
+      if (trip.phase === "before") {
+        return 0;
+      }
+      if (trip.phase === "after") {
+        return totalKm;
+      }
+
+      let completedKm = 0;
+      legRecords.forEach((leg) => {
+        if (leg.dayNumber < trip.dayNumber) {
+          completedKm = Math.max(completedKm, leg.endKm);
+        }
+      });
+
+      const dayLegs = legRecords.filter((leg) => leg.dayNumber === trip.dayNumber);
+      if (!dayLegs.length) {
+        return completedKm;
+      }
+      const dayDistanceKm = dayLegs[dayLegs.length - 1].endKm - dayLegs[0].startKm;
+      const dayProgressKm = estimateDayProgressFromLocation(
+        trip.dayNumber,
+        userCoords,
+        legRecords,
+        dayDistanceKm
+      );
+      return Math.max(
+        completedKm,
+        Math.min(totalKm, dayLegs[0].startKm + dayProgressKm)
+      );
+    }
+
+    function estimateFuelContextTripProgressKm(now = new Date(), userCoords = getLatestKnownCoords()) {
+      const nowDate = now instanceof Date ? now : new Date(now);
+      const nowMs = nowDate.getTime();
+      if (!Number.isFinite(nowMs)) {
+        return 0;
+      }
+      const tripStartDay = startOfLocalDay(TRIP_START_DATE);
+      const todayDay = startOfLocalDay(nowDate);
+      if (todayDay < tripStartDay) {
+        return 0;
+      }
+      if (userCoords && !isCoordsInIceland(userCoords)) {
+        return 0;
+      }
+      return estimateTripProgressKmAt(nowDate, userCoords);
+    }
+
+    function getLatestFuelReference(nowMs = Date.now()) {
+      const events = Array.isArray(fuelPlannerState && fuelPlannerState.manualEvents)
+        ? fuelPlannerState.manualEvents
+        : [];
+      for (let index = events.length - 1; index >= 0; index -= 1) {
+        const event = events[index];
+        if (event && Number.isFinite(event.createdAt) && event.createdAt <= nowMs) {
+          return event;
+        }
+      }
+      return null;
+    }
+
+    function estimateCurrentTankLevelPercent(now = new Date(), userCoords = getLatestKnownCoords()) {
+      const nowDate = now instanceof Date ? now : new Date(now);
+      const nowMs = nowDate.getTime();
+      if (!Number.isFinite(nowMs)) {
+        return 100;
+      }
+
+      const tripStartDay = startOfLocalDay(TRIP_START_DATE);
+      const todayDay = startOfLocalDay(nowDate);
+      if (todayDay < tripStartDay) {
+        return 100;
+      }
+      if (userCoords && !isCoordsInIceland(userCoords)) {
+        return 100;
+      }
+
+      const currentProgressKm = estimateTripProgressKmAt(nowDate, userCoords);
+      const latestReference = getLatestFuelReference(nowMs);
+      const referenceLevelPercent = latestReference
+        ? clampNumber(latestReference.levelPercent, 0, 100, 100)
+        : 100;
+      const referenceProgressKm =
+        latestReference && Number.isFinite(latestReference.progressKm) && latestReference.progressKm >= 0
+          ? latestReference.progressKm
+          : latestReference
+            ? estimateTripProgressKmAt(new Date(latestReference.createdAt), latestReference.coords || null)
+            : 0;
+
+      const distanceSinceReferenceKm = Math.max(0, currentProgressKm - referenceProgressKm);
+      const avgConsumption = clampNumber(
+        fuelPlannerState.avgConsumptionLPer100Km,
+        1,
+        30,
+        DEFAULT_AVG_CONSUMPTION_L_PER_100KM
+      );
+      const tankCapacity = clampNumber(
+        fuelPlannerState.tankCapacityL,
+        10,
+        200,
+        DEFAULT_TANK_CAPACITY_L
+      );
+      const litersUsed = distanceSinceReferenceKm * (avgConsumption / 100);
+      const levelDeltaPercent = (litersUsed / tankCapacity) * 100;
+      return Math.round(clampNumber(referenceLevelPercent - levelDeltaPercent, 0, 100, 100));
+    }
+
+    function computeGasSuggestionsForDay(targetDay, targetLegSummaries = []) {
+      const suggestionsByLeg = new Map();
+      if (!targetDay || !Number.isFinite(targetDay.day)) {
+        return suggestionsByLeg;
+      }
+
+      const fullSafeRangeKm = getFullSafeFuelRangeKm();
+      const currentTankLevelPercent = estimateCurrentTankLevelPercent();
+      let remainingSafeRangeKm = fullSafeRangeKm * (currentTankLevelPercent / 100);
+      if (!Number.isFinite(remainingSafeRangeKm) || remainingSafeRangeKm <= 0) {
+        remainingSafeRangeKm = fullSafeRangeKm;
+      }
+
+      const now = new Date();
+      const currentProgressKm = estimateTripProgressKmAt(now, getLatestKnownCoords());
+      const { legRecords } = buildTripLegRecords(targetDay, targetLegSummaries);
+
+      legRecords.forEach((leg) => {
+        if (leg.endKm <= currentProgressKm) {
+          return;
+        }
+
+        const legCompletedKm = Math.max(0, currentProgressKm - leg.startKm);
+        const legRemainingKm = Math.max(0, leg.distanceKm - legCompletedKm);
+        if (!legRemainingKm) {
+          return;
+        }
+
+        if (remainingSafeRangeKm < legRemainingKm) {
+          const suggestion = findNearestGasStationForLeg(
+            leg.fromLocation,
+            leg.toLocation,
+            leg.fromPoint,
+            leg.toPoint
+          );
+
+          if (suggestion) {
+            if (leg.dayNumber === targetDay.day) {
+              suggestionsByLeg.set(leg.index, {
+                ...suggestion,
+                projectedDistanceKm: legRemainingKm
+              });
+            }
+            remainingSafeRangeKm = Math.max(0, fullSafeRangeKm - suggestion.distanceToEndKm);
+            return;
+          }
+        }
+
+        remainingSafeRangeKm = Math.max(0, remainingSafeRangeKm - legRemainingKm);
+      });
 
       return suggestionsByLeg;
     }
@@ -5435,11 +5915,140 @@
       });
     }
 
+    function clampNumber(value, minValue, maxValue, fallbackValue = minValue) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) {
+        return fallbackValue;
+      }
+      return Math.min(maxValue, Math.max(minValue, numeric));
+    }
+
+    function sanitizeFuelPlannerState(rawState) {
+      const parsed = rawState && typeof rawState === "object" ? rawState : {};
+      const rawEvents = Array.isArray(parsed.manualEvents) ? parsed.manualEvents : [];
+      const manualEvents = rawEvents
+        .map((entry) => {
+          const createdAt = Number(entry && entry.createdAt);
+          const progressKm = Number(entry && entry.progressKm);
+          const levelPercent = Math.round(
+            clampNumber(entry && entry.levelPercent, 0, 100, 100)
+          );
+          const type = entry && entry.type === "override" ? "override" : "refuel";
+          const coords =
+            entry &&
+            Array.isArray(entry.coords) &&
+            entry.coords.length === 2 &&
+            Number.isFinite(Number(entry.coords[0])) &&
+            Number.isFinite(Number(entry.coords[1]))
+              ? [Number(entry.coords[0]), Number(entry.coords[1])]
+              : null;
+          if (!Number.isFinite(createdAt) || createdAt <= 0) {
+            return null;
+          }
+          return {
+            id: String((entry && entry.id) || createdAt),
+            type,
+            createdAt: Math.round(createdAt),
+            levelPercent,
+            progressKm: Number.isFinite(progressKm) && progressKm >= 0 ? progressKm : null,
+            coords
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.createdAt - b.createdAt)
+        .slice(-FUEL_EVENT_HISTORY_LIMIT);
+
+      return {
+        tankCapacityL: Number(
+          clampNumber(parsed.tankCapacityL, 10, 200, DEFAULT_TANK_CAPACITY_L).toFixed(1)
+        ),
+        avgConsumptionLPer100Km: Number(
+          clampNumber(
+            parsed.avgConsumptionLPer100Km,
+            1,
+            30,
+            DEFAULT_AVG_CONSUMPTION_L_PER_100KM
+          ).toFixed(1)
+        ),
+        manualEvents
+      };
+    }
+
+    function loadFuelPlannerState() {
+      const parsed = appPersistence.loadDomain(FUEL_SETTINGS_STORAGE_KEY, null);
+      if (!parsed || typeof parsed !== "object") {
+        return {
+          tankCapacityL: DEFAULT_TANK_CAPACITY_L,
+          avgConsumptionLPer100Km: DEFAULT_AVG_CONSUMPTION_L_PER_100KM,
+          manualEvents: []
+        };
+      }
+      return sanitizeFuelPlannerState(parsed);
+    }
+
+    function saveFuelPlannerState(options = {}) {
+      appPersistence.saveDomain(FUEL_SETTINGS_STORAGE_KEY, fuelPlannerState);
+      if (!options.skipSync) {
+        markSyncLocalChange();
+      }
+    }
+
+    function getLatestKnownCoords() {
+      if (
+        Array.isArray(nearbyLastCoords) &&
+        nearbyLastCoords.length === 2 &&
+        Number.isFinite(Number(nearbyLastCoords[0])) &&
+        Number.isFinite(Number(nearbyLastCoords[1]))
+      ) {
+        return [Number(nearbyLastCoords[0]), Number(nearbyLastCoords[1])];
+      }
+      return null;
+    }
+
+    function isCoordsInIceland(coords) {
+      if (!Array.isArray(coords) || coords.length !== 2) {
+        return false;
+      }
+      const lat = Number(coords[0]);
+      const lon = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return false;
+      }
+      return (
+        lat >= ICELAND_GEO_BOUNDS.minLat &&
+        lat <= ICELAND_GEO_BOUNDS.maxLat &&
+        lon >= ICELAND_GEO_BOUNDS.minLon &&
+        lon <= ICELAND_GEO_BOUNDS.maxLon
+      );
+    }
+
+    function getFullSafeFuelRangeKm() {
+      const tankCapacity = clampNumber(fuelPlannerState.tankCapacityL, 10, 200, DEFAULT_TANK_CAPACITY_L);
+      const avgConsumption = clampNumber(
+        fuelPlannerState.avgConsumptionLPer100Km,
+        1,
+        30,
+        DEFAULT_AVG_CONSUMPTION_L_PER_100KM
+      );
+      const theoreticalRange = (tankCapacity * 100) / avgConsumption;
+      return Math.max(50, theoreticalRange * FUEL_SAFETY_MARGIN_RATIO);
+    }
+
+    function getCurrentFuelRangeKm() {
+      const estimatedLevelPercent = estimateCurrentTankLevelPercent();
+      const safeRangeKm = getFullSafeFuelRangeKm() * (estimatedLevelPercent / 100);
+      if (!Number.isFinite(safeRangeKm) || safeRangeKm <= 0) {
+        return getFullSafeFuelRangeKm();
+      }
+      return safeRangeKm;
+    }
+
     appActions.setBudget(loadBudgetState());
     let nextExpenseId = budgetState.expenses.length
       ? Math.max(...budgetState.expenses.map((item) => item.id)) + 1
       : 1;
     let fxState = loadFxState();
+    let fuelPlannerState = loadFuelPlannerState();
 
     const budgetMainEl = document.getElementById("budget-main");
     const budgetPercentEl = document.getElementById("budget-percent");
@@ -5457,6 +6066,15 @@
     const budgetCalcOutputEl = document.getElementById("budget-calc-output");
     const budgetToggleEl = document.getElementById("budget-toggle");
     const budgetExpandedEl = document.getElementById("budget-expanded");
+    const fuelPlannerCardEl = document.getElementById("fuel-planner-card");
+    const fuelTankCapacityInputEl = document.getElementById("fuel-tank-capacity-input");
+    const fuelConsumptionInputEl = document.getElementById("fuel-consumption-input");
+    const fuelRangeMainEl = document.getElementById("fuel-range-main");
+    const fuelRangeSubEl = document.getElementById("fuel-range-sub");
+    const fuelRefuelBtnEl = document.getElementById("fuel-refuel-btn");
+    const fuelOverrideInputEl = document.getElementById("fuel-override-input");
+    const fuelOverrideSaveEl = document.getElementById("fuel-override-save");
+    const fuelManualEventEl = document.getElementById("fuel-manual-event");
     const dailyLimitCardEl = document.getElementById("daily-limit-card");
     const todayOverviewCardEl = document.getElementById("today-overview-card");
     const todayOverviewToggleEl = document.getElementById("today-overview-toggle");
@@ -5773,6 +6391,10 @@
       };
     }
 
+    function sanitizeSyncedFuelPlannerState(rawState) {
+      return sanitizeFuelPlannerState(rawState);
+    }
+
     function createSyncPayload() {
       const state = appStore.getState();
       return {
@@ -5783,6 +6405,7 @@
           maxBudgetISK: toNonNegativeInteger(state.budget.maxBudgetISK),
           expenses: state.budget.expenses
         },
+        fuelPlannerState: sanitizeSyncedFuelPlannerState(fuelPlannerState),
         syncSettings: state.syncSettings
       };
     }
@@ -5795,6 +6418,11 @@
       const migratedPayload = appRuntime.migrateSyncedPayload(payload);
       const nextPackItems = sanitizeSyncedPackItems(migratedPayload.packItems);
       const nextBudgetState = sanitizeSyncedBudgetState(migratedPayload.budgetState);
+      const hasRemoteFuelPlannerState =
+        payload.fuelPlannerState && typeof payload.fuelPlannerState === "object";
+      const nextFuelPlannerState = hasRemoteFuelPlannerState
+        ? sanitizeSyncedFuelPlannerState(payload.fuelPlannerState)
+        : fuelPlannerState;
 
       syncApplyingRemote = true;
       try {
@@ -5805,6 +6433,12 @@
           : 1;
         saveBudgetState({ skipSync: true });
         renderBudgetCard();
+        if (hasRemoteFuelPlannerState) {
+          fuelPlannerState = nextFuelPlannerState;
+          saveFuelPlannerState({ skipSync: true });
+          renderFuelPlannerCard();
+          rerenderActiveFullscreenItineraryForFuelRange();
+        }
         if (migratedPayload.syncSettings && typeof migratedPayload.syncSettings === "object") {
           appActions.setSyncSettings(migratedPayload.syncSettings);
           saveSyncSettings();
@@ -6012,7 +6646,7 @@
       if (!hasSyncConfig()) {
         await stopSyncLiveSubscription();
         if (!silent) {
-          setSyncStatus("Enter your trip code to sync budget and packing.");
+          setSyncStatus("Enter your trip code to sync budget, packing, and fuel planner.");
         }
         return false;
       }
@@ -6100,7 +6734,7 @@
       if (hasSyncConfig()) {
         activateSyncForCurrentTrip({ silent: false });
       } else {
-        setSyncStatus("Enter your trip code to sync budget and packing.");
+        setSyncStatus("Enter your trip code to sync budget, packing, and fuel planner.");
       }
     }
 
@@ -7302,10 +7936,8 @@
 
       listEl.innerHTML = entries
         .map((entry) => {
-          const fuelPriceText =
-            Number.isFinite(entry.fuel95ISK) && entry.fuel95ISK > 0
-              ? " · 95: " + escapeHtml(String(entry.fuel95ISK.toFixed(1))) + " ISK"
-              : "";
+          const gasPriceText = formatGasPriceLabel(resolveGasPricePriority(entry));
+          const fuelPriceText = gasPriceText ? " · " + escapeHtml(gasPriceText) : "";
           return (
             "<a class=\"nearby-service-item\" href=\"" + escapeHtml(getServicePointMapsUrl(entry)) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
               "<span class=\"nearby-service-main\">" + escapeHtml(getServicePointLabel(entry)) + "</span>" +
@@ -7371,6 +8003,8 @@
           return;
         }
         renderNearbyServicesFromCoords(coords);
+        renderFuelPlannerCard();
+        rerenderActiveFullscreenItineraryForFuelRange();
       };
 
       const onError = (error) => {
@@ -7547,6 +8181,187 @@
       renderBudgetCalculator();
       renderFxRateLabel(false);
       renderDailyBudgetLimitCard();
+    }
+
+    function renderFuelPlannerCard() {
+      if (!fuelPlannerCardEl) {
+        return;
+      }
+
+      if (fuelTankCapacityInputEl && document.activeElement !== fuelTankCapacityInputEl) {
+        fuelTankCapacityInputEl.value = String(fuelPlannerState.tankCapacityL);
+      }
+      if (fuelConsumptionInputEl && document.activeElement !== fuelConsumptionInputEl) {
+        fuelConsumptionInputEl.value = String(fuelPlannerState.avgConsumptionLPer100Km);
+      }
+
+      const estimatedTankLevelPercent = estimateCurrentTankLevelPercent();
+      const estimatedRangeKm = getCurrentFuelRangeKm();
+      if (fuelRangeMainEl) {
+        fuelRangeMainEl.textContent =
+          "Estimated fuel: " +
+          estimatedTankLevelPercent +
+          "% - " +
+          formatDistanceKm(estimatedRangeKm);
+      }
+      if (fuelRangeSubEl) {
+        fuelRangeSubEl.textContent =
+          "Safety range uses a 10% margin. Tank: " +
+          fuelPlannerState.tankCapacityL +
+          "L · Avg: " +
+          fuelPlannerState.avgConsumptionLPer100Km +
+          "L/100km.";
+      }
+      if (fuelOverrideInputEl && document.activeElement !== fuelOverrideInputEl) {
+        fuelOverrideInputEl.value = String(estimatedTankLevelPercent);
+      }
+      if (fuelManualEventEl) {
+        fuelManualEventEl.textContent = describeFuelReferenceEvent(getLatestFuelReference());
+      }
+    }
+
+    function applyFuelPlannerInputs(options = {}) {
+      const nextState = sanitizeFuelPlannerState({
+        ...fuelPlannerState,
+        tankCapacityL: fuelTankCapacityInputEl ? fuelTankCapacityInputEl.value : fuelPlannerState.tankCapacityL,
+        avgConsumptionLPer100Km: fuelConsumptionInputEl ? fuelConsumptionInputEl.value : fuelPlannerState.avgConsumptionLPer100Km
+      });
+      const changed =
+        nextState.tankCapacityL !== fuelPlannerState.tankCapacityL ||
+        nextState.avgConsumptionLPer100Km !== fuelPlannerState.avgConsumptionLPer100Km;
+      fuelPlannerState = nextState;
+      renderFuelPlannerCard();
+      if (changed && options.persist !== false) {
+        saveFuelPlannerState(options);
+      }
+      if (changed || options.forceRerender) {
+        rerenderActiveFullscreenItineraryForFuelRange();
+      }
+    }
+
+    function describeFuelReferenceEvent(event) {
+      if (!event) {
+        return "No manual override yet. Estimation starts at 100% from trip start.";
+      }
+      const actionLabel = event.type === "override" ? "Manual override" : "Refuel";
+      const when = new Date(event.createdAt).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+      const locationText =
+        event.coords && Array.isArray(event.coords)
+          ? " @ " + event.coords[0].toFixed(4) + ", " + event.coords[1].toFixed(4)
+          : "";
+      return actionLabel + ": " + event.levelPercent + "% · " + when + locationText;
+    }
+
+    function renderFullscreenFuelPanel() {
+      if (!fullscreenFuelPanelEl) {
+        return;
+      }
+      const estimatedTankLevelPercent = estimateCurrentTankLevelPercent();
+      const safeRangeKm = getCurrentFuelRangeKm();
+
+      if (fullscreenFuelStatusEl) {
+        fullscreenFuelStatusEl.textContent =
+          "Estimated fuel: " +
+          estimatedTankLevelPercent +
+          "% - " +
+          formatDistanceKm(safeRangeKm);
+      }
+    }
+
+    async function getCurrentCoordsForFuelReference() {
+      const cachedCoords = getLatestKnownCoords();
+      if (cachedCoords) {
+        return cachedCoords;
+      }
+      if (!navigator.geolocation) {
+        return null;
+      }
+      return await new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const coords = [
+              Number(position.coords.latitude),
+              Number(position.coords.longitude)
+            ];
+            resolve(coords);
+          },
+          () => {
+            resolve(null);
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 8000,
+            maximumAge: 60 * 1000
+          }
+        );
+      });
+    }
+
+    async function registerFuelReference(type, levelPercent) {
+      const nowMs = Date.now();
+      const coords = await getCurrentCoordsForFuelReference();
+      const progressKm = estimateTripProgressKmAt(new Date(nowMs), coords);
+      const nextEvent = {
+        id: String(nowMs) + "-" + Math.random().toString(36).slice(2, 6),
+        type: type === "override" ? "override" : "refuel",
+        createdAt: nowMs,
+        levelPercent: Math.round(clampNumber(levelPercent, 0, 100, 100)),
+        progressKm: Number.isFinite(progressKm) && progressKm >= 0 ? progressKm : null,
+        coords: Array.isArray(coords) ? coords : null
+      };
+      const nextState = sanitizeFuelPlannerState({
+        ...fuelPlannerState,
+        manualEvents: [...(fuelPlannerState.manualEvents || []), nextEvent]
+      });
+      fuelPlannerState = nextState;
+      saveFuelPlannerState();
+      renderFuelPlannerCard();
+      renderFullscreenFuelPanel();
+      rerenderActiveFullscreenItineraryForFuelRange();
+    }
+
+    function initializeFuelPlannerCard() {
+      startNearbyServiceWatcher();
+      renderFuelPlannerCard();
+      if (fuelTankCapacityInputEl) {
+        fuelTankCapacityInputEl.addEventListener("change", () => {
+          applyFuelPlannerInputs({ persist: true });
+        });
+      }
+      if (fuelConsumptionInputEl) {
+        fuelConsumptionInputEl.addEventListener("change", () => {
+          applyFuelPlannerInputs({ persist: true });
+        });
+      }
+      if (fuelOverrideSaveEl) {
+        fuelOverrideSaveEl.addEventListener("click", async () => {
+          const value = fuelOverrideInputEl
+            ? fuelOverrideInputEl.value
+            : "";
+          const levelPercent = Math.round(clampNumber(value, 0, 100, estimateCurrentTankLevelPercent()));
+          fuelOverrideSaveEl.disabled = true;
+          try {
+            await registerFuelReference("override", levelPercent);
+          } finally {
+            fuelOverrideSaveEl.disabled = false;
+          }
+        });
+      }
+      if (fuelRefuelBtnEl) {
+        fuelRefuelBtnEl.addEventListener("click", async () => {
+          fuelRefuelBtnEl.disabled = true;
+          try {
+            await registerFuelReference("refuel", 100);
+          } finally {
+            fuelRefuelBtnEl.disabled = false;
+          }
+        });
+      }
     }
 
     async function refreshIskEurRate() {
@@ -8469,6 +9284,7 @@
         setElementVisibility(itineraryOverviewCardEl, true);
         setElementVisibility(packingCardEl, false);
         setElementVisibility(fxCardEl, false);
+        setElementVisibility(fuelPlannerCardEl, false);
         setElementVisibility(syncCardEl, false);
         setElementVisibility(usefulLinksCardEl, false);
         setElementVisibility(budgetCardViewEl, false);
@@ -8490,6 +9306,7 @@
         setElementVisibility(itineraryOverviewCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, true);
+        setElementVisibility(fuelPlannerCardEl, true);
         setElementVisibility(syncCardEl, true);
         setElementVisibility(usefulLinksCardEl, true);
         setElementVisibility(budgetCardViewEl, true);
@@ -8508,6 +9325,7 @@
         setElementVisibility(itineraryOverviewCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, false);
+        setElementVisibility(fuelPlannerCardEl, false);
         setElementVisibility(syncCardEl, false);
         setElementVisibility(usefulLinksCardEl, false);
         setElementVisibility(budgetCardViewEl, false);
@@ -8527,6 +9345,7 @@
       setElementVisibility(itineraryOverviewCardEl, false);
       setElementVisibility(packingCardEl, false);
       setElementVisibility(fxCardEl, false);
+      setElementVisibility(fuelPlannerCardEl, false);
       setElementVisibility(syncCardEl, false);
       setElementVisibility(usefulLinksCardEl, false);
       setElementVisibility(budgetCardViewEl, false);
@@ -8620,6 +9439,8 @@
     const modalMapLinkEl = document.getElementById("fullscreen-map-link");
     const modalRouteEl = document.getElementById("fullscreen-route");
     const modalItineraryTitleEl = document.getElementById("fullscreen-itinerary-title");
+    const fullscreenFuelPanelEl = document.getElementById("fullscreen-fuel-panel");
+    const fullscreenFuelStatusEl = document.getElementById("fullscreen-fuel-status");
     const modalItineraryEl = document.getElementById("fullscreen-itinerary");
     const modalRecoEl = document.getElementById("fullscreen-reco");
     const closeModalBtnEl = document.getElementById("close-fullscreen");
@@ -8724,6 +9545,19 @@
       const routePoints = getDayRoutePoints(day);
       const locations = getDisplayLocations(day, routePoints);
       const gasSuggestionsByLeg = computeGasSuggestionsForDay(day, driveLegSummaries);
+      const currentProgressKm = estimateFuelContextTripProgressKm(new Date(), getLatestKnownCoords());
+      const dayLegRecords = buildTripLegRecords(day, driveLegSummaries).legRecords
+        .filter((leg) => leg.dayNumber === day.day);
+      const stopProgressKmByIndex = new Array(locations.length).fill(null);
+      if (dayLegRecords.length) {
+        stopProgressKmByIndex[0] = dayLegRecords[0].startKm;
+        for (let stopIndex = 1; stopIndex < locations.length; stopIndex += 1) {
+          const previousLeg = dayLegRecords[stopIndex - 1];
+          stopProgressKmByIndex[stopIndex] = previousLeg
+            ? previousLeg.endKm
+            : stopProgressKmByIndex[stopIndex - 1];
+        }
+      }
       const dayCampPricing = getDayCampPricing(day);
       const intermediateStops = Math.max(0, locations.length - 2);
       if (modalItineraryTitleEl) {
@@ -8742,7 +9576,17 @@
         const locationUrl = locationMapsUrl(location, routePoints[index]);
         const isDepartureStop = index === 0;
         const isEndStop = index === locations.length - 1;
-        const cardClass = "location-card" + (location.isCampsite ? " campsite-card" : "") + (isDepartureStop ? " departure-card" : "") + (isEndStop ? " end-card" : "");
+        const stopProgressKm = stopProgressKmByIndex[index];
+        const isPassedStop =
+          Number.isFinite(stopProgressKm) &&
+          Number.isFinite(currentProgressKm) &&
+          currentProgressKm >= stopProgressKm + PASSED_STOP_PROGRESS_BUFFER_KM;
+        const cardClass =
+          "location-card" +
+          (location.isCampsite ? " campsite-card" : "") +
+          (isDepartureStop ? " departure-card" : "") +
+          (isEndStop ? " end-card" : "") +
+          (isPassedStop ? " passed-stop" : "");
         const stepIcons = [];
         if (isDepartureStop) {
           stepIcons.push("<span class=\"location-step-icon departure\" title=\"Departure\">🚩</span>");
@@ -8780,6 +9624,9 @@
         html +=
           "<article class=\"itinerary-item\">" +
             "<div class=\"" + cardClass + "\">" +
+                (isPassedStop
+                  ? "<span class=\"location-passed-badge\" aria-label=\"Passed stop\" title=\"Passed\">✓ Passed</span>"
+                  : "") +
                 "<div class=\"location-media loading\">" +
                   "<div class=\"image-loader\" aria-hidden=\"true\"></div>" +
                   "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\" data-location-name=\"" + locationName + "\" data-day-number=\"" + day.day + "\" data-stop-index=\"" + index + "\"" + cachedImageAttr + " data-lorem-src=\"" + loremFallbackSrc + "\" data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
@@ -8854,15 +9701,25 @@
             "</div>" +
             (gasSuggestionsByLeg.has(index)
               ? (
+                (() => {
+                  const suggestion = gasSuggestionsByLeg.get(index);
+                  const gasPriceText = formatGasPriceLabel({
+                    value: suggestion.gasPriceISK,
+                    source: suggestion.gasPriceSource
+                  });
+                  return (
                 "<a class=\"itinerary-gas-chip\" href=\"" +
-                  escapeHtml(gasSuggestionsByLeg.get(index).directionsUrl) +
+                  escapeHtml(suggestion.directionsUrl) +
                   "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open suggested gas-stop detour between " + escapeHtml(locations[index].name) + " and " + escapeHtml(locations[index + 1].name) + "\">" +
                   "⛽ " +
-                  escapeHtml(getServicePointLabel(gasSuggestionsByLeg.get(index).station)) +
+                  escapeHtml(getServicePointLabel(suggestion.station)) +
+                  (gasPriceText ? " · " + escapeHtml(gasPriceText) : "") +
                   " · +" +
-                  escapeHtml(formatDistanceKm(gasSuggestionsByLeg.get(index).detourKm)) +
+                  escapeHtml(formatDistanceKm(suggestion.detourKm)) +
                   " detour" +
                 "</a>"
+                  );
+                })()
               )
               : "") +
             "<span class=\"itinerary-leg-line\" aria-hidden=\"true\"></span>" +
@@ -8960,6 +9817,29 @@
       populateRecommendationImages(day);
     }
 
+    function rerenderActiveFullscreenItineraryForFuelRange() {
+      if (!modalEl || !modalEl.classList.contains("open") || !Number.isFinite(activeFullscreenDay)) {
+        return;
+      }
+      const day = days.find((entry) => entry.day === activeFullscreenDay);
+      if (!day) {
+        return;
+      }
+      const color = dayColors[(day.day - 1) % dayColors.length];
+      const cachedDriveSummaries = getCachedDrivingLegDurations(day);
+      renderItinerary(day, color, cachedDriveSummaries, !cachedDriveSummaries.length);
+      renderFullscreenFuelPanel();
+
+      const requestId = ++driveTimesRequestId;
+      fetchDrivingLegDurations(day).then((durations) => {
+        if (requestId !== driveTimesRequestId || !modalEl.classList.contains("open")) {
+          return;
+        }
+        renderItinerary(day, color, durations, false);
+        renderFullscreenFuelPanel();
+      });
+    }
+
     function openDayFullscreen(dayNumber) {
       const day = days.find((entry) => entry.day === dayNumber);
       if (!day) {
@@ -8991,6 +9871,7 @@
       renderRouteStops(day, color);
       renderDayDriveTag(day, cachedDriveSummaries);
       renderItinerary(day, color, cachedDriveSummaries, !cachedDriveSummaries.length);
+      renderFullscreenFuelPanel();
       renderRecommendations(day);
 
       const requestId = ++driveTimesRequestId;
@@ -9001,6 +9882,7 @@
         renderFullscreenSubtitle(day, durations);
         renderDayDriveTag(day, durations);
         renderItinerary(day, color, durations, false);
+        renderFullscreenFuelPanel();
       });
     }
 
@@ -9043,6 +9925,7 @@
 
     renderPackList();
     renderBudgetCard();
+    initializeFuelPlannerCard();
     if (!IS_SMOKE_MODE) {
       initializeSyncCard();
       refreshIskEurRate();
