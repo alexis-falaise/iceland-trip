@@ -8280,17 +8280,75 @@
       return actionLabel + ": " + event.levelPercent + "% · " + when + locationText;
     }
 
+    function estimateModalTankLevelForDay(
+      dayNumber,
+      now = new Date(),
+      userCoords = getLatestKnownCoords()
+    ) {
+      const nowDate = now instanceof Date ? now : new Date(now);
+      const currentLevelPercent = estimateCurrentTankLevelPercent(nowDate, userCoords);
+      const trip = getTripPhaseAndDay(nowDate);
+      if (!Number.isFinite(dayNumber) || dayNumber <= trip.dayNumber) {
+        return {
+          levelPercent: currentLevelPercent,
+          projected: false
+        };
+      }
+
+      const { legRecords } = buildTripLegRecords();
+      const targetDayStartLeg = legRecords.find((leg) => leg.dayNumber === dayNumber);
+      if (!targetDayStartLeg || !Number.isFinite(targetDayStartLeg.startKm)) {
+        return {
+          levelPercent: currentLevelPercent,
+          projected: false
+        };
+      }
+
+      const currentProgressKm = estimateFuelContextTripProgressKm(nowDate, userCoords);
+      const distanceToTargetDayKm = Math.max(0, targetDayStartLeg.startKm - currentProgressKm);
+      const avgConsumption = clampNumber(
+        fuelPlannerState.avgConsumptionLPer100Km,
+        1,
+        30,
+        DEFAULT_AVG_CONSUMPTION_L_PER_100KM
+      );
+      const tankCapacity = clampNumber(
+        fuelPlannerState.tankCapacityL,
+        10,
+        200,
+        DEFAULT_TANK_CAPACITY_L
+      );
+      const litersNeeded = distanceToTargetDayKm * (avgConsumption / 100);
+      const projectedLevelPercent = Math.round(
+        clampNumber(
+          currentLevelPercent - (litersNeeded / tankCapacity) * 100,
+          0,
+          100,
+          currentLevelPercent
+        )
+      );
+      return {
+        levelPercent: projectedLevelPercent,
+        projected: true
+      };
+    }
+
     function renderFullscreenFuelPanel() {
       if (!fullscreenFuelPanelEl) {
         return;
       }
-      const estimatedTankLevelPercent = estimateCurrentTankLevelPercent();
-      const safeRangeKm = getCurrentFuelRangeKm();
+      const modalDayNumber = Number(activeFullscreenDay);
+      const modalFuel = estimateModalTankLevelForDay(modalDayNumber, new Date(), getLatestKnownCoords());
+      const safeRangeKm = Math.max(
+        0,
+        getFullSafeFuelRangeKm() * (clampNumber(modalFuel.levelPercent, 0, 100, 0) / 100)
+      );
 
       if (fullscreenFuelStatusEl) {
+        const labelPrefix = modalFuel.projected ? "Projected fuel: " : "Estimated fuel: ";
         fullscreenFuelStatusEl.textContent =
-          "Estimated fuel: " +
-          estimatedTankLevelPercent +
+          labelPrefix +
+          modalFuel.levelPercent +
           "% - " +
           formatDistanceKm(safeRangeKm);
       }
