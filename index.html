@@ -8305,23 +8305,64 @@
       }
 
       const currentProgressKm = estimateFuelContextTripProgressKm(nowDate, userCoords);
-      const distanceToTargetDayKm = Math.max(0, targetDayStartLeg.startKm - currentProgressKm);
-      const avgConsumption = clampNumber(
-        fuelPlannerState.avgConsumptionLPer100Km,
-        1,
-        30,
-        DEFAULT_AVG_CONSUMPTION_L_PER_100KM
+      const targetDayStartKm = targetDayStartLeg.startKm;
+      const fullSafeRangeKm = getFullSafeFuelRangeKm();
+      if (!Number.isFinite(fullSafeRangeKm) || fullSafeRangeKm <= 0) {
+        return {
+          levelPercent: currentLevelPercent,
+          projected: false
+        };
+      }
+
+      let remainingSafeRangeKm = Math.max(
+        0,
+        fullSafeRangeKm * (clampNumber(currentLevelPercent, 0, 100, 0) / 100)
       );
-      const tankCapacity = clampNumber(
-        fuelPlannerState.tankCapacityL,
-        10,
-        200,
-        DEFAULT_TANK_CAPACITY_L
-      );
-      const litersNeeded = distanceToTargetDayKm * (avgConsumption / 100);
+
+      for (const leg of legRecords) {
+        if (!leg || !Number.isFinite(leg.startKm) || !Number.isFinite(leg.endKm)) {
+          continue;
+        }
+        if (leg.endKm <= currentProgressKm) {
+          continue;
+        }
+        if (leg.startKm >= targetDayStartKm) {
+          break;
+        }
+
+        const legCompletedKm = Math.max(0, currentProgressKm - leg.startKm);
+        const legRemainingKm = Math.max(0, leg.distanceKm - legCompletedKm);
+        if (!legRemainingKm) {
+          continue;
+        }
+
+        if (remainingSafeRangeKm < legRemainingKm) {
+          const suggestion = findNearestGasStationForLeg(
+            leg.fromLocation,
+            leg.toLocation,
+            leg.fromPoint,
+            leg.toPoint
+          );
+          if (suggestion) {
+            const stationAfterCurrentKm = Math.max(
+              0,
+              suggestion.distanceFromStartKm - legCompletedKm
+            );
+            const distanceAfterRefuelKm = Math.max(
+              0,
+              stationAfterCurrentKm + suggestion.distanceToEndKm - suggestion.distanceFromStartKm
+            );
+            remainingSafeRangeKm = Math.max(0, fullSafeRangeKm - distanceAfterRefuelKm);
+            continue;
+          }
+        }
+
+        remainingSafeRangeKm = Math.max(0, remainingSafeRangeKm - legRemainingKm);
+      }
+
       const projectedLevelPercent = Math.round(
         clampNumber(
-          currentLevelPercent - (litersNeeded / tankCapacity) * 100,
+          (remainingSafeRangeKm / fullSafeRangeKm) * 100,
           0,
           100,
           currentLevelPercent
