@@ -4290,7 +4290,13 @@
         });
       });
 
-      candidates.sort((left, right) => {
+      const byDetourThenDistance = (left, right) => {
+        if (left.detourKm !== right.detourKm) {
+          return left.detourKm - right.detourKm;
+        }
+        return left.distanceFromStartKm - right.distanceFromStartKm;
+      };
+      const byPriceThenDetour = (left, right) => {
         const leftPrice = Number.isFinite(left.gasPriceISK)
           ? left.gasPriceISK
           : Number.POSITIVE_INFINITY;
@@ -4300,13 +4306,30 @@
         if (leftPrice !== rightPrice) {
           return leftPrice - rightPrice;
         }
-        if (left.detourKm !== right.detourKm) {
-          return left.detourKm - right.detourKm;
-        }
-        return left.distanceFromStartKm - right.distanceFromStartKm;
-      });
+        return byDetourThenDistance(left, right);
+      };
 
-      const best = candidates[0] || null;
+      const closestDetourCandidate = candidates
+        .slice()
+        .sort(byDetourThenDistance)[0] || null;
+      const closestDetourKm =
+        closestDetourCandidate && Number.isFinite(closestDetourCandidate.detourKm)
+          ? closestDetourCandidate.detourKm
+          : null;
+      const pricePriorityDetourLimitKm =
+        Number.isFinite(closestDetourKm) && closestDetourKm >= 0
+          ? closestDetourKm * 1.2
+          : null;
+      const pricePriorityCandidates = candidates.filter((candidate) => (
+        Number.isFinite(candidate.gasPriceISK) &&
+        Number.isFinite(pricePriorityDetourLimitKm) &&
+        candidate.detourKm <= pricePriorityDetourLimitKm
+      ));
+      const best =
+        (pricePriorityCandidates.length
+          ? pricePriorityCandidates.slice().sort(byPriceThenDetour)[0]
+          : null) ||
+        closestDetourCandidate;
       if (!best) {
         return null;
       }
