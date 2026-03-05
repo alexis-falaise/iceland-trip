@@ -3839,15 +3839,6 @@
         .catch(() => "");
     }
 
-    function buildLocationRefreshImageUrl(locationName, dayNumber, stopIndex, nonce) {
-      const safeDay = Number.isFinite(dayNumber) ? dayNumber : 0;
-      const safeStop = Number.isFinite(stopIndex) ? stopIndex : 0;
-      const baseSeed = safeDay * 1000 + safeStop + 1;
-      const uniqueSeed = baseSeed + (Number.isFinite(nonce) ? nonce : 0);
-      const keyword = String(locationName || "iceland location");
-      return imageFor(keyword, uniqueSeed) + "&refresh=" + encodeURIComponent(String(nonce || Date.now()));
-    }
-
     function buildLocationRefreshLoremUrl(locationName, dayNumber, stopIndex, nonce) {
       const safeDay = Number.isFinite(dayNumber) ? dayNumber : 0;
       const safeStop = Number.isFinite(stopIndex) ? stopIndex : 0;
@@ -3872,51 +3863,88 @@
       return "d" + dayNumber + "-r" + (recommendationIndex + 1) + "-" + normalizedTitle;
     }
 
-    function getCachedImageUrl(imageKey) {
-      const cached = imageUrlCache[imageKey];
+    function getCachedImageFromStore(cacheStore, imageKey) {
+      const cached = cacheStore && imageKey ? cacheStore[imageKey] : null;
       return cached && typeof cached.url === "string" ? cached.url : "";
+    }
+
+    function saveCachedImageToStore(cacheStore, imageKey, imageUrl, options = {}) {
+      if (!cacheStore || !imageKey || typeof imageUrl !== "string" || !imageUrl.trim()) {
+        return cacheStore;
+      }
+
+      cacheStore[imageKey] = {
+        url: imageUrl,
+        updatedAt: Date.now()
+      };
+      const maxItems = Number(options.maxItems);
+      const compacted = Number.isFinite(maxItems) && maxItems > 0
+        ? compactObjectCache(cacheStore, maxItems)
+        : cacheStore;
+      const storageKey = String(options.storageKey || "").trim();
+      if (storageKey) {
+        writeLocalStorageObject(storageKey, compacted);
+      }
+      return compacted;
+    }
+
+    function removeCachedImageFromStore(cacheStore, imageKey, storageKey) {
+      if (!cacheStore || !imageKey || !cacheStore[imageKey]) {
+        return cacheStore;
+      }
+      delete cacheStore[imageKey];
+      if (storageKey) {
+        writeLocalStorageObject(storageKey, cacheStore);
+      }
+      return cacheStore;
+    }
+
+    function getCachedImageUrl(imageKey) {
+      return getCachedImageFromStore(imageUrlCache, imageKey);
     }
 
     function saveCachedImageUrl(imageKey, imageUrl) {
-      if (!imageKey || typeof imageUrl !== "string" || !imageUrl.trim()) {
-        return;
-      }
+      imageUrlCache = saveCachedImageToStore(
+        imageUrlCache,
+        imageKey,
+        imageUrl,
+        {
+          maxItems: IMAGE_CACHE_MAX_ITEMS,
+          storageKey: IMAGE_CACHE_STORAGE_KEY
+        }
+      );
+    }
 
-      imageUrlCache[imageKey] = {
-        url: imageUrl,
-        updatedAt: Date.now()
-      };
-      imageUrlCache = compactObjectCache(imageUrlCache, IMAGE_CACHE_MAX_ITEMS);
-      writeLocalStorageObject(IMAGE_CACHE_STORAGE_KEY, imageUrlCache);
+    function removeCachedImageUrl(imageKey) {
+      imageUrlCache = removeCachedImageFromStore(
+        imageUrlCache,
+        imageKey,
+        IMAGE_CACHE_STORAGE_KEY
+      );
     }
 
     function getCachedRecommendationImageUrl(imageKey) {
-      const cached = recommendationImageCache[imageKey];
-      return cached && typeof cached.url === "string" ? cached.url : "";
+      return getCachedImageFromStore(recommendationImageCache, imageKey);
     }
 
     function removeCachedRecommendationImageUrl(imageKey) {
-      if (!imageKey || !recommendationImageCache[imageKey]) {
-        return;
-      }
-      delete recommendationImageCache[imageKey];
-      writeLocalStorageObject(RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY, recommendationImageCache);
+      recommendationImageCache = removeCachedImageFromStore(
+        recommendationImageCache,
+        imageKey,
+        RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY
+      );
     }
 
     function saveCachedRecommendationImageUrl(imageKey, imageUrl) {
-      if (!imageKey || typeof imageUrl !== "string" || !imageUrl.trim()) {
-        return;
-      }
-
-      recommendationImageCache[imageKey] = {
-        url: imageUrl,
-        updatedAt: Date.now()
-      };
-      recommendationImageCache = compactObjectCache(
+      recommendationImageCache = saveCachedImageToStore(
         recommendationImageCache,
-        RECOMMENDATION_IMAGE_CACHE_MAX_ITEMS
+        imageKey,
+        imageUrl,
+        {
+          maxItems: RECOMMENDATION_IMAGE_CACHE_MAX_ITEMS,
+          storageKey: RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY
+        }
       );
-      writeLocalStorageObject(RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY, recommendationImageCache);
     }
 
     function preloadImageUrl(url, timeoutMs = 7000) {
@@ -3960,32 +3988,97 @@
       });
     }
 
-    async function resolveRecommendationImageUrl(query, seed) {
-      const googleCandidate = await fetchGooglePlacesFallbackImage(query, seed);
-      const googleValid = await preloadImageUrl(googleCandidate, 5500);
-      if (googleValid) {
-        return googleValid;
+    function normalizeImageSearchQuery(query) {
+      const rawQuery = String(query || "Iceland").trim();
+      if (!rawQuery) {
+        return "Iceland";
       }
+      return /iceland/i.test(rawQuery) ? rawQuery : rawQuery + ", Iceland";
+    }
 
-      const wikimediaCandidate = await fetchWikimediaFallbackImage(query, seed);
-      const wikimediaValid = await preloadImageUrl(wikimediaCandidate, 5500);
-      if (wikimediaValid) {
-        return wikimediaValid;
-      }
+    async function resolveImageCandidateFromProvider(provider, options = {}) {
+      const query = normalizeImageSearchQuery(options.query);
+      const rawSeed = options.seed;
+      const numericSeed = Number(rawSeed);
+      const safeSeed = Number.isFinite(numericSeed)
+        ? numericSeed
+        : Math.abs(hashString(String(rawSeed || query)));
+      const offset = Number(options.seedOffset);
+      const seeded = safeSeed + (Number.isFinite(offset) ? offset : 0);
+      const loremUrl = typeof options.loremUrl === "string" ? options.loremUrl : "";
+      const picsumSeed = String(options.picsumSeed || seeded || "iceland-fallback");
 
-      const unsplashCandidate = imageFor(query, seed + 17);
-      const unsplashValid = await preloadImageUrl(unsplashCandidate, 5500);
-      if (unsplashValid) {
-        return unsplashValid;
-      }
-
-      const loremCandidate = loremImageFor(query, seed + 31);
-      const loremValid = await preloadImageUrl(loremCandidate, 5500);
-      if (loremValid) {
-        return loremValid;
+      try {
+        if (provider === "google") {
+          return await fetchGooglePlacesFallbackImage(query, seeded);
+        }
+        if (provider === "wikimedia") {
+          return await fetchWikimediaFallbackImage(query, seeded);
+        }
+        if (provider === "unsplash") {
+          return imageFor(query, seeded + 17);
+        }
+        if (provider === "lorem") {
+          return loremUrl || loremImageFor(query, seeded + 31);
+        }
+        if (provider === "picsum") {
+          return "https://picsum.photos/seed/" + encodeURIComponent(picsumSeed) + "/1200/800";
+        }
+      } catch {
+        return "";
       }
 
       return "";
+    }
+
+    async function resolveImageUrlWithProviderChain(query, seed, options = {}) {
+      const providers = Array.isArray(options.providers) && options.providers.length
+        ? options.providers
+        : ["google", "wikimedia", "unsplash", "lorem"];
+      const preloadTimeoutMs = Number(options.preloadTimeoutMs);
+      const timeoutMs = Number.isFinite(preloadTimeoutMs) && preloadTimeoutMs > 0
+        ? preloadTimeoutMs
+        : 5500;
+
+      for (const provider of providers) {
+        const candidate = await resolveImageCandidateFromProvider(provider, {
+          query,
+          seed,
+          seedOffset: options.seedOffset,
+          loremUrl: options.loremUrl,
+          picsumSeed: options.picsumSeed
+        });
+        if (!candidate) {
+          continue;
+        }
+        const valid = await preloadImageUrl(candidate, timeoutMs);
+        if (valid) {
+          return valid;
+        }
+      }
+
+      return "";
+    }
+
+    async function resolveRecommendationImageUrl(query, seed) {
+      return resolveImageUrlWithProviderChain(query, seed, {
+        providers: ["google", "wikimedia", "unsplash", "lorem"],
+        preloadTimeoutMs: 5500
+      });
+    }
+
+    async function resolveLocationImageUrl(query, seed, options = {}) {
+      return resolveImageUrlWithProviderChain(query, seed, {
+        providers: Array.isArray(options.providers) && options.providers.length
+          ? options.providers
+          : ["google", "wikimedia", "unsplash", "lorem"],
+        preloadTimeoutMs: Number.isFinite(Number(options.preloadTimeoutMs))
+          ? Number(options.preloadTimeoutMs)
+          : 5500,
+        seedOffset: options.seedOffset,
+        loremUrl: options.loremUrl,
+        picsumSeed: options.picsumSeed
+      });
     }
 
     function imageLoaded(event) {
@@ -4019,7 +4112,7 @@
     function getFallbackProviderChain(img) {
       const skipCached = img && img.dataset && img.dataset.skipCached === "1";
       const spinOffset = Number.parseInt((img && img.dataset && img.dataset.providerSpin) || "0", 10) || 0;
-      const rotatingProviders = rotateProviders(["google", "wikimedia", "lorem"], spinOffset);
+      const rotatingProviders = rotateProviders(["google", "wikimedia", "unsplash", "lorem"], spinOffset);
       const chain = [];
 
       if (!skipCached) {
@@ -4055,53 +4148,25 @@
         continueImageFallback(img);
         return;
       }
-
-      if (provider === "google") {
-        const keyword = img.dataset.locationName || "Iceland";
-        const seed = img.dataset.fallbackSeed || "iceland-fallback";
-        fetchGooglePlacesFallbackImage(keyword, seed)
-          .then((googlePlacesSrc) => {
-            if (googlePlacesSrc && googlePlacesSrc !== img.src) {
-              img.src = googlePlacesSrc;
-              return;
-            }
-            continueImageFallback(img);
-          })
-          .catch(() => {
-            continueImageFallback(img);
-          });
-        return;
-      }
-
-      if (provider === "wikimedia") {
-        const keyword = img.dataset.locationName || "Iceland";
-        const seed = img.dataset.fallbackSeed || "iceland-fallback";
-        fetchWikimediaFallbackImage(keyword, seed)
-          .then((wikimediaSrc) => {
-            if (wikimediaSrc && wikimediaSrc !== img.src) {
-              img.src = wikimediaSrc;
-              return;
-            }
-            continueImageFallback(img);
-          })
-          .catch(() => {
-            continueImageFallback(img);
-          });
-        return;
-      }
-
-      if (provider === "lorem") {
-        const loremSrc = img.dataset.loremSrc || "";
-        if (loremSrc && loremSrc !== img.src) {
-          img.src = loremSrc;
-          return;
-        }
-        continueImageFallback(img);
-        return;
-      }
-
+      const keyword = img.dataset.locationName || "Iceland";
       const seed = img.dataset.fallbackSeed || "iceland-fallback";
-      img.src = "https://picsum.photos/seed/" + seed + "/1200/800";
+      const loremSrc = img.dataset.loremSrc || "";
+      resolveImageCandidateFromProvider(provider, {
+        query: keyword,
+        seed,
+        loremUrl: loremSrc,
+        picsumSeed: seed
+      })
+        .then((candidateSrc) => {
+          if (candidateSrc && candidateSrc !== img.src) {
+            img.src = candidateSrc;
+            return;
+          }
+          continueImageFallback(img);
+        })
+        .catch(() => {
+          continueImageFallback(img);
+        });
     }
 
     function imageFallback(event) {
@@ -4144,10 +4209,36 @@
       img.dataset.providerSpin = String(
         (Number.parseInt(img.dataset.providerSpin || "0", 10) || 0) + 1
       );
+      const spinOffset = Number.parseInt(img.dataset.providerSpin || "0", 10) || 0;
+      const providers = rotateProviders(
+        ["google", "wikimedia", "unsplash", "lorem", "picsum"],
+        spinOffset
+      );
+      const baseSeed =
+        Number.isFinite(dayNumber) && Number.isFinite(stopIndex)
+          ? dayNumber * 1000 + stopIndex + 1
+          : Math.abs(hashString(String(locationName || "iceland location")));
+      const refreshSeed = baseSeed + nonce;
       img.dataset.loremSrc = buildLocationRefreshLoremUrl(locationName, dayNumber, stopIndex, nonce);
       img.dataset.fallbackSeed = dayNumber + "-" + (stopIndex + 1) + "-" + nonce;
       img.dataset.fallbackStage = "0";
-      img.src = buildLocationRefreshImageUrl(locationName, dayNumber, stopIndex, nonce);
+      resolveLocationImageUrl(locationName, refreshSeed, {
+        providers,
+        seedOffset: nonce,
+        loremUrl: img.dataset.loremSrc,
+        picsumSeed: img.dataset.fallbackSeed,
+        preloadTimeoutMs: 5000
+      })
+        .then((resolvedUrl) => {
+          if (resolvedUrl) {
+            img.src = resolvedUrl;
+            return;
+          }
+          continueImageFallback(img);
+        })
+        .catch(() => {
+          continueImageFallback(img);
+        });
     }
 
     window.imageLoaded = imageLoaded;
@@ -5517,7 +5608,7 @@
           { name: "Vestrahorn", note: "Early light shots before heading north-east.", image: imageFor("Vestrahorn sunrise", 501), coords: [64.273333, -15.008611] },
           { name: "Lagarfljot", note: "Quiet lake break around Egilsstadir region.", image: imageFor("Lagarfljot", 502), coords: [65.1696214, -14.6333108] },
           { name: "Studlagil Canyon", note: "Basalt columns and turquoise river views.", image: imageFor("Studlagil canyon", 503), coords: [65.1623267, -15.3081247] },
-          { name: "Egilsstadir Camp", note: "Settle in and recover from the long driving day.", image: imageFor("Egilsstadir", 505), coords: [65.2583124, -14.4068894], isCamp: true }
+          { name: "Egilsstadir Camp", note: "Settle in and recover from the long driving day.", image: imageFor("Egilsstaðir", 505), coords: [65.2583124, -14.4068894], isCamp: true }
         ],
         recommendations: [
           { title: "Salt Cafe & Bistro", text: "Solid comfort-food stop for refueling in East Iceland." },
@@ -5555,7 +5646,7 @@
         locations: [
           { name: "Hamrar Campsite (Departure)", note: "Start from camp before crossing north-west Iceland.", image: imageFor("Hamrar campsite morning", 700), coords: [65.6485410, -18.1024258] },
           { name: "Akureyri Departure", note: "Quick city breakfast before westward drive.", image: imageFor("Akureyri morning", 701), coords: [65.6839036, -18.1121756] },
-          { name: "Road 83 Coastal Segment", note: "Scenic fjord roads and photo pull-offs.", image: imageFor("Iceland fjord road", 702), coords: [65.9710942, -18.5304388] },
+          { name: "Road 83 Coastal Segment", note: "Scenic fjord roads and photo pull-offs.", image: imageFor("Iceland coast road", 702), coords: [65.9710942, -18.5304388] },
           { name: "Fosslaug", note: "Natural hot pool with river views.", image: imageFor("Fosslaug", 703), coords: [65.4964888, -19.3802608] },
           { name: "Reykyafoss", note: "Short detour to a quieter waterfall stop.", image: imageFor("Iceland waterfall", 704), coords: [65.4945591, -19.3831862] },
           { name: "Budardalur Campsite", note: "Calm overnight base before Snaefellsnes.", image: imageFor("Budardalur", 705), coords: [65.1099356, -21.7672907], isCamp: true }
@@ -10454,6 +10545,7 @@
     let mapMarkersLayer = null;
     let driveTimesRequestId = 0;
     let itineraryLegContextRequestId = 0;
+    let locationImagePopulateRequestId = 0;
     let activeFullscreenDay = null;
 
     function resolveDayColorHex(dayNumber) {
@@ -10831,6 +10923,70 @@
       });
 
       modalItineraryEl.innerHTML = html;
+      populateItineraryLocationImages(day);
+    }
+
+    function populateItineraryLocationImages(day) {
+      if (!modalItineraryEl) {
+        return;
+      }
+      const requestId = ++locationImagePopulateRequestId;
+      const targetDayNumber = Number(day && day.day);
+      const imageEls = Array.from(
+        modalItineraryEl.querySelectorAll(".location-image[data-image-key]")
+      );
+      if (!imageEls.length) {
+        return;
+      }
+
+      imageEls.forEach((img) => {
+        (async () => {
+          const isStillCurrent = () => (
+            requestId === locationImagePopulateRequestId &&
+            modalEl.classList.contains("open") &&
+            activeFullscreenDay === targetDayNumber
+          );
+
+          const imageKey = String(img.dataset.imageKey || "").trim();
+          const locationName = String(img.dataset.locationName || "Iceland").trim();
+          const dayNumber = Number.parseInt(String(img.dataset.dayNumber || "0"), 10);
+          const stopIndex = Number.parseInt(String(img.dataset.stopIndex || "0"), 10);
+          const seed =
+            Number.isFinite(dayNumber) && Number.isFinite(stopIndex)
+              ? dayNumber * 1000 + stopIndex + 1
+              : Math.abs(hashString(locationName));
+          const query = locationName.toLowerCase().includes("iceland")
+            ? locationName
+            : locationName + ", Iceland";
+
+          const cachedUrl = imageKey ? getCachedImageUrl(imageKey) : "";
+          if (cachedUrl) {
+            const validatedCachedUrl = await preloadImageUrl(cachedUrl, 4500);
+            if (validatedCachedUrl) {
+              if (isStillCurrent() && img.src !== validatedCachedUrl) {
+                img.src = validatedCachedUrl;
+              }
+              return;
+            }
+            if (imageKey) {
+              removeCachedImageUrl(imageKey);
+            }
+          }
+
+          const resolvedUrl = await resolveLocationImageUrl(query, seed);
+          if (!resolvedUrl || !isStillCurrent()) {
+            return;
+          }
+
+          if (imageKey) {
+            saveCachedImageUrl(imageKey, resolvedUrl);
+            img.dataset.cachedSrc = resolvedUrl;
+          }
+          if (img.src !== resolvedUrl) {
+            img.src = resolvedUrl;
+          }
+        })();
+      });
     }
 
     function setRecommendationCardBackground(card, imageUrl) {
