@@ -2776,17 +2776,21 @@
     }
 
     .itinerary-leg-status {
-      width: min(100%, 560px);
-      display: grid;
-      gap: 2px;
-      border-radius: 10px;
-      padding: 6px 9px;
-      font-size: 0.68rem;
+      width: auto;
+      max-width: min(100%, 560px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.7rem;
       line-height: 1.35;
-      border: 1px solid var(--border-ui);
+      border: none;
       background: var(--card-ui);
       color: var(--text-ui);
       text-decoration: none;
+      text-align: center;
     }
 
     .itinerary-leg-status-main {
@@ -8265,16 +8269,14 @@
                   legContext.road = {
                     level: worstStatus.level || "unknown",
                     label: worstStatus.status || "Unknown",
-                    details: worstStatus.details || "Official umferdin status",
-                    roadLabel: legRoads.join(" • "),
+                    official: true,
                     url: roadUrl
                   };
                 } else {
                   legContext.road = {
                     level: "unknown",
                     label: "No official data",
-                    details: "Open umferdin for live status on this road.",
-                    roadLabel: legRoads.join(" • "),
+                    official: false,
                     url: roadUrl
                   };
                 }
@@ -10048,7 +10050,13 @@
         return "⛈️";
       }
       const gust = Number(weather.gustKmh);
-      if (Number.isFinite(gust) && gust >= 55) {
+      const wind = Number(weather.windKmh);
+      const windMax = Number(weather.windMaxKmh);
+      if (
+        (Number.isFinite(gust) && gust >= 55) ||
+        (Number.isFinite(wind) && wind >= 55) ||
+        (Number.isFinite(windMax) && windMax >= 55)
+      ) {
         return "💨";
       }
       return "🌤️";
@@ -10063,6 +10071,19 @@
       }
       if (level === "good") {
         return "✅";
+      }
+      return "❔";
+    }
+
+    function roadConditionIcon(level) {
+      if (level === "bad") {
+        return "🔴";
+      }
+      if (level === "warn") {
+        return "🟠";
+      }
+      if (level === "good") {
+        return "🟢";
       }
       return "❔";
     }
@@ -10651,17 +10672,18 @@
       if (legContext.road && typeof legContext.road === "object") {
         const roadLevel = String(legContext.road.level || "unknown");
         const roadStatusClass = "itinerary-leg-status road level-" + roadLevel;
-        const roadMain =
-          "🛣️ Road " +
-          String(legContext.road.roadLabel || "") +
-          " · " +
-          String(legContext.road.label || "Unknown");
-        const roadSub = String(legContext.road.details || "").trim();
+        const roadLabel = String(legContext.road.label || "Unknown");
+        const roadIcon = roadConditionIcon(roadLevel);
+        const officialBadge = legContext.road.official
+          ? " <span aria-label=\"Official umferdin status\" title=\"Official umferdin status\">✓</span>"
+          : "";
         const roadBody =
-          "<span class=\"itinerary-leg-status-main\">" + escapeHtml(roadMain) + "</span>" +
-          (roadSub
-            ? "<span class=\"itinerary-leg-status-sub\">" + escapeHtml(roadSub) + "</span>"
-            : "");
+          "<span class=\"itinerary-leg-status-main\">" +
+            escapeHtml(roadIcon) +
+            " " +
+            escapeHtml(roadLabel) +
+            officialBadge +
+          "</span>";
         const roadUrl = String(legContext.road.url || "").trim();
         if (roadUrl) {
           sections.push(
@@ -10679,12 +10701,12 @@
       }
 
       if (legContext.weather && typeof legContext.weather === "object") {
-        const targetName = String(legContext.weather.targetName || "Next stop");
         const forecastText = formatLegForecastLine(legContext.weather.forecast);
+        const forecastIcon = weatherQuickIcon(legContext.weather.forecast);
         sections.push(
           "<div class=\"itinerary-leg-status weather\">" +
             "<span class=\"itinerary-leg-status-main\">" +
-              "🌤️ Forecast at " + escapeHtml(targetName) + " · " + escapeHtml(forecastText) +
+              escapeHtml(forecastIcon) + " " + escapeHtml(forecastText) +
             "</span>" +
           "</div>"
         );
