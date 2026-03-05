@@ -102,6 +102,9 @@
       --leg-weather-border: rgba(125, 211, 252, 0.48);
       --leg-weather-bg: rgba(30, 64, 175, 0.28);
       --leg-weather-text: #dbeafe;
+      --campsite-chip-border: rgba(147, 197, 253, 0.6);
+      --campsite-chip-bg: rgba(30, 64, 175, 0.34);
+      --campsite-chip-text: #dbeafe;
     }
 
     :root[data-theme="light"] {
@@ -175,6 +178,9 @@
       --leg-weather-border: rgba(37, 99, 235, 0.28);
       --leg-weather-bg: rgba(239, 246, 255, 0.92);
       --leg-weather-text: #1e3a8a;
+      --campsite-chip-border: #bfdbfe;
+      --campsite-chip-bg: #eff6ff;
+      --campsite-chip-text: #1e3a8a;
     }
 
     * {
@@ -2181,9 +2187,9 @@
     }
 
     .route-stop.campsite-stop {
-      border-color: #bfdbfe;
-      background: #eff6ff;
-      color: #1e3a8a;
+      border-color: var(--campsite-chip-border);
+      background: var(--campsite-chip-bg);
+      color: var(--campsite-chip-text);
       font-weight: 600;
     }
 
