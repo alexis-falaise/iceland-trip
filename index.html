@@ -7080,6 +7080,45 @@
       return "forecast|" + coordsKey + "|" + dateKey;
     }
 
+    function getCachedWeatherByKey(cacheKey, ttlMs, options = {}) {
+      if (!cacheKey) {
+        return null;
+      }
+      const includeExpired = options.includeExpired !== false;
+      const nowMs = Date.now();
+      const cachedEntry = todayOverviewWeatherCache[cacheKey];
+      if (
+        !cachedEntry ||
+        typeof cachedEntry !== "object" ||
+        !cachedEntry.data ||
+        typeof cachedEntry.data !== "object" ||
+        !Number.isFinite(cachedEntry.updatedAt)
+      ) {
+        return null;
+      }
+
+      const ageMs = nowMs - Number(cachedEntry.updatedAt);
+      if (!includeExpired && ageMs > ttlMs) {
+        return null;
+      }
+
+      return {
+        ...cachedEntry.data,
+        stale: ageMs > ttlMs,
+        fromCache: true
+      };
+    }
+
+    function getCachedLiveWeatherAtCoords(coords, options = {}) {
+      const cacheKey = buildTodayOverviewWeatherCacheKey(coords);
+      return getCachedWeatherByKey(cacheKey, TODAY_OVERVIEW_WEATHER_TTL_MS, options);
+    }
+
+    function getCachedForecastWeatherAtCoordsForDate(coords, targetDate, options = {}) {
+      const cacheKey = buildForecastWeatherCacheKey(coords, targetDate);
+      return getCachedWeatherByKey(cacheKey, ITINERARY_LEG_FORECAST_TTL_MS, options);
+    }
+
     function persistTodayOverviewWeatherCache() {
       todayOverviewWeatherCache = compactObjectCache(todayOverviewWeatherCache, 200);
       writeLocalStorageObject(TODAY_OVERVIEW_WEATHER_CACHE_KEY, todayOverviewWeatherCache);
@@ -7146,20 +7185,11 @@
       const useCache = options.useCache !== false;
       const nowMs = Date.now();
       const cachedEntry = todayOverviewWeatherCache[cacheKey];
-      if (
-        useCache &&
-        cachedEntry &&
-        typeof cachedEntry === "object" &&
-        Number.isFinite(cachedEntry.updatedAt) &&
-        nowMs - Number(cachedEntry.updatedAt) <= TODAY_OVERVIEW_WEATHER_TTL_MS &&
-        cachedEntry.data &&
-        typeof cachedEntry.data === "object"
-      ) {
-        return {
-          ...cachedEntry.data,
-          stale: false,
-          fromCache: true
-        };
+      if (useCache) {
+        const cachedWeather = getCachedLiveWeatherAtCoords(coords, { includeExpired: false });
+        if (cachedWeather) {
+          return cachedWeather;
+        }
       }
 
       const lat = Number(coords[0]);
@@ -7222,20 +7252,13 @@
       const useCache = options.useCache !== false;
       const nowMs = Date.now();
       const cachedEntry = todayOverviewWeatherCache[cacheKey];
-      if (
-        useCache &&
-        cachedEntry &&
-        typeof cachedEntry === "object" &&
-        Number.isFinite(cachedEntry.updatedAt) &&
-        nowMs - Number(cachedEntry.updatedAt) <= ITINERARY_LEG_FORECAST_TTL_MS &&
-        cachedEntry.data &&
-        typeof cachedEntry.data === "object"
-      ) {
-        return {
-          ...cachedEntry.data,
-          stale: false,
-          fromCache: true
-        };
+      if (useCache) {
+        const cachedForecast = getCachedForecastWeatherAtCoordsForDate(coords, targetDate, {
+          includeExpired: false
+        });
+        if (cachedForecast) {
+          return cachedForecast;
+        }
       }
 
       const lat = Number(coords[0]);
@@ -7433,6 +7456,40 @@
       };
     }
 
+    function getCachedOfficialRoadStatuses(roadValues, options = {}) {
+      const includeExpired = options.includeExpired !== false;
+      const nowMs = Date.now();
+      const roads = Array.from(
+        new Set((Array.isArray(roadValues) ? roadValues : []).map(buildTodayOverviewRoadStatusCacheKey))
+      ).filter(Boolean);
+      const statusByRoad = {};
+
+      roads.forEach((road) => {
+        const cached = todayOverviewRoadStatusCache[road];
+        if (
+          !cached ||
+          typeof cached !== "object" ||
+          !Number.isFinite(cached.updatedAtMs) ||
+          !cached.data ||
+          typeof cached.data !== "object"
+        ) {
+          return;
+        }
+
+        const ageMs = nowMs - Number(cached.updatedAtMs);
+        if (!includeExpired && ageMs > TODAY_OVERVIEW_ROAD_STATUS_TTL_MS) {
+          return;
+        }
+
+        statusByRoad[road] = {
+          ...cached.data,
+          stale: ageMs > TODAY_OVERVIEW_ROAD_STATUS_TTL_MS
+        };
+      });
+
+      return statusByRoad;
+    }
+
     async function fetchOfficialRoadStatuses(roadValues, options = {}) {
       const useCache = options.useCache !== false;
       const nowMs = Date.now();
@@ -7441,10 +7498,21 @@
       ).filter(Boolean);
 
       const statusByRoad = {};
+      const fallbackByRoad = {};
       const roadsToFetch = [];
 
       roads.forEach((road) => {
         const cached = todayOverviewRoadStatusCache[road];
+        const cachedData =
+          cached &&
+          typeof cached === "object" &&
+          cached.data &&
+          typeof cached.data === "object"
+            ? cached.data
+            : null;
+        if (cachedData) {
+          fallbackByRoad[road] = cachedData;
+        }
         if (
           useCache &&
           cached &&
@@ -7503,6 +7571,16 @@
       } catch (error) {
         console.warn("Official road status lookup failed", error);
       }
+
+      roads.forEach((road) => {
+        if (statusByRoad[road] || !fallbackByRoad[road]) {
+          return;
+        }
+        statusByRoad[road] = {
+          ...fallbackByRoad[road],
+          stale: true
+        };
+      });
 
       return statusByRoad;
     }
@@ -7604,6 +7682,12 @@
       ].join("|");
     }
 
+    function getCachedItineraryLegContextForDay(day, driveLegSummaries = []) {
+      const cacheKey = buildItineraryLegContextCacheKey(day, driveLegSummaries);
+      const cached = itineraryLegContextCache[cacheKey];
+      return cached instanceof Map ? cached : null;
+    }
+
     function formatLegForecastLine(forecast) {
       if (!forecast) {
         return "Forecast unavailable";
@@ -7632,6 +7716,10 @@
       }
       const useCache = options.useCache !== false;
       const cacheKey = buildItineraryLegContextCacheKey(day, driveLegSummaries);
+      const fallbackContext =
+        itineraryLegContextCache[cacheKey] instanceof Map
+          ? itineraryLegContextCache[cacheKey]
+          : null;
       if (useCache && itineraryLegContextCache[cacheKey] instanceof Map) {
         return itineraryLegContextCache[cacheKey];
       }
@@ -7640,81 +7728,86 @@
       }
 
       const lookupPromise = (async () => {
-        const routePoints = getDayRoutePoints(day);
-        const locations = getDisplayLocations(day, routePoints);
-        const legCount = Math.max(0, locations.length - 1);
-        const contextByLeg = new Map();
-        const targetDate = getTripDayDate(day.day);
-        const weatherPromises = new Array(legCount).fill(null).map((_, index) => {
-          const targetCoords = resolveCoords(
-            locations[index + 1] && locations[index + 1].coords,
-            routePoints[index + 1]
-          );
-          if (!targetCoords) {
-            return Promise.resolve(null);
-          }
-          return fetchForecastWeatherAtCoordsForDate(targetCoords, targetDate, { useCache: true });
-        });
+        try {
+          const routePoints = getDayRoutePoints(day);
+          const locations = getDisplayLocations(day, routePoints);
+          const legCount = Math.max(0, locations.length - 1);
+          const contextByLeg = new Map();
+          const targetDate = getTripDayDate(day.day);
+          const weatherPromises = new Array(legCount).fill(null).map((_, index) => {
+            const targetCoords = resolveCoords(
+              locations[index + 1] && locations[index + 1].coords,
+              routePoints[index + 1]
+            );
+            if (!targetCoords) {
+              return Promise.resolve(null);
+            }
+            return fetchForecastWeatherAtCoordsForDate(targetCoords, targetDate, { useCache: false });
+          });
 
-        const trip = getTripPhaseAndDay();
-        const shouldShowRoadStatus = trip.phase === "during" && day.day === trip.dayNumber;
-        let officialStatusByRoad = {};
-        if (shouldShowRoadStatus) {
-          const roadTokens = Array.from(
-            new Set(
-              (Array.isArray(driveLegSummaries) ? driveLegSummaries : [])
-                .flatMap((summary) => getLegRoadTokens(summary))
-            )
-          );
-          if (roadTokens.length) {
-            officialStatusByRoad = await fetchOfficialRoadStatuses(roadTokens, { useCache: true });
-          }
-        }
-
-        const weatherByLeg = await Promise.all(weatherPromises);
-        for (let index = 0; index < legCount; index += 1) {
-          const legContext = {};
-          const targetLocation = locations[index + 1];
-          legContext.weather = {
-            targetName: targetLocation ? targetLocation.name : "Next stop",
-            forecast: weatherByLeg[index] || null
-          };
-
+          const trip = getTripPhaseAndDay();
+          const shouldShowRoadStatus = trip.phase === "during" && day.day === trip.dayNumber;
+          let officialStatusByRoad = {};
           if (shouldShowRoadStatus) {
-            const legRoads = getLegRoadTokens(driveLegSummaries[index]);
-            if (legRoads.length) {
-              const knownOfficial = legRoads
-                .map((roadToken) => officialStatusByRoad[roadToken] || null)
-                .filter((entry) => entry && entry.status && entry.status !== "Unknown");
-              const roadUrl = "https://umferdin.is/en?search=" + encodeURIComponent(legRoads.join(" "));
-              if (knownOfficial.length) {
-                const worstStatus = knownOfficial.slice().sort(
-                  (left, right) => roadRiskLevelRank(right.level) - roadRiskLevelRank(left.level)
-                )[0];
-                legContext.road = {
-                  level: worstStatus.level || "unknown",
-                  label: worstStatus.status || "Unknown",
-                  details: worstStatus.details || "Official umferdin status",
-                  roadLabel: legRoads.join(" • "),
-                  url: roadUrl
-                };
-              } else {
-                legContext.road = {
-                  level: "unknown",
-                  label: "No official data",
-                  details: "Open umferdin for live status on this road.",
-                  roadLabel: legRoads.join(" • "),
-                  url: roadUrl
-                };
-              }
+            const roadTokens = Array.from(
+              new Set(
+                (Array.isArray(driveLegSummaries) ? driveLegSummaries : [])
+                  .flatMap((summary) => getLegRoadTokens(summary))
+              )
+            );
+            if (roadTokens.length) {
+              officialStatusByRoad = await fetchOfficialRoadStatuses(roadTokens, { useCache: false });
             }
           }
 
-          contextByLeg.set(index, legContext);
-        }
+          const weatherByLeg = await Promise.all(weatherPromises);
+          for (let index = 0; index < legCount; index += 1) {
+            const legContext = {};
+            const targetLocation = locations[index + 1];
+            legContext.weather = {
+              targetName: targetLocation ? targetLocation.name : "Next stop",
+              forecast: weatherByLeg[index] || null
+            };
 
-        itineraryLegContextCache[cacheKey] = contextByLeg;
-        return contextByLeg;
+            if (shouldShowRoadStatus) {
+              const legRoads = getLegRoadTokens(driveLegSummaries[index]);
+              if (legRoads.length) {
+                const knownOfficial = legRoads
+                  .map((roadToken) => officialStatusByRoad[roadToken] || null)
+                  .filter((entry) => entry && entry.status && entry.status !== "Unknown");
+                const roadUrl = "https://umferdin.is/en?search=" + encodeURIComponent(legRoads.join(" "));
+                if (knownOfficial.length) {
+                  const worstStatus = knownOfficial.slice().sort(
+                    (left, right) => roadRiskLevelRank(right.level) - roadRiskLevelRank(left.level)
+                  )[0];
+                  legContext.road = {
+                    level: worstStatus.level || "unknown",
+                    label: worstStatus.status || "Unknown",
+                    details: worstStatus.details || "Official umferdin status",
+                    roadLabel: legRoads.join(" • "),
+                    url: roadUrl
+                  };
+                } else {
+                  legContext.road = {
+                    level: "unknown",
+                    label: "No official data",
+                    details: "Open umferdin for live status on this road.",
+                    roadLabel: legRoads.join(" • "),
+                    url: roadUrl
+                  };
+                }
+              }
+            }
+
+            contextByLeg.set(index, legContext);
+          }
+
+          itineraryLegContextCache[cacheKey] = contextByLeg;
+          return contextByLeg;
+        } catch (error) {
+          console.warn("Itinerary leg context lookup failed", error);
+          return fallbackContext || new Map();
+        }
       })();
 
       itineraryLegContextInFlight[cacheKey] = lookupPromise;
@@ -7951,6 +8044,131 @@
         .join("");
     }
 
+    async function buildTodayRoadAssessments(
+      roadCandidates,
+      officialStatusByRoad,
+      weatherResolver
+    ) {
+      const candidates = Array.isArray(roadCandidates) ? roadCandidates : [];
+      const officialByRoad = officialStatusByRoad && typeof officialStatusByRoad === "object"
+        ? officialStatusByRoad
+        : {};
+      const resolveWeather = typeof weatherResolver === "function"
+        ? weatherResolver
+        : () => null;
+      const assessments = await Promise.all(
+        candidates.map(async (entry) => {
+          const official = officialByRoad[entry.road] || null;
+          if (official && official.level && official.status !== "Unknown") {
+            return {
+              ...entry,
+              weather: null,
+              official,
+              risk: {
+                level: official.level,
+                label: official.status,
+                details: official.details
+              }
+            };
+          }
+
+          const weather = await Promise.resolve(resolveWeather(entry));
+          return {
+            ...entry,
+            weather: weather || null,
+            official: official || null,
+            risk: getRoadRiskFromWeather(weather || null)
+          };
+        })
+      );
+      return assessments;
+    }
+
+    function renderTodayOverviewContent(day, weatherSnapshots = [], roadAssessments = [], options = {}) {
+      if (todayOverviewDayEl && day) {
+        todayOverviewDayEl.textContent = "Day " + day.day + " · " + day.title;
+      }
+
+      if (todayOverviewWeatherEl) {
+        if (!weatherSnapshots.length) {
+          todayOverviewWeatherEl.innerHTML =
+            "<div class=\"today-overview-weather-item\"><span class=\"today-overview-main\">No live weather locations found for today.</span></div>";
+        } else {
+          todayOverviewWeatherEl.innerHTML = weatherSnapshots
+            .map((entry) => (
+              "<div class=\"today-overview-weather-item\">" +
+                "<span class=\"today-overview-main\">📍 " + escapeHtml(entry.name) + "</span>" +
+                "<span class=\"today-overview-sub\">" + escapeHtml(formatWeatherSnapshotLine(entry.weather)) + "</span>" +
+              "</div>"
+            ))
+            .join("");
+        }
+      }
+
+      if (todayOverviewRoadsEl) {
+        if (!roadAssessments.length) {
+          todayOverviewRoadsEl.innerHTML =
+            "<a class=\"today-overview-road-item level-unknown\" href=\"https://umferdin.is/en\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+              "<span class=\"today-overview-main\">No road-number data found yet</span>" +
+              "<span class=\"today-overview-sub\">Open umferdin.is for the official nationwide map.</span>" +
+            "</a>";
+        } else {
+          todayOverviewRoadsEl.innerHTML = roadAssessments
+            .map((entry) => {
+              const roadInfoUrl = "https://umferdin.is/en?search=" + encodeURIComponent(entry.road);
+              const risk = entry.risk || { level: "unknown", label: "No data", details: "" };
+              const sourcePrefix =
+                entry.official && entry.official.status !== "Unknown"
+                  ? "Official"
+                  : "Estimated";
+              return (
+                "<a class=\"today-overview-road-item level-" + escapeHtml(risk.level) + "\" href=\"" + escapeHtml(roadInfoUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+                  "<span class=\"today-overview-main\">🛣️ Road " + escapeHtml(entry.road) + " · " + escapeHtml(risk.label) + "</span>" +
+                  "<span class=\"today-overview-sub\">" +
+                    escapeHtml(entry.direction) +
+                    " · " +
+                    escapeHtml(entry.fromName) +
+                    " → " +
+                    escapeHtml(entry.toName) +
+                    " · " +
+                    escapeHtml(sourcePrefix) +
+                    " · " +
+                    escapeHtml(risk.details) +
+                  "</span>" +
+                "</a>"
+              );
+            })
+            .join("");
+        }
+      }
+
+      if (todayOverviewAdviceEl) {
+        renderTodayAiAdvice(day, weatherSnapshots, roadAssessments);
+      }
+
+      renderTodayOverviewQuickSummary(weatherSnapshots, roadAssessments);
+
+      if (todayOverviewUpdatedEl) {
+        if (typeof options.updatedText === "string" && options.updatedText.trim()) {
+          todayOverviewUpdatedEl.textContent = options.updatedText;
+        } else {
+          todayOverviewUpdatedEl.textContent =
+            "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
+      }
+
+      const status = typeof options.status === "string" && options.status
+        ? options.status
+        : "ready";
+      appActions.setTodayOverview({
+        status,
+        dayNumber: day && Number.isFinite(day.day) ? day.day : null,
+        weatherSnapshots,
+        roadAssessments,
+        lastUpdatedAt: Date.now()
+      });
+    }
+
     function renderTodayOverviewLoading(day) {
       if (!todayOverviewCardEl) {
         return;
@@ -8098,11 +8316,35 @@
         seenTargets.add(key);
         dedupedTargets.push(entry);
       });
+      const roadCandidates = collectTodayRoadCandidates(day, driveLegSummaries);
+      const weatherTargetsForFetch = dedupedTargets.slice(0, 3);
+      const cachedWeatherSnapshots = weatherTargetsForFetch
+        .map((entry) => ({
+          name: entry.name,
+          weather: getCachedLiveWeatherAtCoords(entry.coords, { includeExpired: true })
+        }))
+        .filter((entry) => Boolean(entry.weather));
+      const cachedOfficialStatusByRoad = getCachedOfficialRoadStatuses(
+        roadCandidates.map((entry) => entry.road),
+        { includeExpired: true }
+      );
+      const cachedRoadAssessments = await buildTodayRoadAssessments(
+        roadCandidates,
+        cachedOfficialStatusByRoad,
+        (entry) => getCachedLiveWeatherAtCoords(entry.coords, { includeExpired: true })
+      );
+      const hasCachedData = cachedWeatherSnapshots.length > 0 || cachedRoadAssessments.length > 0;
+      if (hasCachedData && requestId === todayOverviewRequestId) {
+        renderTodayOverviewContent(day, cachedWeatherSnapshots, cachedRoadAssessments, {
+          status: "refreshing",
+          updatedText: "Refreshing… showing cached data"
+        });
+      }
 
       const weatherSnapshots = await Promise.all(
-        dedupedTargets.slice(0, 3).map(async (entry) => ({
+        weatherTargetsForFetch.map(async (entry) => ({
           name: entry.name,
-          weather: await fetchLiveWeatherAtCoords(entry.coords, { useCache: !forceRefresh })
+          weather: await fetchLiveWeatherAtCoords(entry.coords, { useCache: false })
         }))
       );
 
@@ -8110,123 +8352,26 @@
         return;
       }
 
-      const roadCandidates = collectTodayRoadCandidates(day, driveLegSummaries);
       const officialStatusByRoad = await fetchOfficialRoadStatuses(
         roadCandidates.map((entry) => entry.road),
-        { useCache: !forceRefresh }
+        { useCache: false }
       );
       if (requestId !== todayOverviewRequestId) {
         return;
       }
 
-      const roadAssessments = await Promise.all(
-        roadCandidates.map(async (entry) => {
-          const official = officialStatusByRoad[entry.road] || null;
-          if (official && official.level && official.status !== "Unknown") {
-            return {
-              ...entry,
-              weather: null,
-              official,
-              risk: {
-                level: official.level,
-                label: official.status,
-                details: official.details
-              }
-            };
-          }
-
-          return {
-            ...entry,
-            weather: await fetchLiveWeatherAtCoords(entry.coords, { useCache: !forceRefresh }),
-            official: official || null,
-            risk: null
-          };
-        })
+      const roadAssessments = await buildTodayRoadAssessments(
+        roadCandidates,
+        officialStatusByRoad,
+        (entry) => fetchLiveWeatherAtCoords(entry.coords, { useCache: false })
       );
-      roadAssessments.forEach((entry) => {
-        if (entry.risk) {
-          return;
-        }
-        entry.risk = getRoadRiskFromWeather(entry.weather);
-      });
 
       if (requestId !== todayOverviewRequestId) {
         return;
       }
 
-      if (todayOverviewDayEl) {
-        todayOverviewDayEl.textContent = "Day " + day.day + " · " + day.title;
-      }
-
-      if (todayOverviewWeatherEl) {
-        if (!weatherSnapshots.length) {
-          todayOverviewWeatherEl.innerHTML =
-            "<div class=\"today-overview-weather-item\"><span class=\"today-overview-main\">No live weather locations found for today.</span></div>";
-        } else {
-          todayOverviewWeatherEl.innerHTML = weatherSnapshots
-            .map((entry) => (
-              "<div class=\"today-overview-weather-item\">" +
-                "<span class=\"today-overview-main\">📍 " + escapeHtml(entry.name) + "</span>" +
-                "<span class=\"today-overview-sub\">" + escapeHtml(formatWeatherSnapshotLine(entry.weather)) + "</span>" +
-              "</div>"
-            ))
-            .join("");
-        }
-      }
-
-      if (todayOverviewRoadsEl) {
-        if (!roadAssessments.length) {
-          todayOverviewRoadsEl.innerHTML =
-            "<a class=\"today-overview-road-item level-unknown\" href=\"https://umferdin.is/en\" target=\"_blank\" rel=\"noopener noreferrer\">" +
-              "<span class=\"today-overview-main\">No road-number data found yet</span>" +
-              "<span class=\"today-overview-sub\">Open umferdin.is for the official nationwide map.</span>" +
-            "</a>";
-        } else {
-          todayOverviewRoadsEl.innerHTML = roadAssessments
-            .map((entry) => {
-              const roadInfoUrl = "https://umferdin.is/en?search=" + encodeURIComponent(entry.road);
-              const risk = entry.risk || { level: "unknown", label: "No data", details: "" };
-              const sourcePrefix =
-                entry.official && entry.official.status !== "Unknown"
-                  ? "Official"
-                  : "Estimated";
-              return (
-                "<a class=\"today-overview-road-item level-" + escapeHtml(risk.level) + "\" href=\"" + escapeHtml(roadInfoUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
-                  "<span class=\"today-overview-main\">🛣️ Road " + escapeHtml(entry.road) + " · " + escapeHtml(risk.label) + "</span>" +
-                  "<span class=\"today-overview-sub\">" +
-                    escapeHtml(entry.direction) +
-                    " · " +
-                    escapeHtml(entry.fromName) +
-                    " → " +
-                    escapeHtml(entry.toName) +
-                    " · " +
-                    escapeHtml(sourcePrefix) +
-                    " · " +
-                    escapeHtml(risk.details) +
-                  "</span>" +
-                "</a>"
-              );
-            })
-            .join("");
-        }
-      }
-
-      if (todayOverviewAdviceEl) {
-        renderTodayAiAdvice(day, weatherSnapshots, roadAssessments);
-      }
-
-      renderTodayOverviewQuickSummary(weatherSnapshots, roadAssessments);
-
-      if (todayOverviewUpdatedEl) {
-        todayOverviewUpdatedEl.textContent =
-          "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      }
-      appActions.setTodayOverview({
-        status: "ready",
-        dayNumber: day.day,
-        weatherSnapshots,
-        roadAssessments,
-        lastUpdatedAt: Date.now()
+      renderTodayOverviewContent(day, weatherSnapshots, roadAssessments, {
+        status: "ready"
       });
     }
 
@@ -10346,13 +10491,25 @@
 
     function requestItineraryLegContextRender(day, color, driveLegSummaries = [], isLoading = false) {
       const requestId = ++itineraryLegContextRequestId;
-      fetchItineraryLegContextForDay(day, driveLegSummaries, { useCache: true })
+      const cachedContext = getCachedItineraryLegContextForDay(day, driveLegSummaries);
+      let renderedFromCache = false;
+
+      if (cachedContext && cachedContext.size) {
+        renderItinerary(day, color, driveLegSummaries, isLoading, cachedContext);
+        renderFullscreenFuelPanel();
+        renderedFromCache = true;
+      }
+
+      fetchItineraryLegContextForDay(day, driveLegSummaries, { useCache: false })
         .then((legContextByLeg) => {
           if (
             requestId !== itineraryLegContextRequestId ||
             !modalEl.classList.contains("open") ||
             activeFullscreenDay !== day.day
           ) {
+            return;
+          }
+          if (renderedFromCache && legContextByLeg === cachedContext) {
             return;
           }
           renderItinerary(day, color, driveLegSummaries, isLoading, legContextByLeg);
