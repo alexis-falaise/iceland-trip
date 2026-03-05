@@ -2234,6 +2234,15 @@
       pointer-events: none;
     }
 
+    .location-card.is-disabled {
+      filter: grayscale(0.38) saturate(0.7);
+    }
+
+    .location-card.is-disabled::after {
+      background:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.36) 0%, rgba(2, 6, 23, 0.28) 36%, rgba(2, 6, 23, 0.84) 100%);
+    }
+
     .location-content {
       position: relative;
       z-index: 3;
@@ -2591,6 +2600,65 @@
 
     .location-card:hover {
       filter: brightness(1.04);
+    }
+
+    .location-card.is-disabled:hover {
+      filter: grayscale(0.38) saturate(0.7) brightness(1);
+    }
+
+    .location-toggle-btn {
+      margin-top: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.52);
+      background: rgba(15, 23, 42, 0.62);
+      color: rgba(241, 245, 249, 0.98);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.67rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      align-self: flex-start;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .location-toggle-btn:hover {
+      border-color: rgba(226, 232, 240, 0.76);
+      background: rgba(15, 23, 42, 0.78);
+    }
+
+    .location-toggle-btn.reenable {
+      border-color: rgba(134, 239, 172, 0.72);
+      background: rgba(6, 78, 59, 0.74);
+      color: #ecfdf5;
+    }
+
+    .location-toggle-btn.reenable:hover {
+      border-color: rgba(187, 247, 208, 0.9);
+      background: rgba(6, 95, 70, 0.84);
+    }
+
+    .location-disabled-overlay {
+      position: absolute;
+      inset: auto 10px 10px 10px;
+      z-index: 5;
+      display: grid;
+      gap: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.58);
+      border-radius: 10px;
+      padding: 9px 10px;
+      background: rgba(2, 6, 23, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 12px 20px rgba(2, 6, 23, 0.35);
+    }
+
+    .location-disabled-overlay p {
+      margin: 0;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: rgba(226, 232, 240, 0.96);
+      font-weight: 600;
     }
 
     .location-passed-badge {
@@ -3142,7 +3210,7 @@
           Auto-push local changes
         </label>
         <p id="sync-status" class="sync-status" aria-live="polite"></p>
-        <p class="sync-note">Syncs packing + budget + fuel planner. Enter the same trip code on both phones.</p>
+        <p class="sync-note">Syncs packing + budget + fuel planner + disabled itinerary stops. Enter the same trip code on both phones.</p>
       </div>
     </section>
 
@@ -3416,6 +3484,7 @@
     window.icelandTripRuntime = appRuntime;
 
     let packItems = [];
+    let disabledLocations = {};
     let budgetState = { maxBudgetISK: 0, expenses: [] };
     let activeTab = "home";
     let moduleCollapseState = {};
@@ -3423,6 +3492,10 @@
 
     function syncStateRefs(nextState = appStore.getState()) {
       packItems = Array.isArray(nextState.packItems) ? nextState.packItems : [];
+      disabledLocations =
+        nextState.disabledLocations && typeof nextState.disabledLocations === "object"
+          ? nextState.disabledLocations
+          : {};
       budgetState = nextState.budget && typeof nextState.budget === "object"
         ? nextState.budget
         : { maxBudgetISK: 0, expenses: [] };
@@ -3445,6 +3518,7 @@
       appPersistence.saveAppSnapshot({
         schemaVersion: SYNC_SCHEMA_VERSION,
         packItems: nextState.packItems,
+        disabledLocations: nextState.disabledLocations,
         budget: nextState.budget,
         activeTab: nextState.activeTab,
         moduleCollapse: nextState.moduleCollapse,
@@ -4110,6 +4184,29 @@
       return locationRoute;
     }
 
+    function getLocationStateKey(dayNumber, locationIndex) {
+      return "day-" + Number(dayNumber) + "-loc-" + Number(locationIndex);
+    }
+
+    function parseLocationStateKey(locationKey) {
+      const match = /^day-(\d+)-loc-(\d+)$/i.exec(String(locationKey || "").trim());
+      if (!match) {
+        return null;
+      }
+      return {
+        dayNumber: Number(match[1]),
+        locationIndex: Number(match[2])
+      };
+    }
+
+    function isLocationDisabled(locationKey) {
+      return Boolean(
+        disabledLocations &&
+        typeof disabledLocations === "object" &&
+        disabledLocations[locationKey]
+      );
+    }
+
     function locationMapsUrl(location, fallbackPoint) {
       const point =
         (Array.isArray(location.coords) && location.coords.length === 2 && location.coords) ||
@@ -4177,6 +4274,45 @@
         "&waypoints=" + encodeURIComponent(waypoint) +
         "&travelmode=driving"
       );
+    }
+
+    function locationDirectionsToken(location, fallbackPoint) {
+      const point = resolveCoords(location && location.coords, fallbackPoint);
+      if (point) {
+        return point[0] + "," + point[1];
+      }
+      return String((location && location.name) || "Iceland").trim();
+    }
+
+    function buildDayDirectionsUrl(day) {
+      const dayRoute = getDayEnabledRoute(day);
+      const locations = dayRoute.enabledLocations;
+      const routePoints = dayRoute.enabledRoutePoints;
+      if (locations.length < 2) {
+        return String(day && day.mapLink ? day.mapLink : "https://www.google.com/maps");
+      }
+
+      const origin = locationDirectionsToken(locations[0], routePoints[0]);
+      const destination = locationDirectionsToken(
+        locations[locations.length - 1],
+        routePoints[routePoints.length - 1]
+      );
+      const waypoints = locations
+        .slice(1, -1)
+        .map((location, index) => locationDirectionsToken(location, routePoints[index + 1]))
+        .filter((token) => token)
+        .slice(0, 8);
+
+      const params = [
+        "api=1",
+        "travelmode=driving",
+        "origin=" + encodeURIComponent(origin),
+        "destination=" + encodeURIComponent(destination)
+      ];
+      if (waypoints.length) {
+        params.push("waypoints=" + encodeURIComponent(waypoints.join("|")));
+      }
+      return "https://www.google.com/maps/dir/?" + params.join("&");
     }
 
     function resolveCoords(primaryPoint, fallbackPoint) {
@@ -4304,13 +4440,26 @@
       return !hasSharedPlaceKeyword(campName, lastLocation ? lastLocation.name : "");
     }
 
-    function getDisplayLocations(day, routePoints = getDayRoutePoints(day)) {
-      const locations = day.locations.map((location) => ({
-        ...location,
-        isCampsite: Boolean(location.isCampsite || location.isCamp)
-      }));
+    function getDisplayLocations(day, routePoints = getDayRoutePoints(day), options = {}) {
+      const includeDisabled = options.includeDisabled !== false;
+      const locations = day.locations.map((location, sourceIndex) => {
+        const isCampsite = Boolean(location.isCampsite || location.isCamp);
+        const locationKey = getLocationStateKey(day.day, sourceIndex);
+        const canDisable = !isCampsite && sourceIndex > 0;
+        const isDisabled = canDisable && isLocationDisabled(locationKey);
+        return {
+          ...location,
+          isCampsite,
+          locationKey,
+          sourceIndex,
+          canDisable,
+          isDisabled
+        };
+      });
       if (!shouldAppendCampStop(day, locations)) {
-        return locations;
+        return includeDisabled
+          ? locations
+          : locations.filter((location) => !location.isDisabled);
       }
 
       const campName = String(day.camp || "Campsite").trim();
@@ -4334,16 +4483,51 @@
             ? mappedCampCoordsEntry.coords
             : null;
 
+      const campSourceIndex = locations.length;
       locations.push({
         name: campName,
         note: "Overnight stop. Check in, organize gear, and recharge for tomorrow.",
         image: imageFor("iceland campsite " + campName, day.day * 100 + 99),
         coords: routeEndPoint,
         isCampsite: true,
-        isCamp: true
+        isCamp: true,
+        locationKey: getLocationStateKey(day.day, campSourceIndex),
+        sourceIndex: campSourceIndex,
+        canDisable: false,
+        isDisabled: false
       });
 
-      return locations;
+      return includeDisabled
+        ? locations
+        : locations.filter((location) => !location.isDisabled);
+    }
+
+    function getDayEnabledRoute(day) {
+      const routePoints = getDayRoutePoints(day);
+      const allLocations = getDisplayLocations(day, routePoints, { includeDisabled: true });
+      const enabledLocations = [];
+      const enabledLocationIndexes = [];
+      const enabledRoutePoints = [];
+
+      allLocations.forEach((location, index) => {
+        if (location.isDisabled) {
+          return;
+        }
+        enabledLocations.push(location);
+        enabledLocationIndexes.push(index);
+        const resolvedPoint = resolveCoords(location.coords, routePoints[index]);
+        if (resolvedPoint) {
+          enabledRoutePoints.push(resolvedPoint);
+        }
+      });
+
+      return {
+        routePoints,
+        allLocations,
+        enabledLocations,
+        enabledLocationIndexes,
+        enabledRoutePoints
+      };
     }
 
     const LEG_DURATION_OVERRIDES = {
@@ -4567,8 +4751,9 @@
         if (targetDay && day.day > targetDay.day) {
           break;
         }
-        const routePoints = getDayRoutePoints(day);
-        const locations = getDisplayLocations(day, routePoints);
+        const dayRoute = getDayEnabledRoute(day);
+        const routePoints = dayRoute.enabledRoutePoints;
+        const locations = dayRoute.enabledLocations;
         const summaries =
           targetDay && day.day === targetDay.day
             ? targetLegSummaries
@@ -4853,9 +5038,9 @@
     }
 
     function getDayDriveAggregate(day, driveLegSummaries = []) {
-      const routePoints = getDayRoutePoints(day);
-      const locations = getDisplayLocations(day, routePoints);
-      const legCount = Math.max(0, locations.length - 1);
+      const dayRoute = getDayEnabledRoute(day);
+      const locations = dayRoute.enabledLocations;
+      const legCount = Math.max(0, dayRoute.enabledRoutePoints.length - 1);
       let totalSeconds = 0;
       let knownLegs = 0;
 
@@ -5139,7 +5324,7 @@
     }
 
     function getCachedDrivingLegDurations(day) {
-      const route = getDayRoutePoints(day);
+      const route = getDayEnabledRoute(day).enabledRoutePoints;
       if (route.length < 2) {
         return [];
       }
@@ -5158,7 +5343,7 @@
     }
 
     async function fetchDrivingLegDurations(day) {
-      const route = getDayRoutePoints(day);
+      const route = getDayEnabledRoute(day).enabledRoutePoints;
       if (route.length < 2) {
         return [];
       }
@@ -6636,6 +6821,7 @@
         schemaVersion: SYNC_SCHEMA_VERSION,
         sourceDeviceId: syncDeviceId,
         packItems: state.packItems,
+        disabledLocations: state.disabledLocations,
         budgetState: {
           maxBudgetISK: toNonNegativeInteger(state.budget.maxBudgetISK),
           expenses: state.budget.expenses
@@ -6652,6 +6838,31 @@
 
       const migratedPayload = appRuntime.migrateSyncedPayload(payload);
       const nextPackItems = sanitizeSyncedPackItems(migratedPayload.packItems);
+      const nextDisabledLocations =
+        migratedPayload.disabledLocations && typeof migratedPayload.disabledLocations === "object"
+          ? migratedPayload.disabledLocations
+          : {};
+      const previousDisabledLocations =
+        disabledLocations && typeof disabledLocations === "object"
+          ? disabledLocations
+          : {};
+      const changedDisabledDayNumbers = new Set();
+      Object.keys(previousDisabledLocations).forEach((locationKey) => {
+        if (previousDisabledLocations[locationKey] && !nextDisabledLocations[locationKey]) {
+          const parsedKey = parseLocationStateKey(locationKey);
+          if (parsedKey && Number.isFinite(parsedKey.dayNumber)) {
+            changedDisabledDayNumbers.add(parsedKey.dayNumber);
+          }
+        }
+      });
+      Object.keys(nextDisabledLocations).forEach((locationKey) => {
+        if (nextDisabledLocations[locationKey] && !previousDisabledLocations[locationKey]) {
+          const parsedKey = parseLocationStateKey(locationKey);
+          if (parsedKey && Number.isFinite(parsedKey.dayNumber)) {
+            changedDisabledDayNumbers.add(parsedKey.dayNumber);
+          }
+        }
+      });
       const nextBudgetState = sanitizeSyncedBudgetState(migratedPayload.budgetState);
       const hasRemoteFuelPlannerState =
         payload.fuelPlannerState && typeof payload.fuelPlannerState === "object";
@@ -6662,6 +6873,7 @@
       syncApplyingRemote = true;
       try {
         packingFeature.setItems(nextPackItems, { skipSync: true });
+        appActions.setDisabledLocations(nextDisabledLocations);
         appActions.setBudget(nextBudgetState);
         nextExpenseId = budgetState.expenses.length
           ? Math.max(...budgetState.expenses.map((item) => item.id)) + 1
@@ -6681,6 +6893,16 @@
       } finally {
         syncApplyingRemote = false;
       }
+
+      changedDisabledDayNumbers.forEach((dayNumber) => {
+        const day = days.find((entry) => entry.day === dayNumber);
+        if (day) {
+          refreshRoutingDependentUiForDay(day, {
+            refreshTodayOverview: activeTab === "home",
+            forceItineraryOverviewRefit: activeTab === "itinerary"
+          });
+        }
+      });
 
       setSyncLocalUpdatedAt(remoteUpdatedAtMs);
       return true;
@@ -7735,8 +7957,9 @@
     }
 
     function collectTodayRoadCandidates(day, driveLegSummaries = []) {
-      const routePoints = getDayRoutePoints(day);
-      const locations = getDisplayLocations(day, routePoints);
+      const dayRoute = getDayEnabledRoute(day);
+      const routePoints = dayRoute.enabledRoutePoints;
+      const locations = dayRoute.enabledLocations;
       if (routePoints.length < 2 || locations.length < 2) {
         return [];
       }
@@ -7820,6 +8043,17 @@
     function buildItineraryLegContextCacheKey(day, driveLegSummaries = []) {
       const trip = getTripPhaseAndDay();
       const dayToken = Number(day && day.day);
+      const routeToken = day && Number.isFinite(dayToken)
+        ? getDayEnabledRoute(day).enabledRoutePoints
+        .map((point) => {
+          const lat = Number(point && point[0]);
+          const lon = Number(point && point[1]);
+          return Number.isFinite(lat) && Number.isFinite(lon)
+            ? lat.toFixed(5) + "," + lon.toFixed(5)
+            : "na";
+        })
+        .join(";")
+        : "";
       const roadsToken = (Array.isArray(driveLegSummaries) ? driveLegSummaries : [])
         .map((summary) => getLegRoadTokens(summary).join(","))
         .join("|");
@@ -7827,6 +8061,7 @@
         "day-" + (Number.isFinite(dayToken) ? dayToken : "na"),
         "date-" + formatDateAsYmd(getTripDayDate(dayToken)),
         "trip-" + trip.phase + "-" + trip.dayNumber,
+        "route-" + routeToken,
         "roads-" + roadsToken
       ].join("|");
     }
@@ -7878,8 +8113,9 @@
 
       const lookupPromise = (async () => {
         try {
-          const routePoints = getDayRoutePoints(day);
-          const locations = getDisplayLocations(day, routePoints);
+          const dayRoute = getDayEnabledRoute(day);
+          const routePoints = dayRoute.enabledRoutePoints;
+          const locations = dayRoute.enabledLocations;
           const legCount = Math.max(0, locations.length - 1);
           const contextByLeg = new Map();
           const targetDate = getTripDayDate(day.day);
@@ -8061,7 +8297,7 @@
         .slice(0, 3)
         .map((entry) => "Road " + entry.road + " (" + entry.risk.label + ")");
 
-      const dayLocations = getDisplayLocations(day, getDayRoutePoints(day))
+      const dayLocations = getDayEnabledRoute(day).enabledLocations
         .filter((location) => !location.isCampsite)
         .map((location) => location.name);
       const whatToSee = dayLocations.slice(0, 3);
@@ -8431,8 +8667,8 @@
         return;
       }
 
-      const routePoints = getDayRoutePoints(day);
-      const locations = getDisplayLocations(day, routePoints);
+      const dayRoute = getDayEnabledRoute(day);
+      const locations = dayRoute.enabledLocations;
       const weatherTargets = [];
       if (locations[0] && Array.isArray(locations[0].coords)) {
         weatherTargets.push({
@@ -9815,9 +10051,8 @@
     }
 
     function getItineraryOverviewRoutePoints(day) {
-      const routePoints = getDayRoutePoints(day);
-      const displayLocations = getDisplayLocations(day, routePoints);
-      const pointsFromLocations = displayLocations
+      const dayRoute = getDayEnabledRoute(day);
+      const pointsFromLocations = dayRoute.enabledLocations
         .map((location) => (
           Array.isArray(location && location.coords) && location.coords.length === 2
             ? location.coords
@@ -9833,7 +10068,7 @@
         return pointsFromLocations;
       }
 
-      return routePoints.filter((point) => (
+      return dayRoute.enabledRoutePoints.filter((point) => (
         Array.isArray(point) &&
         point.length === 2 &&
         Number.isFinite(Number(point[0])) &&
@@ -10250,8 +10485,9 @@
         mapMarkersLayer = null;
       }
 
-      const route = getDayRoutePoints(day);
-      const locations = getDisplayLocations(day, route);
+      const dayRoute = getDayEnabledRoute(day);
+      const route = dayRoute.enabledRoutePoints;
+      const locations = dayRoute.enabledLocations;
 
       if (!route.length) {
         fullscreenMap.setView([64.9, -19.0], 6);
@@ -10290,8 +10526,9 @@
     }
 
     function renderRouteStops(day, color) {
-      const routePoints = getDayRoutePoints(day);
-      const locations = getDisplayLocations(day, routePoints);
+      const dayRoute = getDayEnabledRoute(day);
+      const routePoints = dayRoute.enabledRoutePoints;
+      const locations = dayRoute.enabledLocations;
       modalRouteEl.innerHTML = locations
         .map((location, index) => {
           const locationUrl = locationMapsUrl(location, routePoints[index]);
@@ -10362,24 +10599,32 @@
     }
 
     function renderItinerary(day, color, driveLegSummaries = [], isLoading = false, legContextByLeg = null) {
-      const routePoints = getDayRoutePoints(day);
-      const locations = getDisplayLocations(day, routePoints);
+      const dayRoute = getDayEnabledRoute(day);
+      const routePoints = dayRoute.routePoints;
+      const locations = dayRoute.allLocations;
+      const enabledLocations = dayRoute.enabledLocations;
+      const enabledLocationIndexes = dayRoute.enabledLocationIndexes;
+      const enabledRoutePoints = dayRoute.enabledRoutePoints;
+      const enabledSequenceByAllIndex = new Map();
+      enabledLocationIndexes.forEach((allIndex, enabledIndex) => {
+        enabledSequenceByAllIndex.set(allIndex, enabledIndex);
+      });
       const gasSuggestionsByLeg = computeGasSuggestionsForDay(day, driveLegSummaries);
       const currentProgressKm = estimateFuelContextTripProgressKm(new Date(), getLatestKnownCoords());
       const dayLegRecords = buildTripLegRecords(day, driveLegSummaries).legRecords
         .filter((leg) => leg.dayNumber === day.day);
       const stopProgressKmByIndex = new Array(locations.length).fill(null);
-      if (dayLegRecords.length) {
-        stopProgressKmByIndex[0] = dayLegRecords[0].startKm;
-        for (let stopIndex = 1; stopIndex < locations.length; stopIndex += 1) {
-          const previousLeg = dayLegRecords[stopIndex - 1];
-          stopProgressKmByIndex[stopIndex] = previousLeg
-            ? previousLeg.endKm
-            : stopProgressKmByIndex[stopIndex - 1];
+      if (dayLegRecords.length && enabledLocationIndexes.length) {
+        stopProgressKmByIndex[enabledLocationIndexes[0]] = dayLegRecords[0].startKm;
+        for (let legIndex = 0; legIndex < dayLegRecords.length; legIndex += 1) {
+          const nextAllIndex = enabledLocationIndexes[legIndex + 1];
+          if (Number.isFinite(nextAllIndex)) {
+            stopProgressKmByIndex[nextAllIndex] = dayLegRecords[legIndex].endKm;
+          }
         }
       }
       const dayCampPricing = getDayCampPricing(day);
-      const intermediateStops = Math.max(0, locations.length - 2);
+      const intermediateStops = Math.max(0, enabledLocations.length - 2);
       if (modalItineraryTitleEl) {
         const label = intermediateStops === 1 ? "stop" : "stops";
         modalItineraryTitleEl.innerHTML =
@@ -10393,9 +10638,11 @@
       let html = "";
 
       locations.forEach((location, index) => {
-        const locationUrl = locationMapsUrl(location, routePoints[index]);
+        const fallbackPoint = resolveCoords(location.coords, routePoints[index]);
+        const locationUrl = locationMapsUrl(location, fallbackPoint);
         const isDepartureStop = index === 0;
         const isEndStop = index === locations.length - 1;
+        const isDisabledStop = Boolean(location.isDisabled);
         const stopProgressKm = stopProgressKmByIndex[index];
         const isPassedStop =
           Number.isFinite(stopProgressKm) &&
@@ -10406,6 +10653,7 @@
           (location.isCampsite ? " campsite-card" : "") +
           (isDepartureStop ? " departure-card" : "") +
           (isEndStop ? " end-card" : "") +
+          (isDisabledStop ? " is-disabled" : "") +
           (isPassedStop ? " passed-stop" : "");
         const stepIcons = [];
         if (isDepartureStop) {
@@ -10425,6 +10673,17 @@
         const locationPrimaryLabel = location.isCampsite ? "Open campsite in Maps" : "Open location in Maps";
         const campPriceLine = location.isCampsite && dayCampPricing
           ? "<p class=\"location-note\">💳 " + escapeHtml(getCampPriceDisplayText(dayCampPricing)) + "</p>"
+          : "";
+        const locationStateButton = location.canDisable && !isDisabledStop
+          ? "<button class=\"location-toggle-btn\" type=\"button\" data-location-toggle=\"disable\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" aria-label=\"Disable " + locationName + "\">Disable stop</button>"
+          : "";
+        const disabledOverlay = isDisabledStop && location.canDisable
+          ? (
+            "<div class=\"location-disabled-overlay\" aria-label=\"Disabled stop\">" +
+              "<p>Stop disabled for routing.</p>" +
+              "<button class=\"location-toggle-btn reenable\" type=\"button\" data-location-toggle=\"enable\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" aria-label=\"Re-enable " + locationName + "\">Re-enable stop</button>" +
+            "</div>"
+          )
           : "";
         const discoveryLinksHtml = getLocationDiscoveryLinks(location)
           .map((entry) => (
@@ -10461,16 +10720,30 @@
                   "<p class=\"location-note\">" + locationNote + "</p>" +
                   campPriceLine +
                   "<div class=\"location-discovery-links\">" + discoveryLinksHtml + "</div>" +
+                  locationStateButton +
                 "</div>" +
+                disabledOverlay +
             "</div>" +
           "</article>";
 
-        if (index < locations.length - 1) {
-          const legSummary = driveLegSummaries[index];
+        const enabledSequenceIndex = enabledSequenceByAllIndex.has(index)
+          ? enabledSequenceByAllIndex.get(index)
+          : -1;
+        const hasNextEnabledLeg =
+          Number.isFinite(enabledSequenceIndex) &&
+          enabledSequenceIndex >= 0 &&
+          enabledSequenceIndex < enabledLocations.length - 1;
+
+        if (hasNextEnabledLeg) {
+          const fromLocation = enabledLocations[enabledSequenceIndex];
+          const toLocation = enabledLocations[enabledSequenceIndex + 1];
+          const fromPoint = enabledRoutePoints[enabledSequenceIndex];
+          const toPoint = enabledRoutePoints[enabledSequenceIndex + 1];
+          const legSummary = driveLegSummaries[enabledSequenceIndex];
           const legContext = legContextByLeg instanceof Map
-            ? legContextByLeg.get(index)
+            ? legContextByLeg.get(enabledSequenceIndex)
             : null;
-          const fallbackDirection = getCardinalDirection(routePoints[index], routePoints[index + 1]);
+          const fallbackDirection = getCardinalDirection(fromPoint, toPoint);
           const roadNumbers =
             legSummary && Array.isArray(legSummary.roads) && legSummary.roads.length
               ? legSummary.roads.join(" • ")
@@ -10486,16 +10759,16 @@
             summaryClass += " loading";
           }
           const legDirectionsUrl = mapsDirectionsUrl(
-            locations[index],
-            locations[index + 1],
-            routePoints[index],
-            routePoints[index + 1]
+            fromLocation,
+            toLocation,
+            fromPoint,
+            toPoint
           );
 
           html +=
             "<div class=\"itinerary-leg\">" +
               "<span class=\"itinerary-leg-line\" aria-hidden=\"true\"></span>" +
-              "<a class=\"" + summaryClass + "\" href=\"" + escapeHtml(legDirectionsUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open driving itinerary between " + escapeHtml(locations[index].name) + " and " + escapeHtml(locations[index + 1].name) + "\">" +
+              "<a class=\"" + summaryClass + "\" href=\"" + escapeHtml(legDirectionsUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open driving itinerary between " + escapeHtml(fromLocation.name) + " and " + escapeHtml(toLocation.name) + "\">" +
                 "<span>🛣️ Roads: " + escapeHtml(roadNumbers) + "</span>" +
                 "<span>•</span>" +
                 "<span>Direction: " + escapeHtml(directionText) + "</span>" +
@@ -10503,8 +10776,8 @@
 
           const durationValue = getLegDurationSeconds(
             day,
-            locations[index],
-            locations[index + 1],
+            fromLocation,
+            toLocation,
             legSummary
           );
           let durationText = "Drive time unavailable";
@@ -10523,10 +10796,10 @@
               "<span>" + durationText + "</span>" +
             "</div>" +
             buildItineraryLegContextHtml(legContext) +
-            (gasSuggestionsByLeg.has(index)
+            (gasSuggestionsByLeg.has(enabledSequenceIndex)
               ? (
                 (() => {
-                  const suggestion = gasSuggestionsByLeg.get(index);
+                  const suggestion = gasSuggestionsByLeg.get(enabledSequenceIndex);
                   const gasPriceText = formatGasPriceLabel({
                     value: suggestion.gasPriceISK,
                     source: suggestion.gasPriceSource
@@ -10534,7 +10807,7 @@
                   return (
                 "<a class=\"itinerary-gas-chip\" href=\"" +
                   escapeHtml(suggestion.directionsUrl) +
-                  "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open suggested gas-stop detour between " + escapeHtml(locations[index].name) + " and " + escapeHtml(locations[index + 1].name) + "\">" +
+                  "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open suggested gas-stop detour between " + escapeHtml(fromLocation.name) + " and " + escapeHtml(toLocation.name) + "\">" +
                   "⛽ " +
                   escapeHtml(getServicePointLabel(suggestion.station)) +
                   (gasPriceText ? " · " + escapeHtml(gasPriceText) : "") +
@@ -10672,6 +10945,66 @@
         });
     }
 
+    function refreshRoutingDependentUiForDay(day, options = {}) {
+      if (!day) {
+        return;
+      }
+
+      const shouldRefreshTodayOverview = Boolean(options.refreshTodayOverview);
+      const forceItineraryOverviewRefit = Boolean(options.forceItineraryOverviewRefit);
+      const color = dayColors[(day.day - 1) % dayColors.length];
+      const colorHex = resolveDayColorHex(day.day);
+      const cachedDriveSummaries = getCachedDrivingLegDurations(day);
+
+      renderDayDriveTag(day, cachedDriveSummaries);
+
+      if (activeTab === "itinerary") {
+        renderItineraryOverviewMap(forceItineraryOverviewRefit);
+      }
+
+      if (modalEl.classList.contains("open") && activeFullscreenDay === day.day) {
+        renderFullscreenSubtitle(day, cachedDriveSummaries);
+        renderFullscreenMap(day, colorHex);
+        renderRouteStops(day, color);
+        renderItinerary(day, color, cachedDriveSummaries, !cachedDriveSummaries.length);
+        renderFullscreenFuelPanel();
+        requestItineraryLegContextRender(day, color, cachedDriveSummaries, !cachedDriveSummaries.length);
+      }
+
+      if (shouldRefreshTodayOverview && activeTab === "home") {
+        refreshTodayOverview({
+          force: true,
+          silent: true,
+          skipBackgroundRefresh: true
+        });
+      }
+
+      const dayNumber = day.day;
+      const requestId =
+        modalEl.classList.contains("open") && activeFullscreenDay === dayNumber
+          ? ++driveTimesRequestId
+          : 0;
+      fetchDrivingLegDurations(day).then((durations) => {
+        if (requestId && requestId !== driveTimesRequestId) {
+          return;
+        }
+        renderDayDriveTag(day, durations);
+        if (modalEl.classList.contains("open") && activeFullscreenDay === dayNumber) {
+          renderFullscreenSubtitle(day, durations);
+          renderItinerary(day, color, durations, false);
+          renderFullscreenFuelPanel();
+          requestItineraryLegContextRender(day, color, durations, false);
+        }
+        if (shouldRefreshTodayOverview && activeTab === "home") {
+          refreshTodayOverview({
+            force: true,
+            silent: true,
+            skipBackgroundRefresh: true
+          });
+        }
+      });
+    }
+
     function rerenderActiveFullscreenItineraryForFuelRange() {
       if (!modalEl || !modalEl.classList.contains("open") || !Number.isFinite(activeFullscreenDay)) {
         return;
@@ -10680,21 +11013,7 @@
       if (!day) {
         return;
       }
-      const color = dayColors[(day.day - 1) % dayColors.length];
-      const cachedDriveSummaries = getCachedDrivingLegDurations(day);
-      renderItinerary(day, color, cachedDriveSummaries, !cachedDriveSummaries.length);
-      renderFullscreenFuelPanel();
-      requestItineraryLegContextRender(day, color, cachedDriveSummaries, !cachedDriveSummaries.length);
-
-      const requestId = ++driveTimesRequestId;
-      fetchDrivingLegDurations(day).then((durations) => {
-        if (requestId !== driveTimesRequestId || !modalEl.classList.contains("open")) {
-          return;
-        }
-        renderItinerary(day, color, durations, false);
-        renderFullscreenFuelPanel();
-        requestItineraryLegContextRender(day, color, durations, false);
-      });
+      refreshRoutingDependentUiForDay(day);
     }
 
     function openDayFullscreen(dayNumber) {
@@ -10713,7 +11032,7 @@
       modalTitleEl.textContent = "Day " + day.day + ": " + day.title;
       renderFullscreenSubtitle(day, cachedDriveSummaries);
 
-      modalMapLinkEl.href = day.mapLink;
+      modalMapLinkEl.href = buildDayDirectionsUrl(day);
 
       modalEl.classList.add("open");
       document.body.classList.add("modal-open");
@@ -10770,6 +11089,37 @@
     });
 
     closeModalBtnEl.addEventListener("click", closeDayFullscreen);
+
+    modalItineraryEl.addEventListener("click", (event) => {
+      const trigger = event.target.closest("[data-location-toggle]");
+      if (!trigger) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+
+      const locationKey = String(trigger.getAttribute("data-location-key") || "").trim();
+      const toggleType = String(trigger.getAttribute("data-location-toggle") || "").trim();
+      if (!locationKey || (toggleType !== "disable" && toggleType !== "enable")) {
+        return;
+      }
+
+      const parsedKey = parseLocationStateKey(locationKey);
+      if (!parsedKey || !Number.isFinite(parsedKey.dayNumber)) {
+        return;
+      }
+      const day = days.find((entry) => entry.day === parsedKey.dayNumber);
+      if (!day) {
+        return;
+      }
+
+      appActions.setLocationDisabled(locationKey, toggleType === "disable");
+      markSyncLocalChange();
+      refreshRoutingDependentUiForDay(day, {
+        refreshTodayOverview: true,
+        forceItineraryOverviewRefit: true
+      });
+    });
 
     modalEl.addEventListener("click", (event) => {
       if (event.target === modalEl) {

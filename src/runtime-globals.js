@@ -84,6 +84,22 @@
     const allowedTabs = /* @__PURE__ */ new Set(["home", "itinerary", "tools"]);
     return allowedTabs.has(value) ? value : "home";
   }
+  function sanitizeDisabledLocations(rawState) {
+    if (!rawState || typeof rawState !== "object") {
+      return {};
+    }
+    const sanitized = {};
+    Object.keys(rawState).forEach((rawKey) => {
+      const key = String(rawKey || "").trim();
+      if (!key || key.length > 120 || !/^[a-z0-9:_-]+$/i.test(key)) {
+        return;
+      }
+      if (rawState[rawKey]) {
+        sanitized[key] = true;
+      }
+    });
+    return sanitized;
+  }
   function createActions(store) {
     const { getState, setState } = store;
     return {
@@ -227,6 +243,28 @@
           }
         }));
       },
+      setDisabledLocations(nextState) {
+        return setState({
+          disabledLocations: sanitizeDisabledLocations(nextState)
+        });
+      },
+      setLocationDisabled(locationKey, disabled) {
+        const key = String(locationKey || "").trim();
+        if (!key || key.length > 120 || !/^[a-z0-9:_-]+$/i.test(key)) {
+          return getState();
+        }
+        return setState((state) => {
+          const current = sanitizeDisabledLocations(state.disabledLocations);
+          if (disabled) {
+            current[key] = true;
+          } else {
+            delete current[key];
+          }
+          return {
+            disabledLocations: current
+          };
+        });
+      },
       setSyncSettings(nextSettingsOrUpdater) {
         return setState((state) => {
           const current = state.syncSettings || {
@@ -262,7 +300,8 @@
   }
   var stateSanitizers = {
     sanitizePackItems,
-    sanitizeBudgetState
+    sanitizeBudgetState,
+    sanitizeDisabledLocations
   };
 
   // src/storage/local-storage-adapter.js
@@ -534,6 +573,7 @@
     return {
       schemaVersion,
       packItems: [],
+      disabledLocations: {},
       budget: {
         maxBudgetISK: 0,
         expenses: []
@@ -558,6 +598,7 @@
       ...raw,
       schemaVersion,
       packItems: stateSanitizers.sanitizePackItems(raw.packItems),
+      disabledLocations: stateSanitizers.sanitizeDisabledLocations(raw.disabledLocations),
       budget: stateSanitizers.sanitizeBudgetState(raw.budget),
       moduleCollapse: raw.moduleCollapse && typeof raw.moduleCollapse === "object" ? raw.moduleCollapse : {},
       syncSettings: {
@@ -581,6 +622,11 @@
         ...defaults.budget,
         ...persisted.budget,
         ...provided.budget
+      },
+      disabledLocations: {
+        ...defaults.disabledLocations,
+        ...persisted.disabledLocations,
+        ...provided.disabledLocations
       },
       syncSettings: {
         ...defaults.syncSettings,
@@ -686,6 +732,7 @@
         return {
           schemaVersion,
           packItems: stateSanitizers.sanitizePackItems(parsed.packItems),
+          disabledLocations: stateSanitizers.sanitizeDisabledLocations(parsed.disabledLocations),
           budgetState: stateSanitizers.sanitizeBudgetState(parsed.budgetState),
           syncSettings: parsed.syncSettings && typeof parsed.syncSettings === "object" ? parsed.syncSettings : null
         };
@@ -693,6 +740,7 @@
       return {
         schemaVersion,
         packItems: stateSanitizers.sanitizePackItems(parsed.packItems),
+        disabledLocations: stateSanitizers.sanitizeDisabledLocations(parsed.disabledLocations),
         budgetState: stateSanitizers.sanitizeBudgetState(parsed.budgetState),
         syncSettings: parsed.syncSettings && typeof parsed.syncSettings === "object" ? parsed.syncSettings : null
       };

@@ -20,6 +20,7 @@ function createDefaultState(schemaVersion) {
   return {
     schemaVersion,
     packItems: [],
+    disabledLocations: {},
     budget: {
       maxBudgetISK: 0,
       expenses: []
@@ -46,6 +47,7 @@ export function migrateState(rawState, targetSchemaVersion = DEFAULT_SCHEMA_VERS
     ...raw,
     schemaVersion,
     packItems: stateSanitizers.sanitizePackItems(raw.packItems),
+    disabledLocations: stateSanitizers.sanitizeDisabledLocations(raw.disabledLocations),
     budget: stateSanitizers.sanitizeBudgetState(raw.budget),
     moduleCollapse:
       raw.moduleCollapse && typeof raw.moduleCollapse === "object"
@@ -83,6 +85,11 @@ function mergeInitialState(schemaVersion, persistedState, providedState) {
       ...defaults.budget,
       ...persisted.budget,
       ...provided.budget
+    },
+    disabledLocations: {
+      ...defaults.disabledLocations,
+      ...persisted.disabledLocations,
+      ...provided.disabledLocations
     },
     syncSettings: {
       ...defaults.syncSettings,
@@ -209,6 +216,7 @@ export function createAppRuntime(options = {}) {
       return {
         schemaVersion,
         packItems: stateSanitizers.sanitizePackItems(parsed.packItems),
+        disabledLocations: stateSanitizers.sanitizeDisabledLocations(parsed.disabledLocations),
         budgetState: stateSanitizers.sanitizeBudgetState(parsed.budgetState),
         syncSettings:
           parsed.syncSettings && typeof parsed.syncSettings === "object"
@@ -220,6 +228,7 @@ export function createAppRuntime(options = {}) {
     return {
       schemaVersion,
       packItems: stateSanitizers.sanitizePackItems(parsed.packItems),
+      disabledLocations: stateSanitizers.sanitizeDisabledLocations(parsed.disabledLocations),
       budgetState: stateSanitizers.sanitizeBudgetState(parsed.budgetState),
       syncSettings:
         parsed.syncSettings && typeof parsed.syncSettings === "object"
@@ -238,4 +247,3 @@ export function createAppRuntime(options = {}) {
     migrateSyncedPayload
   };
 }
-

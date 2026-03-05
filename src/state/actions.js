@@ -59,6 +59,24 @@ function sanitizeActiveTab(value) {
   return allowedTabs.has(value) ? value : "home";
 }
 
+function sanitizeDisabledLocations(rawState) {
+  if (!rawState || typeof rawState !== "object") {
+    return {};
+  }
+
+  const sanitized = {};
+  Object.keys(rawState).forEach((rawKey) => {
+    const key = String(rawKey || "").trim();
+    if (!key || key.length > 120 || !/^[a-z0-9:_-]+$/i.test(key)) {
+      return;
+    }
+    if (rawState[rawKey]) {
+      sanitized[key] = true;
+    }
+  });
+  return sanitized;
+}
+
 export function createActions(store) {
   const { getState, setState } = store;
 
@@ -239,6 +257,31 @@ export function createActions(store) {
       }));
     },
 
+    setDisabledLocations(nextState) {
+      return setState({
+        disabledLocations: sanitizeDisabledLocations(nextState)
+      });
+    },
+
+    setLocationDisabled(locationKey, disabled) {
+      const key = String(locationKey || "").trim();
+      if (!key || key.length > 120 || !/^[a-z0-9:_-]+$/i.test(key)) {
+        return getState();
+      }
+
+      return setState((state) => {
+        const current = sanitizeDisabledLocations(state.disabledLocations);
+        if (disabled) {
+          current[key] = true;
+        } else {
+          delete current[key];
+        }
+        return {
+          disabledLocations: current
+        };
+      });
+    },
+
     setSyncSettings(nextSettingsOrUpdater) {
       return setState((state) => {
         const current = state.syncSettings || {
@@ -282,6 +325,6 @@ export function createActions(store) {
 
 export const stateSanitizers = {
   sanitizePackItems,
-  sanitizeBudgetState
+  sanitizeBudgetState,
+  sanitizeDisabledLocations
 };
-
