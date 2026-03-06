@@ -598,6 +598,41 @@
       margin-bottom: 12px;
     }
 
+    .module-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .module-head .card-title {
+      margin-bottom: 0;
+    }
+
+    .module-toggle-btn {
+      border: 1px solid var(--border-ui);
+      background: #ffffff;
+      color: var(--muted-text-ui);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.35;
+      cursor: pointer;
+    }
+
+    .module-toggle-btn:hover {
+      border-color: #a1a1aa;
+      background: var(--muted-ui);
+      color: var(--text-ui);
+    }
+
+    .module-expanded[hidden],
+    .module-collapsed[hidden] {
+      display: none !important;
+    }
+
     #packing-card .card-title {
       font-size: 0.83rem;
       margin-bottom: 12px;
@@ -965,6 +1000,31 @@
       font-weight: 700;
       color: var(--text-ui);
       margin-bottom: 8px;
+    }
+
+    .today-overview-quick {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .today-overview-quick-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border-ui);
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.76rem;
+      color: var(--text-ui);
+    }
+
+    .today-overview-quick-icon {
+      font-size: 0.88rem;
+      line-height: 1;
+      min-width: 1.1em;
+      text-align: center;
     }
 
     .today-overview-block + .today-overview-block {
@@ -2035,9 +2095,102 @@
       font-style: italic;
     }
 
+    #itinerary-overview-card {
+      display: none;
+    }
+
+    .itinerary-overview-map {
+      min-height: 300px;
+      border: 1px solid var(--border-ui);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #e5e7eb;
+    }
+
+    .itinerary-overview-legend {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .itinerary-overview-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border-ui);
+      background: #ffffff;
+      color: var(--text-ui);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.69rem;
+      font-weight: 600;
+      line-height: 1.2;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .itinerary-overview-chip:hover {
+      border-color: #a1a1aa;
+      background: var(--muted-ui);
+    }
+
+    .itinerary-overview-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      background: var(--chip-color, #2563eb);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+    }
+
+    .itinerary-overview-day-marker {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      border: 2px solid #ffffff;
+      color: #ffffff;
+      font-size: 0.66rem;
+      font-weight: 700;
+      line-height: 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+      background: var(--marker-color, #2563eb);
+      user-select: none;
+    }
+
+    .itinerary-overview-hint {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: var(--muted-text-ui);
+    }
+
     .itinerary-drive-time.loading {
       opacity: 0.82;
       font-style: italic;
+    }
+
+    .day-reco-head {
+      margin: 8px 0 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .day-reco-head h4 {
+      margin: 0;
+    }
+
+    .reco-more-badge {
+      border: 1px solid var(--border-ui);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #ffffff;
+      color: var(--muted-text-ui);
+      font-size: 0.67rem;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     @media (max-width: 640px) {
@@ -2095,6 +2248,10 @@
       .map-embed {
         min-height: 240px;
       }
+
+      .itinerary-overview-map {
+        min-height: 240px;
+      }
     }
   </style>
 </head>
@@ -2133,32 +2290,49 @@
     </section>
 
     <section id="today-overview-card" class="card" aria-labelledby="today-overview-title" style="display:none;">
-      <h2 id="today-overview-title" class="card-title">🧭 Today's Overview</h2>
+      <div class="module-head">
+        <h2 id="today-overview-title" class="card-title">🧭 Today's Overview</h2>
+        <button id="today-overview-toggle" class="module-toggle-btn" type="button" aria-expanded="false">Expand</button>
+      </div>
       <div id="today-overview-day" class="today-overview-day">Day 1 · The Discovery</div>
-      <div class="today-overview-block">
-        <div class="today-overview-label">Live weather updates</div>
-        <div id="today-overview-weather" class="today-overview-list">
-          <div class="today-overview-weather-item">
-            <span class="today-overview-main">Loading live weather…</span>
+      <div id="today-overview-collapsed" class="module-collapsed">
+        <div class="today-overview-quick">
+          <div id="today-overview-quick-weather" class="today-overview-quick-item">
+            <span class="today-overview-quick-icon">🌤️</span>
+            <span>Weather loading…</span>
+          </div>
+          <div id="today-overview-quick-road" class="today-overview-quick-item">
+            <span class="today-overview-quick-icon">❔</span>
+            <span>Road status loading…</span>
           </div>
         </div>
       </div>
-      <div class="today-overview-block">
-        <div class="today-overview-label">Road conditions on planned roads</div>
-        <div id="today-overview-roads" class="today-overview-list">
-          <div class="today-overview-road-item level-unknown">
-            <span class="today-overview-main">Loading road context…</span>
+      <div id="today-overview-expanded" class="module-expanded" hidden>
+        <div class="today-overview-block">
+          <div class="today-overview-label">Live weather updates</div>
+          <div id="today-overview-weather" class="today-overview-list">
+            <div class="today-overview-weather-item">
+              <span class="today-overview-main">Loading live weather…</span>
+            </div>
           </div>
         </div>
-        <p class="today-overview-note">Uses official umferdin road status when available, with weather-based fallback.</p>
-      </div>
-      <div class="today-overview-block">
-        <div class="today-overview-label">AI suggestions</div>
-        <div id="today-overview-advice" class="today-overview-advice">
-          <p class="today-overview-advice-paragraph">Building smart advice for today…</p>
+        <div class="today-overview-block">
+          <div class="today-overview-label">Road conditions on planned roads</div>
+          <div id="today-overview-roads" class="today-overview-list">
+            <div class="today-overview-road-item level-unknown">
+              <span class="today-overview-main">Loading road context…</span>
+            </div>
+          </div>
+          <p class="today-overview-note">Uses official umferdin road status when available, with weather-based fallback.</p>
         </div>
+        <div class="today-overview-block">
+          <div class="today-overview-label">AI suggestions</div>
+          <div id="today-overview-advice" class="today-overview-advice">
+            <p class="today-overview-advice-paragraph">Building smart advice for today…</p>
+          </div>
+        </div>
+        <div id="today-overview-updated" class="today-overview-updated">Refreshing automatically.</div>
       </div>
-      <div id="today-overview-updated" class="today-overview-updated">Refreshing automatically.</div>
     </section>
 
     <section id="daily-limit-card" class="card" aria-labelledby="daily-limit-title" style="display:none;">
@@ -2192,7 +2366,10 @@
     </section>
 
     <section id="packing-card" class="card" aria-labelledby="pack-title">
-      <h2 id="pack-title" class="card-title">🎒 Packing List</h2>
+      <div class="module-head">
+        <h2 id="pack-title" class="card-title">🎒 Packing List</h2>
+        <button id="packing-toggle" class="module-toggle-btn" type="button" aria-expanded="false">Expand</button>
+      </div>
       <div class="prog-row">
         <span id="prog-label">0 packed</span>
         <span id="prog-pct">0%</span>
@@ -2206,7 +2383,9 @@
         <button class="btn-primary" type="submit">Add</button>
       </form>
 
-      <div id="packlist" aria-live="polite"></div>
+      <div id="packing-expanded" class="module-expanded" hidden>
+        <div id="packlist" aria-live="polite"></div>
+      </div>
     </section>
 
     <section id="fx-card" class="card" aria-labelledby="fx-title">
@@ -2284,7 +2463,10 @@
     </section>
 
     <section id="budget-card" class="card" aria-labelledby="budget-title">
-      <h2 id="budget-title" class="card-title">💸 Budget</h2>
+      <div class="module-head">
+        <h2 id="budget-title" class="card-title">💸 Budget</h2>
+        <button id="budget-toggle" class="module-toggle-btn" type="button" aria-expanded="false">Expand</button>
+      </div>
       <div class="budget-summary">
         <span id="budget-main" class="budget-main">0 ISK / 0 ISK</span>
         <span id="budget-percent" class="budget-percent">0%</span>
@@ -2293,21 +2475,30 @@
       <div class="prog-bar" aria-hidden="true">
         <div class="prog-fill" id="budget-progress"></div>
       </div>
-      <div id="budget-rate" class="budget-rate loading">Loading ISK→EUR daily rate…</div>
-      <div id="budget-base-note" class="budget-rate"></div>
+      <div id="budget-expanded" class="module-expanded" hidden>
+        <div id="budget-rate" class="budget-rate loading">Loading ISK→EUR daily rate…</div>
+        <div id="budget-base-note" class="budget-rate"></div>
 
-      <form id="budget-max-form" class="budget-form">
-        <input id="budget-max-input" class="text-input budget-amount-input" type="number" min="0" step="100" placeholder="Max budget (ISK)" aria-label="Max budget in ISK">
-        <button class="btn-primary" type="submit">Set max</button>
-      </form>
+        <form id="budget-max-form" class="budget-form">
+          <input id="budget-max-input" class="text-input budget-amount-input" type="number" min="0" step="100" placeholder="Max budget (ISK)" aria-label="Max budget in ISK">
+          <button class="btn-primary" type="submit">Set max</button>
+        </form>
 
-      <form id="expense-form" class="budget-form">
-        <input id="expense-name-input" class="text-input" type="text" maxlength="100" placeholder="Expense name" aria-label="Expense name">
-        <input id="expense-amount-input" class="text-input budget-amount-input" type="number" min="0" step="1" placeholder="Amount ISK" aria-label="Expense amount in ISK">
-        <button class="btn-primary" type="submit">Add</button>
-      </form>
+        <form id="expense-form" class="budget-form">
+          <input id="expense-name-input" class="text-input" type="text" maxlength="100" placeholder="Expense name" aria-label="Expense name">
+          <input id="expense-amount-input" class="text-input budget-amount-input" type="number" min="0" step="1" placeholder="Amount ISK" aria-label="Expense amount in ISK">
+          <button class="btn-primary" type="submit">Add</button>
+        </form>
 
-      <div id="budget-list" aria-live="polite"></div>
+        <div id="budget-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="itinerary-overview-card" class="card" aria-labelledby="itinerary-overview-title">
+      <h2 id="itinerary-overview-title" class="card-title">🗺 Itinerary Overview</h2>
+      <div id="itinerary-overview-map" class="itinerary-overview-map" role="img" aria-label="Full itinerary map"></div>
+      <div id="itinerary-overview-legend" class="itinerary-overview-legend" aria-label="Day colors"></div>
+      <p class="itinerary-overview-hint">Tap a colored route or day chip to open that day in fullscreen.</p>
     </section>
 
     <h2 id="days-section-title" class="section-title">Itinerary Days</h2>
@@ -2423,6 +2614,7 @@
     const TODAY_OVERVIEW_ROAD_STATUS_CACHE_KEY = "icelandTodayOverviewRoadStatusV1";
     const TODAY_OVERVIEW_ROAD_STATUS_TTL_MS = 8 * 60 * 1000;
     const TODAY_OVERVIEW_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+    const MODULE_COLLAPSE_STORAGE_KEY = "icelandModuleCollapseV1";
     const UMFERDIN_ROAD_STATUS_PROXY_URL =
       SYNC_SUPABASE_URL + "/functions/v1/umferdin-road-status";
     let headerVideoBlobUrl = "";
@@ -4709,9 +4901,16 @@
     const budgetListEl = document.getElementById("budget-list");
     const budgetCalcInputEl = document.getElementById("budget-calc-isk-input");
     const budgetCalcOutputEl = document.getElementById("budget-calc-output");
+    const budgetToggleEl = document.getElementById("budget-toggle");
+    const budgetExpandedEl = document.getElementById("budget-expanded");
     const dailyLimitCardEl = document.getElementById("daily-limit-card");
     const todayOverviewCardEl = document.getElementById("today-overview-card");
+    const todayOverviewToggleEl = document.getElementById("today-overview-toggle");
+    const todayOverviewCollapsedEl = document.getElementById("today-overview-collapsed");
+    const todayOverviewExpandedEl = document.getElementById("today-overview-expanded");
     const todayOverviewDayEl = document.getElementById("today-overview-day");
+    const todayOverviewQuickWeatherEl = document.getElementById("today-overview-quick-weather");
+    const todayOverviewQuickRoadEl = document.getElementById("today-overview-quick-road");
     const todayOverviewWeatherEl = document.getElementById("today-overview-weather");
     const todayOverviewRoadsEl = document.getElementById("today-overview-roads");
     const todayOverviewAdviceEl = document.getElementById("today-overview-advice");
@@ -4727,6 +4926,8 @@
     const syncTripInputEl = document.getElementById("sync-trip-input");
     const syncAutoInputEl = document.getElementById("sync-auto-input");
     const syncStatusEl = document.getElementById("sync-status");
+    const packingToggleEl = document.getElementById("packing-toggle");
+    const packingExpandedEl = document.getElementById("packing-expanded");
 
     function loadSyncSettings() {
       try {
@@ -6265,6 +6466,7 @@
       if (todayOverviewUpdatedEl) {
         todayOverviewUpdatedEl.textContent = "Refreshing…";
       }
+      renderTodayOverviewQuickSummary([], []);
     }
 
     let todayOverviewBackgroundRefreshQueued = false;
@@ -6473,6 +6675,8 @@
       if (todayOverviewAdviceEl) {
         renderTodayAiAdvice(day, weatherSnapshots, roadAssessments);
       }
+
+      renderTodayOverviewQuickSummary(weatherSnapshots, roadAssessments);
 
       if (todayOverviewUpdatedEl) {
         todayOverviewUpdatedEl.textContent =
@@ -6706,7 +6910,9 @@
         .join("");
       const campPricing = getDayCampPricing(day);
       const campPriceText = campPricing ? getCampPriceDisplayText(campPricing) : "price unavailable";
-      const recosHTML = day.recommendations
+      const recommendationPreview = day.recommendations.slice(0, 3);
+      const hiddenRecoCount = Math.max(0, day.recommendations.length - recommendationPreview.length);
+      const recosHTML = recommendationPreview
         .map((rec) => {
           const recommendationUrl = getRecommendationLink(rec);
           const actionLabel = getRecommendationActionLabel(rec);
@@ -6726,6 +6932,9 @@
         );
         })
         .join("");
+      const recoBadgeHtml = hiddenRecoCount
+        ? "<span class=\"reco-more-badge\">(+ " + hiddenRecoCount + " recommendations)</span>"
+        : "";
 
       details.innerHTML =
         "<summary>" +
@@ -6743,7 +6952,7 @@
           "<a class=\"map-link\" href=\"" + day.mapLink + "\" target=\"_blank\" rel=\"noopener noreferrer\">📍 Open Route Map</a>" +
           "<h4>Route &amp; Visits</h4>" +
           "<ul>" + visitsHTML + "</ul>" +
-          "<h4>Recommendations</h4>" +
+          "<div class=\"day-reco-head\"><h4>Recommendations</h4>" + recoBadgeHtml + "</div>" +
           "<ul>" + recosHTML + "</ul>" +
         "</div>";
 
@@ -6810,21 +7019,155 @@
     window.addEventListener("scroll", scheduleHeaderCompactUpdate, { passive: true });
     window.addEventListener("resize", updateHeaderCompactState);
 
-    allDayCards.forEach((detail) => {
-      detail.addEventListener("toggle", (event) => {
-        if (!detail.open) {
-          return;
-        }
-        allDayCards.forEach((other) => {
-          if (other !== detail) {
-            other.open = false;
-          }
-        });
-        if (event.isTrusted) {
+    function stopDayCardAnimation(detail) {
+      if (!detail || !detail.__dayCardAnimation) {
+        return;
+      }
+      try {
+        detail.__dayCardAnimation.cancel();
+      } catch {
+        // ignore
+      }
+      detail.__dayCardAnimation = null;
+    }
+
+    function cleanupDayCardAnimationStyles(detail) {
+      if (!detail) {
+        return;
+      }
+      detail.style.removeProperty("overflow");
+      detail.style.removeProperty("height");
+      detail.style.removeProperty("will-change");
+    }
+
+    function setDayCardOpen(detail, shouldOpen, options = {}) {
+      if (!detail) {
+        return;
+      }
+      detail.__dayCardTargetOpen = Boolean(shouldOpen);
+      const summary = detail.querySelector("summary");
+      if (!summary) {
+        detail.open = Boolean(shouldOpen);
+        detail.__dayCardTargetOpen = null;
+        return;
+      }
+
+      const animate = options.animate !== false;
+      const shouldScroll = Boolean(options.scrollIntoViewOnOpen && shouldOpen);
+      const reducedMotion =
+        !animate ||
+        typeof detail.animate !== "function" ||
+        (window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+      stopDayCardAnimation(detail);
+
+      if (reducedMotion) {
+        cleanupDayCardAnimationStyles(detail);
+        detail.open = Boolean(shouldOpen);
+        detail.__dayCardTargetOpen = null;
+        if (shouldScroll) {
           requestAnimationFrame(() => {
             scrollDayCardIntoView(detail);
           });
         }
+        return;
+      }
+
+      const startHeight = Math.max(0, Math.ceil(detail.getBoundingClientRect().height));
+      if (Boolean(shouldOpen)) {
+        detail.open = true;
+      }
+      const summaryHeight = Math.max(0, Math.ceil(summary.getBoundingClientRect().height));
+      const endHeight = Boolean(shouldOpen)
+        ? Math.max(summaryHeight, Math.ceil(detail.scrollHeight))
+        : summaryHeight;
+
+      if (startHeight === endHeight) {
+        detail.open = Boolean(shouldOpen);
+        detail.__dayCardTargetOpen = null;
+        cleanupDayCardAnimationStyles(detail);
+        if (shouldScroll) {
+          requestAnimationFrame(() => {
+            scrollDayCardIntoView(detail);
+          });
+        }
+        return;
+      }
+
+      detail.style.overflow = "hidden";
+      detail.style.willChange = "height";
+      detail.style.height = startHeight + "px";
+
+      const animation = detail.animate(
+        [
+          { height: startHeight + "px" },
+          { height: endHeight + "px" }
+        ],
+        {
+          duration: shouldOpen ? 260 : 210,
+          easing: shouldOpen ? "cubic-bezier(0.2, 0, 0, 1)" : "cubic-bezier(0.4, 0, 1, 1)",
+          fill: "forwards"
+        }
+      );
+      detail.__dayCardAnimation = animation;
+      animation.onfinish = () => {
+        if (detail.__dayCardAnimation !== animation) {
+          return;
+        }
+        detail.__dayCardAnimation = null;
+        detail.__dayCardTargetOpen = null;
+        detail.open = Boolean(shouldOpen);
+        cleanupDayCardAnimationStyles(detail);
+        if (shouldScroll) {
+          requestAnimationFrame(() => {
+            scrollDayCardIntoView(detail);
+          });
+        }
+      };
+      animation.oncancel = () => {
+        if (detail.__dayCardAnimation !== animation) {
+          return;
+        }
+        detail.__dayCardAnimation = null;
+        detail.__dayCardTargetOpen = null;
+        cleanupDayCardAnimationStyles(detail);
+      };
+    }
+
+    function closeOtherDayCards(activeDetail, options = {}) {
+      allDayCards.forEach((other) => {
+        if (other === activeDetail || !other.open) {
+          return;
+        }
+        setDayCardOpen(other, false, { animate: options.animate !== false });
+      });
+    }
+
+    allDayCards.forEach((detail) => {
+      const summary = detail.querySelector("summary");
+      if (!summary) {
+        return;
+      }
+      summary.addEventListener("click", (event) => {
+        const targetElement = event.target instanceof Element ? event.target : null;
+        if (targetElement && targetElement.closest(".fullscreen-trigger")) {
+          event.preventDefault();
+          return;
+        }
+        event.preventDefault();
+        const currentState =
+          typeof detail.__dayCardTargetOpen === "boolean"
+            ? detail.__dayCardTargetOpen
+            : detail.open;
+        const willOpen = !currentState;
+        if (willOpen) {
+          closeOtherDayCards(detail, { animate: true });
+        }
+        setDayCardOpen(detail, willOpen, {
+          animate: true,
+          scrollIntoViewOnOpen: event.isTrusted && willOpen
+        });
       });
     });
 
@@ -6833,6 +7176,9 @@
     const departureCountdownTimeEl = document.getElementById("departure-countdown-time");
     const flightCardEl = document.getElementById("flight-card");
     const outboundFlightBlockEl = document.getElementById("outbound-flight-block");
+    const itineraryOverviewCardEl = document.getElementById("itinerary-overview-card");
+    const itineraryOverviewMapEl = document.getElementById("itinerary-overview-map");
+    const itineraryOverviewLegendEl = document.getElementById("itinerary-overview-legend");
     const daysSectionTitleEl = document.getElementById("days-section-title");
     const packingCardEl = document.getElementById("packing-card");
     const fxCardEl = document.getElementById("fx-card");
@@ -6858,6 +7204,9 @@
     const COUNTDOWN_HIDE_DATE = new Date("2026-03-05T00:00:00+00:00");
     const OUTBOUND_HIDE_DATE = new Date("2026-03-04T17:15:00+00:00");
     let activeTab = "home";
+    let itineraryOverviewMap = null;
+    let itineraryOverviewLayerGroup = null;
+    let itineraryOverviewHasFitted = false;
 
     function startOfLocalDay(dateValue) {
       const date = new Date(dateValue);
@@ -6890,6 +7239,262 @@
       element.style.display = visible ? "" : "none";
     }
 
+    let moduleCollapseState = readLocalStorageObject(MODULE_COLLAPSE_STORAGE_KEY);
+
+    function saveModuleCollapseState() {
+      writeLocalStorageObject(MODULE_COLLAPSE_STORAGE_KEY, moduleCollapseState);
+    }
+
+    function stopModuleAnimation(element) {
+      if (!element || !element.__toggleAnimation) {
+        return;
+      }
+      try {
+        element.__toggleAnimation.cancel();
+      } catch {
+        // ignore
+      }
+      element.__toggleAnimation = null;
+    }
+
+    function cleanupModuleAnimationStyles(element) {
+      if (!element) {
+        return;
+      }
+      element.style.removeProperty("overflow");
+      element.style.removeProperty("height");
+      element.style.removeProperty("opacity");
+      element.style.removeProperty("will-change");
+    }
+
+    function animateModuleSection(element, show, shouldAnimate = true) {
+      if (!element) {
+        return;
+      }
+
+      const reducedMotion =
+        !shouldAnimate ||
+        typeof element.animate !== "function" ||
+        (window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+      stopModuleAnimation(element);
+
+      if (reducedMotion) {
+        cleanupModuleAnimationStyles(element);
+        element.hidden = !show;
+        return;
+      }
+
+      if (show) {
+        element.hidden = false;
+        element.style.overflow = "hidden";
+        element.style.willChange = "height, opacity";
+        const targetHeight = Math.max(0, Math.ceil(element.scrollHeight));
+        if (!targetHeight) {
+          cleanupModuleAnimationStyles(element);
+          return;
+        }
+
+        const animation = element.animate(
+          [
+            { height: "0px", opacity: 0 },
+            { height: targetHeight + "px", opacity: 1 }
+          ],
+          {
+            duration: 220,
+            easing: "cubic-bezier(0.2, 0, 0, 1)",
+            fill: "forwards"
+          }
+        );
+        element.__toggleAnimation = animation;
+        animation.onfinish = () => {
+          if (element.__toggleAnimation !== animation) {
+            return;
+          }
+          element.__toggleAnimation = null;
+          cleanupModuleAnimationStyles(element);
+        };
+        animation.oncancel = () => {
+          if (element.__toggleAnimation !== animation) {
+            return;
+          }
+          element.__toggleAnimation = null;
+          cleanupModuleAnimationStyles(element);
+        };
+        return;
+      }
+
+      if (element.hidden) {
+        cleanupModuleAnimationStyles(element);
+        return;
+      }
+
+      const startHeight = Math.max(0, Math.ceil(element.scrollHeight));
+      if (!startHeight) {
+        element.hidden = true;
+        cleanupModuleAnimationStyles(element);
+        return;
+      }
+
+      element.style.overflow = "hidden";
+      element.style.willChange = "height, opacity";
+      const animation = element.animate(
+        [
+          { height: startHeight + "px", opacity: 1 },
+          { height: "0px", opacity: 0 }
+        ],
+        {
+          duration: 200,
+          easing: "cubic-bezier(0.4, 0, 1, 1)",
+          fill: "forwards"
+        }
+      );
+      element.__toggleAnimation = animation;
+      animation.onfinish = () => {
+        if (element.__toggleAnimation !== animation) {
+          return;
+        }
+        element.__toggleAnimation = null;
+        element.hidden = true;
+        cleanupModuleAnimationStyles(element);
+      };
+      animation.oncancel = () => {
+        if (element.__toggleAnimation !== animation) {
+          return;
+        }
+        element.__toggleAnimation = null;
+        cleanupModuleAnimationStyles(element);
+      };
+    }
+
+    function setModuleCollapsed(moduleKey, collapsed, toggleEl, expandedEl, collapsedEl, options = {}) {
+      const shouldAnimate = options.animate !== false;
+      moduleCollapseState[moduleKey] = Boolean(collapsed);
+      animateModuleSection(expandedEl, !Boolean(collapsed), shouldAnimate);
+      animateModuleSection(collapsedEl, Boolean(collapsed), shouldAnimate);
+      if (toggleEl) {
+        toggleEl.textContent = collapsed ? "Expand" : "Collapse";
+        toggleEl.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      }
+      saveModuleCollapseState();
+    }
+
+    function initializeModuleToggle(moduleKey, toggleEl, expandedEl, collapsedEl, defaultCollapsed = true) {
+      if (!toggleEl) {
+        return;
+      }
+      const hasStoredState = typeof moduleCollapseState[moduleKey] === "boolean";
+      const initialCollapsed = hasStoredState
+        ? Boolean(moduleCollapseState[moduleKey])
+        : Boolean(defaultCollapsed);
+      setModuleCollapsed(moduleKey, initialCollapsed, toggleEl, expandedEl, collapsedEl, { animate: false });
+      toggleEl.addEventListener("click", () => {
+        const current = Boolean(moduleCollapseState[moduleKey]);
+        setModuleCollapsed(moduleKey, !current, toggleEl, expandedEl, collapsedEl, { animate: true });
+      });
+    }
+
+    function weatherQuickIcon(weather) {
+      if (!weather) {
+        return "❔";
+      }
+      const code = Number(weather.weatherCode);
+      if (code === 0) {
+        return "☀️";
+      }
+      if (code === 1 || code === 2 || code === 3) {
+        return "⛅";
+      }
+      if (code === 45 || code === 48) {
+        return "🌫️";
+      }
+      if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82) || (code >= 51 && code <= 57)) {
+        return "🌧️";
+      }
+      if ((code >= 71 && code <= 77) || code === 85 || code === 86) {
+        return "❄️";
+      }
+      if (code === 95 || code === 96 || code === 99) {
+        return "⛈️";
+      }
+      const gust = Number(weather.gustKmh);
+      if (Number.isFinite(gust) && gust >= 55) {
+        return "💨";
+      }
+      return "🌤️";
+    }
+
+    function roadQuickIcon(level) {
+      if (level === "bad") {
+        return "⛔";
+      }
+      if (level === "warn") {
+        return "⚠️";
+      }
+      if (level === "good") {
+        return "✅";
+      }
+      return "❔";
+    }
+
+    function renderTodayOverviewQuickSummary(weatherSnapshots = [], roadAssessments = []) {
+      if (todayOverviewQuickWeatherEl) {
+        const firstWeatherEntry = (Array.isArray(weatherSnapshots) ? weatherSnapshots : [])
+          .find((entry) => entry && entry.weather);
+        if (!firstWeatherEntry || !firstWeatherEntry.weather) {
+          todayOverviewQuickWeatherEl.innerHTML =
+            "<span class=\"today-overview-quick-icon\">❔</span><span>Weather unavailable right now</span>";
+        } else {
+          const weather = firstWeatherEntry.weather;
+          const temp = formatSignedTemperature(weather.temperatureC);
+          const wind = Number.isFinite(Number(weather.windKmh))
+            ? Math.round(Number(weather.windKmh)) + " km/h"
+            : "N/A";
+          todayOverviewQuickWeatherEl.innerHTML =
+            "<span class=\"today-overview-quick-icon\">" + weatherQuickIcon(weather) + "</span>" +
+            "<span>" +
+              escapeHtml(firstWeatherEntry.name) +
+              " · " +
+              escapeHtml(temp) +
+              " · wind " +
+              escapeHtml(wind) +
+            "</span>";
+        }
+      }
+
+      if (todayOverviewQuickRoadEl) {
+        const assessed = Array.isArray(roadAssessments) ? roadAssessments : [];
+        if (!assessed.length) {
+          todayOverviewQuickRoadEl.innerHTML =
+            "<span class=\"today-overview-quick-icon\">❔</span><span>No planned-road status yet</span>";
+          return;
+        }
+
+        let level = "unknown";
+        if (assessed.some((entry) => entry && entry.risk && entry.risk.level === "bad")) {
+          level = "bad";
+        } else if (assessed.some((entry) => entry && entry.risk && entry.risk.level === "warn")) {
+          level = "warn";
+        } else if (assessed.some((entry) => entry && entry.risk && entry.risk.level === "good")) {
+          level = "good";
+        }
+
+        const label =
+          level === "bad"
+            ? "High caution"
+            : level === "warn"
+              ? "Use caution"
+              : level === "good"
+                ? "Generally clear"
+                : "No live data";
+
+        todayOverviewQuickRoadEl.innerHTML =
+          "<span class=\"today-overview-quick-icon\">" + roadQuickIcon(level) + "</span>" +
+          "<span>Planned roads · " + escapeHtml(label) + "</span>";
+      }
+    }
+
     function showAllDayCards() {
       allDayCards.forEach((card) => {
         card.style.display = "";
@@ -6903,6 +7508,145 @@
         card.style.display = isTarget ? "" : "none";
         card.open = Boolean(isTarget);
       });
+    }
+
+    function getItineraryDayColorHex(dayNumber) {
+      return (
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--day-" + dayNumber)
+          .trim() || "#2563eb"
+      );
+    }
+
+    function getItineraryOverviewRoutePoints(day) {
+      const routePoints = getDayRoutePoints(day);
+      const displayLocations = getDisplayLocations(day, routePoints);
+      const pointsFromLocations = displayLocations
+        .map((location) => (
+          Array.isArray(location && location.coords) && location.coords.length === 2
+            ? location.coords
+            : null
+        ))
+        .filter((point) => (
+          Array.isArray(point) &&
+          Number.isFinite(Number(point[0])) &&
+          Number.isFinite(Number(point[1]))
+        ));
+
+      if (pointsFromLocations.length >= 2) {
+        return pointsFromLocations;
+      }
+
+      return routePoints.filter((point) => (
+        Array.isArray(point) &&
+        point.length === 2 &&
+        Number.isFinite(Number(point[0])) &&
+        Number.isFinite(Number(point[1]))
+      ));
+    }
+
+    function ensureItineraryOverviewMap() {
+      if (itineraryOverviewMap || typeof L === "undefined" || !itineraryOverviewMapEl) {
+        return;
+      }
+
+      itineraryOverviewMap = L.map(itineraryOverviewMapEl, {
+        zoomControl: true,
+        attributionControl: true
+      });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(itineraryOverviewMap);
+      itineraryOverviewLayerGroup = L.layerGroup().addTo(itineraryOverviewMap);
+    }
+
+    function renderItineraryOverviewLegend() {
+      if (!itineraryOverviewLegendEl) {
+        return;
+      }
+
+      itineraryOverviewLegendEl.innerHTML = days
+        .map((day) => {
+          const color = getItineraryDayColorHex(day.day);
+          return (
+            "<button class=\"itinerary-overview-chip\" type=\"button\" data-day-open=\"" + day.day + "\" aria-label=\"Open Day " + day.day + " fullscreen\">" +
+              "<span class=\"itinerary-overview-dot\" style=\"--chip-color:" + color + "\"></span>" +
+              "Day " + day.day +
+            "</button>"
+          );
+        })
+        .join("");
+    }
+
+    function renderItineraryOverviewMap(forceRefit = false) {
+      ensureItineraryOverviewMap();
+      if (!itineraryOverviewMap || !itineraryOverviewLayerGroup) {
+        return;
+      }
+
+      itineraryOverviewLayerGroup.clearLayers();
+      const allLatLngs = [];
+
+      days.forEach((day) => {
+        const points = getItineraryOverviewRoutePoints(day);
+        if (points.length < 2) {
+          return;
+        }
+
+        const color = getItineraryDayColorHex(day.day);
+        const polyline = L.polyline(points, {
+          color,
+          weight: 4,
+          opacity: 0.9
+        }).addTo(itineraryOverviewLayerGroup);
+
+        polyline.bindTooltip("Day " + day.day + ": " + day.title, { direction: "top", sticky: true });
+        polyline.on("click", () => {
+          openDayFullscreen(day.day);
+        });
+
+        const startPoint = points[0];
+        const markerIcon = L.divIcon({
+          className: "",
+          html:
+            "<div class=\"itinerary-overview-day-marker\" style=\"--marker-color:" + color + "\">" +
+              day.day +
+            "</div>",
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+        const marker = L.marker(startPoint, {
+          icon: markerIcon,
+          title: "Day " + day.day + ": " + day.title
+        }).addTo(itineraryOverviewLayerGroup);
+        marker.on("click", () => {
+          openDayFullscreen(day.day);
+        });
+
+        points.forEach((point) => {
+          allLatLngs.push(point);
+        });
+      });
+
+      renderItineraryOverviewLegend();
+
+      if (allLatLngs.length) {
+        const bounds = L.latLngBounds(allLatLngs);
+        if (forceRefit || !itineraryOverviewHasFitted) {
+          itineraryOverviewMap.fitBounds(bounds, { padding: [24, 24] });
+          itineraryOverviewHasFitted = true;
+        }
+      } else if (forceRefit || !itineraryOverviewHasFitted) {
+        itineraryOverviewMap.setView([64.9, -19.0], 6);
+        itineraryOverviewHasFitted = true;
+      }
+
+      setTimeout(() => {
+        if (itineraryOverviewMap) {
+          itineraryOverviewMap.invalidateSize();
+        }
+      }, 0);
     }
 
     function setActiveTabButton(nextTab) {
@@ -6986,6 +7730,7 @@
         setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(todayOverviewCardEl, false);
         setElementVisibility(flightCardEl, true);
+        setElementVisibility(itineraryOverviewCardEl, true);
         setElementVisibility(packingCardEl, false);
         setElementVisibility(fxCardEl, false);
         setElementVisibility(syncCardEl, false);
@@ -6995,6 +7740,7 @@
         setElementVisibility(daysContainerEl, true);
         daysSectionTitleEl.textContent = "Itinerary Days";
         showAllDayCards();
+        renderItineraryOverviewMap(false);
         updateTimeAwareVisibility();
         return;
       }
@@ -7004,6 +7750,7 @@
         setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(todayOverviewCardEl, false);
         setElementVisibility(flightCardEl, false);
+        setElementVisibility(itineraryOverviewCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, true);
         setElementVisibility(syncCardEl, true);
@@ -7020,6 +7767,7 @@
         setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(todayOverviewCardEl, true);
         setElementVisibility(flightCardEl, true);
+        setElementVisibility(itineraryOverviewCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, false);
         setElementVisibility(syncCardEl, false);
@@ -7036,6 +7784,7 @@
       setElementVisibility(departureCountdownCardEl, true);
       setElementVisibility(todayOverviewCardEl, true);
       setElementVisibility(flightCardEl, false);
+      setElementVisibility(itineraryOverviewCardEl, false);
       setElementVisibility(packingCardEl, false);
       setElementVisibility(fxCardEl, false);
       setElementVisibility(syncCardEl, false);
@@ -7066,6 +7815,48 @@
         applyTabView(button.dataset.tab || "home");
         scrollPageToTop();
       });
+    });
+
+    if (itineraryOverviewLegendEl) {
+      itineraryOverviewLegendEl.addEventListener("click", (event) => {
+        const trigger = event.target.closest("[data-day-open]");
+        if (!trigger) {
+          return;
+        }
+        event.preventDefault();
+        const dayNumber = Number(trigger.getAttribute("data-day-open"));
+        if (Number.isFinite(dayNumber) && dayNumber > 0) {
+          openDayFullscreen(dayNumber);
+        }
+      });
+    }
+
+    initializeModuleToggle(
+      "todayOverview",
+      todayOverviewToggleEl,
+      todayOverviewExpandedEl,
+      todayOverviewCollapsedEl,
+      true
+    );
+    initializeModuleToggle(
+      "budget",
+      budgetToggleEl,
+      budgetExpandedEl,
+      null,
+      true
+    );
+    initializeModuleToggle(
+      "packing",
+      packingToggleEl,
+      packingExpandedEl,
+      null,
+      true
+    );
+
+    window.addEventListener("resize", () => {
+      if (activeTab === "itinerary") {
+        renderItineraryOverviewMap(false);
+      }
     });
 
     updateDepartureCountdown();
