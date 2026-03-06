@@ -1047,9 +1047,23 @@
 
     .today-overview-advice {
       margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .today-overview-advice-paragraph {
+      margin: 0;
       font-size: 0.79rem;
       color: var(--text-ui);
       line-height: 1.45;
+    }
+
+    .today-overview-advice-title {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 2px;
     }
 
     .today-overview-updated {
@@ -2140,7 +2154,9 @@
       </div>
       <div class="today-overview-block">
         <div class="today-overview-label">AI suggestions</div>
-        <p id="today-overview-advice" class="today-overview-advice">Building smart advice for today…</p>
+        <div id="today-overview-advice" class="today-overview-advice">
+          <p class="today-overview-advice-paragraph">Building smart advice for today…</p>
+        </div>
       </div>
       <div id="today-overview-updated" class="today-overview-updated">Refreshing automatically.</div>
     </section>
@@ -6017,7 +6033,21 @@
       };
     }
 
-    function buildTodayAiAdvice(day, weatherSnapshots, roadAssessments) {
+    function formatNaturalList(items) {
+      const safe = (Array.isArray(items) ? items : []).filter((item) => typeof item === "string" && item.trim());
+      if (!safe.length) {
+        return "";
+      }
+      if (safe.length === 1) {
+        return safe[0];
+      }
+      if (safe.length === 2) {
+        return safe[0] + " and " + safe[1];
+      }
+      return safe.slice(0, -1).join(", ") + ", and " + safe[safe.length - 1];
+    }
+
+    function buildTodayAiAdviceSections(day, weatherSnapshots, roadAssessments) {
       const validWeather = weatherSnapshots.filter((entry) => entry && entry.weather);
       const validRoads = roadAssessments.filter((entry) => entry && entry.risk);
       const allTemps = validWeather
@@ -6031,52 +6061,154 @@
         .filter((value) => Number.isFinite(value));
 
       const minTemp = allTemps.length ? Math.min(...allTemps) : null;
+      const maxTemp = allTemps.length ? Math.max(...allTemps) : null;
+      const maxWind = validWeather
+        .map((entry) => Number(entry.weather.windKmh))
+        .filter((value) => Number.isFinite(value))
+        .reduce((max, value) => Math.max(max, value), 0);
       const maxGust = allGusts.length ? Math.max(...allGusts) : null;
       const precipNow = allPrecip.length ? Math.max(...allPrecip) : null;
       const hasHighRoadRisk = validRoads.some((entry) => entry.risk.level === "bad");
       const hasWarnRoadRisk = validRoads.some((entry) => entry.risk.level === "warn");
+      const hasGoodRoadRisk = validRoads.some((entry) => entry.risk.level === "good");
+      const officialRoadCount = validRoads.filter(
+        (entry) => entry.official && entry.official.status !== "Unknown"
+      ).length;
+      const riskyRoads = validRoads
+        .filter((entry) => entry.risk.level === "bad" || entry.risk.level === "warn")
+        .slice(0, 3)
+        .map((entry) => "Road " + entry.road + " (" + entry.risk.label + ")");
 
-      const mustSee = getDisplayLocations(day, getDayRoutePoints(day))
+      const dayLocations = getDisplayLocations(day, getDayRoutePoints(day))
         .filter((location) => !location.isCampsite)
-        .slice(0, 2)
         .map((location) => location.name);
+      const whatToSee = dayLocations.slice(0, 3);
 
-      const sentences = [];
-      sentences.push(
-        "Day " +
-          day.day +
-          " (" +
-          day.title +
-          ") looks best when paced around key stops and short weather checks."
-      );
+      const mustSee = [];
+      if (dayLocations[0]) {
+        mustSee.push(dayLocations[0]);
+      }
+      if (dayLocations.length > 2) {
+        mustSee.push(dayLocations[Math.floor(dayLocations.length / 2)]);
+      }
+      if (dayLocations.length > 1) {
+        mustSee.push(dayLocations[dayLocations.length - 1]);
+      }
+      const dedupedMustSee = mustSee.filter((value, index) => mustSee.indexOf(value) === index).slice(0, 2);
 
+      const cautionHints = [];
+      if (Number.isFinite(maxGust) && maxGust >= 65) {
+        cautionHints.push("strong gusts on exposed sections");
+      }
+      if (Number.isFinite(precipNow) && precipNow > 0) {
+        cautionHints.push("wet surfaces and longer braking distance");
+      }
+      if (Number.isFinite(minTemp) && minTemp <= 0) {
+        cautionHints.push("freezing patches in shaded or elevated roads");
+      }
+      if (dayLocations.some((name) => /Reynisfjara/i.test(name))) {
+        cautionHints.push("sneaker waves at Reynisfjara");
+      }
+      if (dayLocations.some((name) => /Dyrholaey|Dyrhólaey/i.test(name))) {
+        cautionHints.push("very gusty cliff edges at Dyrholaey");
+      }
+      const cautionText = cautionHints.length
+        ? "Watch for " + formatNaturalList(cautionHints.slice(0, 3)) + "."
+        : "Weather can shift quickly between stops, so re-check conditions at each major break.";
+
+      let overviewText =
+        "Day " + day.day + " (" + day.title + ") looks manageable with short weather and road checks between stops.";
+      if (Number.isFinite(minTemp) && Number.isFinite(maxTemp)) {
+        overviewText +=
+          " Live temperatures are around " +
+          formatSignedTemperature(minTemp) +
+          " to " +
+          formatSignedTemperature(maxTemp) +
+          ".";
+      }
+      if (validRoads.length) {
+        overviewText +=
+          " Road readout: " +
+          validRoads.filter((entry) => entry.risk.level === "bad").length +
+          " high-risk, " +
+          validRoads.filter((entry) => entry.risk.level === "warn").length +
+          " caution, " +
+          validRoads.filter((entry) => entry.risk.level === "good").length +
+          " generally clear.";
+      } else {
+        overviewText += " No road-number match yet for a direct road status summary.";
+      }
+
+      let wearText = "";
       if ((Number.isFinite(minTemp) && minTemp <= 0) || (Number.isFinite(maxGust) && maxGust >= 55)) {
-        sentences.push(
-          "Wear thermal base layers plus a windproof outer shell; gloves and a beanie will matter in exposed viewpoints."
-        );
+        wearText =
+          "Go with thermal base layers, warm mid-layer, windproof/waterproof shell, gloves, and beanie for exposed viewpoints.";
       } else if (Number.isFinite(precipNow) && precipNow > 0) {
-        sentences.push("Keep waterproof layers ready and protect camera gear from drizzle and spray.");
+        wearText = "Keep a waterproof shell ready, plus quick-dry layers and camera protection for drizzle or spray.";
       } else {
-        sentences.push("Light layers should work, but keep one warm mid-layer in the van for fast weather changes.");
+        wearText = "Light layers should work, with one warm backup layer in the van for fast weather swings.";
       }
 
+      let driveText = "";
       if (hasHighRoadRisk) {
-        sentences.push(
-          "Drive conservatively on flagged roads, reduce speed before turns, and keep extra buffer time between stops."
-        );
+        driveText =
+          "Use a conservative pace, avoid tight scheduling, and keep extra distance and buffer time between all legs.";
       } else if (hasWarnRoadRisk) {
-        sentences.push("Roads look manageable overall, but expect occasional wind or grip changes on open stretches.");
+        driveText =
+          "Drive is mostly feasible, but expect changing grip and wind on open stretches; smooth inputs matter.";
+      } else if (hasGoodRoadRisk) {
+        driveText =
+          "Road profile is mostly clear right now; use that margin for short photo stops without rushing.";
       } else {
-        sentences.push("Road profile is relatively friendly right now; use the margin to enjoy one extra photo stop.");
+        driveText =
+          "No direct road status matched for all legs; keep a steady pace and verify each segment before departure.";
+      }
+      if (riskyRoads.length) {
+        driveText += " Priority checks: " + formatNaturalList(riskyRoads) + ".";
+      }
+      if (officialRoadCount > 0) {
+        driveText += " " + officialRoadCount + " planned road status source(s) are from official umferdin data.";
       }
 
-      if (mustSee.length >= 2) {
-        sentences.push("Do not miss " + mustSee[0] + " and " + mustSee[1] + " while light is best.");
-      } else if (mustSee.length === 1) {
-        sentences.push("Do not miss " + mustSee[0] + " today.");
+      const seeText = whatToSee.length
+        ? "Focus on " + formatNaturalList(whatToSee) + "; these are your strongest value stops for today."
+        : "Prioritize the main highlighted stops in your route timeline.";
+
+      let notMissText = "";
+      if (dedupedMustSee.length >= 2) {
+        notMissText = "Lock in " + dedupedMustSee[0] + " and " + dedupedMustSee[1] + " even if timing slips.";
+      } else if (dedupedMustSee.length === 1) {
+        notMissText = "Make sure " + dedupedMustSee[0] + " stays in the plan.";
+      } else {
+        notMissText = "Keep at least one headline stop for golden-hour or best-visibility windows.";
+      }
+      if (Number.isFinite(maxWind) && maxWind >= 45) {
+        notMissText += " If wind spikes, prioritize sheltered viewpoints first and return to exposed spots later.";
       }
 
-      return sentences.join(" ");
+      return [
+        { title: "Overview", text: overviewText },
+        { title: "What to wear", text: wearText },
+        { title: "Drive", text: driveText },
+        { title: "Be cautious about", text: cautionText },
+        { title: "What to see", text: seeText },
+        { title: "What not to miss", text: notMissText }
+      ];
+    }
+
+    function renderTodayAiAdvice(day, weatherSnapshots, roadAssessments) {
+      if (!todayOverviewAdviceEl) {
+        return;
+      }
+      const sections = buildTodayAiAdviceSections(day, weatherSnapshots, roadAssessments);
+      todayOverviewAdviceEl.innerHTML = sections
+        .map((section) => (
+          "<p class=\"today-overview-advice-paragraph\">" +
+            "<span class=\"today-overview-advice-title\">" + escapeHtml(section.title) + "</span>" +
+            escapeHtml(section.text) +
+          "</p>"
+        ))
+        .join("");
     }
 
     function renderTodayOverviewLoading(day) {
@@ -6095,7 +6227,8 @@
           "<div class=\"today-overview-road-item level-unknown\"><span class=\"today-overview-main\">Loading road context…</span></div>";
       }
       if (todayOverviewAdviceEl) {
-        todayOverviewAdviceEl.textContent = "Building smart advice for today…";
+        todayOverviewAdviceEl.innerHTML =
+          "<p class=\"today-overview-advice-paragraph\">Building smart advice for today…</p>";
       }
       if (todayOverviewUpdatedEl) {
         todayOverviewUpdatedEl.textContent = "Refreshing…";
@@ -6276,7 +6409,7 @@
       }
 
       if (todayOverviewAdviceEl) {
-        todayOverviewAdviceEl.textContent = buildTodayAiAdvice(day, weatherSnapshots, roadAssessments);
+        renderTodayAiAdvice(day, weatherSnapshots, roadAssessments);
       }
 
       if (todayOverviewUpdatedEl) {
