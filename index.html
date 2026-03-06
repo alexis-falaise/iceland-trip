@@ -438,6 +438,34 @@
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
     }
 
+    .countdown-card {
+      text-align: center;
+      padding: 16px;
+    }
+
+    .countdown-days {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+    }
+
+    .countdown-sub {
+      margin-top: 5px;
+      font-size: 0.9rem;
+      color: var(--muted-text-ui);
+      font-weight: 600;
+    }
+
+    .countdown-caption {
+      margin-top: 7px;
+      font-size: 0.76rem;
+      color: var(--muted-text-ui);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
     #packing-card {
       background: var(--card-ui);
       border: 1px solid var(--border-ui);
@@ -467,6 +495,11 @@
 
     .flight-block + .flight-block {
       border-top: 1px solid var(--border-ui);
+    }
+
+    #flight-card.outbound-hidden .flight-block.return-flight-block {
+      border-top: none;
+      padding-top: 0;
     }
 
     .flight-badge {
@@ -927,6 +960,42 @@
       padding: 7px 10px;
     }
 
+    .useful-links-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .useful-link {
+      display: block;
+      border: 1px solid var(--border-ui);
+      border-radius: 8px;
+      background: var(--muted-ui);
+      padding: 9px 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .useful-link-title {
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--text-ui);
+      line-height: 1.2;
+    }
+
+    .useful-link-url {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted-text-ui);
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
+    .useful-link:hover {
+      background: #ffffff;
+      border-color: #a1a1aa;
+    }
+
     .pack-item {
       display: flex;
       align-items: center;
@@ -1351,6 +1420,36 @@
       transition: border-color 0.15s, background 0.15s;
     }
 
+    .location-media {
+      position: relative;
+    }
+
+    .img-refresh-btn {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      background: rgba(9, 9, 11, 0.72);
+      color: #ffffff;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+
+    .img-refresh-btn:hover {
+      background: rgba(9, 9, 11, 0.85);
+    }
+
+    .img-refresh-btn:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+
     .location-discovery-links {
       display: flex;
       flex-wrap: wrap;
@@ -1533,14 +1632,20 @@
   </header>
 
   <div class="shell">
+    <section id="departure-countdown-card" class="card countdown-card" aria-label="Countdown to departure">
+      <div id="departure-countdown-days" class="countdown-days">0 days</div>
+      <div id="departure-countdown-time" class="countdown-sub">00h 00m</div>
+      <div class="countdown-caption">before the great north</div>
+    </section>
+
     <section id="flight-card" class="card" aria-labelledby="flight-title">
       <h2 id="flight-title" class="card-title">✈️ Flights</h2>
-      <div class="flight-block">
+      <div id="outbound-flight-block" class="flight-block outbound-flight-block">
         <div class="flight-badge">Outbound · Mar 4</div>
         <div class="flight-route">Orly 14:25 → Keflavik 17:15</div>
         <div class="flight-ref">EJU4895 · Ref: K93RDQ3</div>
       </div>
-      <div class="flight-block">
+      <div id="return-flight-block" class="flight-block return-flight-block">
         <div class="flight-badge">Return · Mar 14</div>
         <div class="flight-route">Keflavik 17:15 → Orly 21:35</div>
         <div class="flight-ref">EJU4898 · Ref: KBHPM1R</div>
@@ -1573,6 +1678,56 @@
           <input id="budget-calc-isk-input" class="text-input budget-amount-input" type="number" min="0" step="1" placeholder="Amount in ISK" aria-label="Calculator amount in ISK">
           <output id="budget-calc-output" class="budget-calc-output">€0.00</output>
         </div>
+      </div>
+    </section>
+
+    <section id="useful-links-card" class="card" aria-labelledby="useful-links-title">
+      <h2 id="useful-links-title" class="card-title">🔗 Useful Links</h2>
+      <div class="useful-links-list">
+        <a class="useful-link" href="https://gottvedur.is/" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Weather</span>
+          <span class="useful-link-url">gottvedur.is</span>
+        </a>
+        <a class="useful-link" href="https://umferdin.is/en" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Road conditions</span>
+          <span class="useful-link-url">umferdin.is/en</span>
+        </a>
+        <a class="useful-link" href="https://safetravel.is/" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Safety alerts</span>
+          <span class="useful-link-url">safetravel.is</span>
+        </a>
+        <a class="useful-link" href="https://en.vedur.is/" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Official met office</span>
+          <span class="useful-link-url">en.vedur.is</span>
+        </a>
+        <a class="useful-link" href="https://auroraforecast.is/" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Aurora forecast</span>
+          <span class="useful-link-url">auroraforecast.is</span>
+        </a>
+        <a class="useful-link" href="https://gasvaktin.is/" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Fuel prices</span>
+          <span class="useful-link-url">gasvaktin.is</span>
+        </a>
+        <a class="useful-link" href="https://www.isavia.is/en/keflavik-airport" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Keflavik airport info</span>
+          <span class="useful-link-url">isavia.is/en/keflavik-airport</span>
+        </a>
+        <a class="useful-link" href="https://straeto.is/en" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Public transport</span>
+          <span class="useful-link-url">straeto.is/en</span>
+        </a>
+        <a class="useful-link" href="https://www.112.is/en" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Emergency info (112)</span>
+          <span class="useful-link-url">112.is/en</span>
+        </a>
+        <a class="useful-link" href="https://www.ruv.is/english" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">News in English</span>
+          <span class="useful-link-url">ruv.is/english</span>
+        </a>
+        <a class="useful-link" href="https://www.yr.no/en" target="_blank" rel="noopener noreferrer">
+          <span class="useful-link-title">Weather backup</span>
+          <span class="useful-link-url">yr.no/en</span>
+        </a>
       </div>
     </section>
 
@@ -1763,6 +1918,23 @@
       return instagramRelatedImageFor(keyword, seed);
     }
 
+    function buildLocationRefreshImageUrl(locationName, dayNumber, stopIndex, nonce) {
+      const safeDay = Number.isFinite(dayNumber) ? dayNumber : 0;
+      const safeStop = Number.isFinite(stopIndex) ? stopIndex : 0;
+      const baseSeed = safeDay * 1000 + safeStop + 1;
+      const uniqueSeed = baseSeed + (Number.isFinite(nonce) ? nonce : 0);
+      const keyword = String(locationName || "iceland location");
+      return imageFor(keyword, uniqueSeed) + "&refresh=" + encodeURIComponent(String(nonce || Date.now()));
+    }
+
+    function buildLocationRefreshLoremUrl(locationName, dayNumber, stopIndex, nonce) {
+      const safeDay = Number.isFinite(dayNumber) ? dayNumber : 0;
+      const safeStop = Number.isFinite(stopIndex) ? stopIndex : 0;
+      const baseSeed = safeDay * 10000 + safeStop + 1;
+      const uniqueSeed = baseSeed + (Number.isFinite(nonce) ? nonce : Date.now());
+      return loremImageFor(String(locationName || "iceland location"), uniqueSeed);
+    }
+
     function getLocationImageCacheKey(dayNumber, stopIndex, locationName) {
       const normalizedName = String(locationName || "stop")
         .toLowerCase()
@@ -1830,6 +2002,43 @@
 
       const seed = img.dataset.fallbackSeed || "iceland-fallback";
       img.src = "https://picsum.photos/seed/" + seed + "/1200/800";
+    }
+
+    function refetchLocationImage(button) {
+      if (!button) {
+        return;
+      }
+
+      const media = button.closest(".location-media");
+      if (!media) {
+        return;
+      }
+
+      const img = media.querySelector(".location-image");
+      if (!img) {
+        return;
+      }
+
+      const locationName = img.dataset.locationName || "iceland location";
+      const dayNumber = Number.parseInt(img.dataset.dayNumber || "0", 10);
+      const stopIndex = Number.parseInt(img.dataset.stopIndex || "0", 10);
+      const nonce = Date.now();
+
+      const unlock = () => {
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+      };
+
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      img.addEventListener("load", unlock, { once: true });
+      img.addEventListener("error", unlock, { once: true });
+
+      img.dataset.cachedSrc = "";
+      img.dataset.loremSrc = buildLocationRefreshLoremUrl(locationName, dayNumber, stopIndex, nonce);
+      img.dataset.fallbackSeed = dayNumber + "-" + (stopIndex + 1) + "-" + nonce;
+      img.dataset.fallbackStage = "0";
+      img.src = buildLocationRefreshImageUrl(locationName, dayNumber, stopIndex, nonce);
     }
 
     function buildMapEmbed(bounds) {
@@ -2387,7 +2596,7 @@
           { name: "Gullfoss Waterfall", note: "Powerful canyon waterfall with multiple viewpoints.", image: imageFor("Gullfoss waterfall", 203), coords: [64.3266103, -20.1216821] },
           { name: "Kerid Crater", note: "Volcanic crater lake with vivid red and blue contrast.", image: imageFor("Kerid crater", 204), coords: [64.0417879, -20.8864810] },
           { name: "Hrunalaug Hot Spring", note: "Small rustic soak to close the day.", image: imageFor("Iceland hot spring", 205), coords: [64.1328671, -20.2549498] },
-          { name: "Gesthús Selfoss", note: "Campsite base for the night with amenities and easy morning departure.", image: imageFor("Gesthus Selfoss", 206), coords: [63.9330556, -20.9888091], isCamp: true },
+          { name: "Gesthús Selfoss", note: "Campsite base for the night with amenities and easy morning departure.", image: imageFor("Selfoss Iceland", 206), coords: [63.9330556, -20.9888091], isCamp: true },
         ],
         recommendations: [
           { title: "Fridheimar", text: "Book ahead for a greenhouse tomato lunch; warm and cozy even in harsh weather." },
@@ -2461,7 +2670,7 @@
         mapLink: "https://www.google.com/maps/dir/Egilssta%C3%B0ir,+Iceland/N%C3%A1maskard/Go%C3%B0afoss+Waterfall/Akureyri,+Iceland/data=!4m26!4m25!1m5!1m1!19sChIJ056oDYAEzEgRVH98LGtBv5U!2m2!1d-14.399439399999999!2d65.2609232!1m5!1m1!19sChIJBxz9UKGfzUgR1lrqxPH-eEg!2m2!1d-16.826666799999998!2d65.6472222!1m5!1m1!19sChIJnzYfSGp-zUgROx0NTqrNu34!2m2!1d-17.5501918!2d65.6827782!1m5!1m1!19sChIJp7-wHAeP0kgR0f1xjHkytr0!2m2!1d-18.0906859!2d65.6825509!3e0",
         mapEmbed: buildMapEmbed([-18.35,65.2,-14.1,65.95]),
         locations: [
-          { name: "Egilsstadir Start", note: "Coffee and supplies before crossing highlands roads.", image: imageFor("Egilsstadir city", 601), coords: [65.2620412, -14.4035258] },
+          { name: "Egilsstadir", note: "Coffee and supplies before crossing highlands roads.", image: imageFor("Egilsstadir city", 601), coords: [65.2620412, -14.4035258] },
           { name: "Namaskard", note: "Steaming geothermal vents and sulfur-colored hills.", image: imageFor("Namaskard", 602), coords: [65.6473428, -16.8250680] },
           { name: "Godafoss", note: "Classic horseshoe waterfall with easy access trails.", image: imageFor("Godafoss", 603), coords: [65.6828162, -17.5506240] },
           { name: "Akureyri", note: "Explore town center and harbor streets.", image: imageFor("Akureyri", 604), coords: [65.6839036, -18.1121756] },
@@ -3743,15 +3952,31 @@
       });
     });
 
+    const departureCountdownCardEl = document.getElementById("departure-countdown-card");
+    const departureCountdownDaysEl = document.getElementById("departure-countdown-days");
+    const departureCountdownTimeEl = document.getElementById("departure-countdown-time");
     const flightCardEl = document.getElementById("flight-card");
+    const outboundFlightBlockEl = document.getElementById("outbound-flight-block");
     const daysSectionTitleEl = document.getElementById("days-section-title");
     const packingCardEl = document.getElementById("packing-card");
     const fxCardEl = document.getElementById("fx-card");
+    const usefulLinksCardEl = document.getElementById("useful-links-card");
     const budgetCardViewEl = document.getElementById("budget-card");
     const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
 
+    if (budgetCardViewEl && packingCardEl) {
+      budgetCardViewEl.insertAdjacentElement("afterend", packingCardEl);
+    }
+    if (packingCardEl && usefulLinksCardEl) {
+      packingCardEl.insertAdjacentElement("afterend", usefulLinksCardEl);
+    }
+
     const TRIP_START_DATE = new Date(2026, 2, 4);
     const TRIP_END_DATE = new Date(2026, 2, 14);
+    const OUTBOUND_DEPARTURE_DATE = new Date("2026-03-04T14:25:00+01:00");
+    const COUNTDOWN_HIDE_DATE = new Date("2026-03-05T00:00:00+00:00");
+    const OUTBOUND_HIDE_DATE = new Date("2026-03-04T17:15:00+00:00");
+    let activeTab = "home";
 
     function startOfLocalDay(dateValue) {
       const date = new Date(dateValue);
@@ -3811,46 +4036,98 @@
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
 
+    function updateDepartureCountdown() {
+      if (!departureCountdownDaysEl || !departureCountdownTimeEl) {
+        return;
+      }
+
+      const now = Date.now();
+      const diffMs = OUTBOUND_DEPARTURE_DATE.getTime() - now;
+
+      if (diffMs <= 0) {
+        departureCountdownDaysEl.textContent = "Let the adventure begin !";
+        departureCountdownTimeEl.textContent = "";
+        return;
+      }
+
+      const safeDiffMs = Math.max(0, diffMs);
+      const totalMinutes = Math.floor(safeDiffMs / 60000);
+      const days = Math.floor(totalMinutes / (24 * 60));
+      const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+      const minutes = totalMinutes % 60;
+      const dayLabel = days === 1 ? "day" : "days";
+
+      departureCountdownDaysEl.textContent = days + " " + dayLabel;
+      departureCountdownTimeEl.textContent =
+        String(hours).padStart(2, "0") + "h " + String(minutes).padStart(2, "0") + "m";
+    }
+
+    function updateTimeAwareVisibility() {
+      const now = Date.now();
+      const shouldShowCountdown = activeTab === "home" && now < COUNTDOWN_HIDE_DATE.getTime();
+      setElementVisibility(departureCountdownCardEl, shouldShowCountdown);
+
+      const hideOutbound = now >= OUTBOUND_HIDE_DATE.getTime();
+      if (outboundFlightBlockEl) {
+        outboundFlightBlockEl.style.display = hideOutbound ? "none" : "";
+      }
+      if (flightCardEl) {
+        flightCardEl.classList.toggle("outbound-hidden", hideOutbound);
+      }
+    }
+
     function applyTabView(nextTab) {
       const trip = getTripPhaseAndDay();
+      activeTab = nextTab;
       setActiveTabButton(nextTab);
 
       if (nextTab === "itinerary") {
+        setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(packingCardEl, false);
         setElementVisibility(fxCardEl, false);
+        setElementVisibility(usefulLinksCardEl, false);
         setElementVisibility(budgetCardViewEl, false);
         setElementVisibility(daysSectionTitleEl, true);
         setElementVisibility(daysContainerEl, true);
         daysSectionTitleEl.textContent = "Itinerary Days";
         showAllDayCards();
+        updateTimeAwareVisibility();
         return;
       }
 
       if (nextTab === "tools") {
+        setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(flightCardEl, false);
-        setElementVisibility(packingCardEl, false);
+        setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, true);
+        setElementVisibility(usefulLinksCardEl, true);
         setElementVisibility(budgetCardViewEl, true);
         setElementVisibility(daysSectionTitleEl, false);
         setElementVisibility(daysContainerEl, false);
+        updateTimeAwareVisibility();
         return;
       }
 
       if (trip.phase === "before") {
+        setElementVisibility(departureCountdownCardEl, true);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, false);
+        setElementVisibility(usefulLinksCardEl, false);
         setElementVisibility(budgetCardViewEl, false);
         setElementVisibility(daysSectionTitleEl, false);
         setElementVisibility(daysContainerEl, false);
         showAllDayCards();
+        updateTimeAwareVisibility();
         return;
       }
 
+      setElementVisibility(departureCountdownCardEl, true);
       setElementVisibility(flightCardEl, false);
       setElementVisibility(packingCardEl, false);
       setElementVisibility(fxCardEl, false);
+      setElementVisibility(usefulLinksCardEl, false);
       setElementVisibility(budgetCardViewEl, false);
       setElementVisibility(daysSectionTitleEl, true);
       setElementVisibility(daysContainerEl, true);
@@ -3865,6 +4142,7 @@
         daysSectionTitleEl.textContent += " · Day " + todayDay.day + ": " + todayDay.title;
       }
       showSingleDayCard(trip.dayNumber);
+      updateTimeAwareVisibility();
     }
 
     tabButtons.forEach((button) => {
@@ -3876,6 +4154,11 @@
         scrollPageToTop();
       });
     });
+
+    updateDepartureCountdown();
+    updateTimeAwareVisibility();
+    setInterval(updateDepartureCountdown, 60 * 1000);
+    setInterval(updateTimeAwareVisibility, 60 * 1000);
 
     const modalEl = document.getElementById("fullscreen-modal");
     const modalHeadEl = document.getElementById("fullscreen-head");
@@ -4029,7 +4312,10 @@
                 "<p class=\"location-note\">" + locationNote + "</p>" +
                 campPriceLine +
                 "<div class=\"location-discovery-links\">" + discoveryLinksHtml + "</div>" +
-                "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\"" + cachedImageAttr + " data-lorem-src=\"" + loremFallbackSrc + "\" data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
+                "<div class=\"location-media\">" +
+                  "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\" data-location-name=\"" + locationName + "\" data-day-number=\"" + day.day + "\" data-stop-index=\"" + index + "\"" + cachedImageAttr + " data-lorem-src=\"" + loremFallbackSrc + "\" data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
+                  "<button class=\"img-refresh-btn\" type=\"button\" onclick=\"refetchLocationImage(this)\" aria-label=\"Refresh photo for " + locationName + "\" title=\"Fetch another photo\">↻ New photo</button>" +
+                "</div>" +
             "</div>" +
           "</article>";
 
