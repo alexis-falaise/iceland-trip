@@ -1716,11 +1716,27 @@
       background: transparent;
       box-shadow: none;
       padding: 0;
-      margin-top: 8px;
+      margin-top: 14px;
     }
 
     .fullscreen-card.recommendation-section-card {
-      margin-top: 8px;
+      margin-top: 14px;
+    }
+
+    .itinerary-stop-count {
+      margin-left: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-ui);
+      border-radius: 999px;
+      background: var(--muted-ui);
+      color: var(--muted-text-ui);
+      font-size: 0.66rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 3px 8px;
+      white-space: nowrap;
     }
 
     .map-embed {
@@ -2698,7 +2714,7 @@
         </div>
 
         <div class="fullscreen-card itinerary-section-card">
-          <h4>Itinerary</h4>
+          <h4 id="fullscreen-itinerary-title">Itinerary</h4>
           <div id="fullscreen-itinerary" class="itinerary-list"></div>
         </div>
 
@@ -8026,6 +8042,7 @@
     const modalMapEl = document.getElementById("fullscreen-map");
     const modalMapLinkEl = document.getElementById("fullscreen-map-link");
     const modalRouteEl = document.getElementById("fullscreen-route");
+    const modalItineraryTitleEl = document.getElementById("fullscreen-itinerary-title");
     const modalItineraryEl = document.getElementById("fullscreen-itinerary");
     const modalRecoEl = document.getElementById("fullscreen-reco");
     const closeModalBtnEl = document.getElementById("close-fullscreen");
@@ -8130,6 +8147,17 @@
       const routePoints = getDayRoutePoints(day);
       const locations = getDisplayLocations(day, routePoints);
       const dayCampPricing = getDayCampPricing(day);
+      const intermediateStops = Math.max(0, locations.length - 2);
+      if (modalItineraryTitleEl) {
+        const label = intermediateStops === 1 ? "stop" : "stops";
+        modalItineraryTitleEl.innerHTML =
+          "Itinerary" +
+          "<span class=\"itinerary-stop-count\">" +
+            intermediateStops +
+            " " +
+            label +
+          "</span>";
+      }
       let html = "";
 
       locations.forEach((location, index) => {
