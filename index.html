@@ -8770,6 +8770,33 @@
       element.style.display = visible ? "" : "none";
     }
 
+    function moveCardAfter(anchorCard, movingCard) {
+      if (!anchorCard || !movingCard) {
+        return;
+      }
+      if (movingCard.previousElementSibling === anchorCard) {
+        return;
+      }
+      anchorCard.insertAdjacentElement("afterend", movingCard);
+    }
+
+    function syncHomePriorityCardLayout(now = Date.now(), tripContext = null) {
+      const trip = tripContext && typeof tripContext === "object"
+        ? tripContext
+        : getTripPhaseAndDay(now);
+      const shouldPrioritizePackingOnHome =
+        activeTab === "home" &&
+        trip.phase === "before";
+
+      if (shouldPrioritizePackingOnHome) {
+        moveCardAfter(todayOverviewCardEl, packingCardEl);
+        return;
+      }
+
+      moveCardAfter(todayOverviewCardEl, nearbyServiceCardEl);
+      moveCardAfter(budgetCardViewEl, packingCardEl);
+    }
+
     appActions.setModuleCollapseState(
       readLocalStorageObject(MODULE_COLLAPSE_STORAGE_KEY)
     );
@@ -9226,12 +9253,15 @@
     function updateTimeAwareVisibility() {
       const now = Date.now();
       const today = startOfLocalDay(now);
+      const trip = getTripPhaseAndDay(now);
       const shouldShowOverview = activeTab === "home";
+      const shouldShowNearby = shouldShowOverview && trip.phase !== "before";
       setElementVisibility(todayOverviewCardEl, shouldShowOverview);
-      setElementVisibility(nearbyServiceCardEl, shouldShowOverview);
-      if (shouldShowOverview) {
+      setElementVisibility(nearbyServiceCardEl, shouldShowNearby);
+      if (shouldShowNearby) {
         startNearbyServiceWatcher();
       }
+      syncHomePriorityCardLayout(now, trip);
 
       const shouldShowCountdown = activeTab === "home" && now < COUNTDOWN_HIDE_DATE.getTime();
       setElementVisibility(departureCountdownCardEl, shouldShowCountdown);
@@ -9320,7 +9350,7 @@
         setElementVisibility(departureCountdownCardEl, true);
         setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(todayOverviewCardEl, true);
-        setElementVisibility(nearbyServiceCardEl, true);
+        setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(itineraryOverviewCardEl, false);
         setElementVisibility(packingCardEl, true);
@@ -9333,7 +9363,6 @@
         setElementVisibility(daysContainerEl, false);
         showAllDayCards();
         updateTimeAwareVisibility();
-        startNearbyServiceWatcher();
         refreshTodayOverview();
         return;
       }
