@@ -1848,6 +1848,9 @@
     const DRIVE_CACHE_STORAGE_KEY = "icelandDriveLegCacheV1";
     const IMAGE_CACHE_MAX_ITEMS = 240;
     const DRIVE_CACHE_MAX_ITEMS = 180;
+    const WIKIMEDIA_SEARCH_LIMIT = 16;
+    const GOOGLE_PLACES_API_KEY = "AIzaSyBxwWsUASKhG8zALOa_V73RTlAj7lgDfNU";
+    const GOOGLE_PLACES_STORAGE_KEY = "icelandGooglePlacesApiKey";
 
     function readLocalStorageObject(key) {
       try {
@@ -1872,6 +1875,8 @@
 
     let imageUrlCache = readLocalStorageObject(IMAGE_CACHE_STORAGE_KEY);
     let driveTimesStorageCache = readLocalStorageObject(DRIVE_CACHE_STORAGE_KEY);
+    const wikimediaImageSearchCache = {};
+    const googlePlacesImageSearchCache = {};
 
     function compactObjectCache(cacheObject, maxItems) {
       const entries = Object.entries(cacheObject || {});
@@ -1916,6 +1921,171 @@
 
     function imageFor(keyword, seed) {
       return instagramRelatedImageFor(keyword, seed);
+    }
+
+    function hashString(value) {
+      const text = String(value || "");
+      let hash = 0;
+      for (let index = 0; index < text.length; index += 1) {
+        hash = (hash << 5) - hash + text.charCodeAt(index);
+        hash |= 0;
+      }
+      return hash;
+    }
+
+    function pickBySeed(items, seed) {
+      if (!Array.isArray(items) || !items.length) {
+        return "";
+      }
+      const index = Math.abs(hashString(String(seed || "0"))) % items.length;
+      return items[index] || "";
+    }
+
+    function getGooglePlacesApiKey() {
+      const fromWindow =
+        typeof window !== "undefined" && typeof window.GOOGLE_PLACES_API_KEY === "string"
+          ? window.GOOGLE_PLACES_API_KEY.trim()
+          : "";
+      if (fromWindow) {
+        return fromWindow;
+      }
+
+      try {
+        const fromStorage = String(localStorage.getItem(GOOGLE_PLACES_STORAGE_KEY) || "").trim();
+        if (fromStorage) {
+          return fromStorage;
+        }
+      } catch {
+        // ignore storage access errors
+      }
+
+      if (typeof GOOGLE_PLACES_API_KEY === "string" && GOOGLE_PLACES_API_KEY.trim()) {
+        return GOOGLE_PLACES_API_KEY.trim();
+      }
+
+      return "";
+    }
+
+    function fetchGooglePlacesFallbackImage(keyword, seed) {
+      const apiKey = getGooglePlacesApiKey();
+      if (!apiKey) {
+        return Promise.resolve("");
+      }
+
+      const rawKeyword = String(keyword || "Iceland").trim();
+      const searchKeyword = rawKeyword.toLowerCase().includes("iceland")
+        ? rawKeyword
+        : rawKeyword + ", Iceland";
+      const cacheKey = searchKeyword.toLowerCase();
+
+      if (Array.isArray(googlePlacesImageSearchCache[cacheKey]) && googlePlacesImageSearchCache[cacheKey].length) {
+        return Promise.resolve(pickBySeed(googlePlacesImageSearchCache[cacheKey], cacheKey + "|" + seed));
+      }
+
+      return fetch("https://places.googleapis.com/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": "places.photos"
+        },
+        body: JSON.stringify({
+          textQuery: searchKeyword,
+          pageSize: 5
+        })
+      })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((payload) => {
+          const places = payload && Array.isArray(payload.places) ? payload.places : [];
+          const photoNames = places
+            .flatMap((place) => (Array.isArray(place.photos) ? place.photos : []))
+            .map((photo) => (photo && typeof photo.name === "string" ? photo.name : ""))
+            .filter(Boolean);
+
+          if (!photoNames.length) {
+            return "";
+          }
+
+          const uniquePhotoNames = Array.from(new Set(photoNames));
+          const targetPhotoName = pickBySeed(uniquePhotoNames, cacheKey + "|" + seed);
+          if (!targetPhotoName) {
+            return "";
+          }
+
+          const encodedPhotoPath = targetPhotoName
+            .split("/")
+            .map((segment) => encodeURIComponent(segment))
+            .join("/");
+          const mediaUrl =
+            "https://places.googleapis.com/v1/" +
+            encodedPhotoPath +
+            "/media?maxHeightPx=900&skipHttpRedirect=true&key=" +
+            encodeURIComponent(apiKey);
+
+          return fetch(mediaUrl, { cache: "no-store" })
+            .then((photoResponse) => (photoResponse.ok ? photoResponse.json() : null))
+            .then((photoPayload) => {
+              const resolvedUrl =
+                photoPayload && typeof photoPayload.photoUri === "string"
+                  ? photoPayload.photoUri
+                  : "";
+              if (!resolvedUrl) {
+                return "";
+              }
+
+              googlePlacesImageSearchCache[cacheKey] = [resolvedUrl];
+              return resolvedUrl;
+            });
+        })
+        .catch(() => "");
+    }
+
+    function fetchWikimediaFallbackImage(keyword, seed) {
+      const rawKeyword = String(keyword || "Iceland").trim();
+      const searchKeyword = rawKeyword.toLowerCase().includes("iceland")
+        ? rawKeyword
+        : rawKeyword + " Iceland";
+      const cacheKey = searchKeyword.toLowerCase();
+
+      if (Array.isArray(wikimediaImageSearchCache[cacheKey]) && wikimediaImageSearchCache[cacheKey].length) {
+        return Promise.resolve(pickBySeed(wikimediaImageSearchCache[cacheKey], cacheKey + "|" + seed));
+      }
+
+      const endpoint =
+        "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*" +
+        "&generator=search&gsrnamespace=6&gsrlimit=" + WIKIMEDIA_SEARCH_LIMIT +
+        "&gsrsearch=" + encodeURIComponent(searchKeyword) +
+        "&prop=imageinfo&iiprop=url|mime&iiurlwidth=1280";
+
+      return fetch(endpoint, { cache: "no-store" })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((payload) => {
+          const pages = payload && payload.query && payload.query.pages
+            ? Object.values(payload.query.pages)
+            : [];
+
+          const imageUrls = pages
+            .map((page) => {
+              const info = page && Array.isArray(page.imageinfo) ? page.imageinfo[0] : null;
+              if (!info) {
+                return "";
+              }
+              const mime = String(info.mime || "");
+              if (mime && !mime.startsWith("image/")) {
+                return "";
+              }
+              return info.thumburl || info.url || "";
+            })
+            .filter(Boolean);
+
+          if (!imageUrls.length) {
+            return "";
+          }
+
+          wikimediaImageSearchCache[cacheKey] = imageUrls;
+          return pickBySeed(imageUrls, cacheKey + "|" + seed);
+        })
+        .catch(() => "");
     }
 
     function buildLocationRefreshImageUrl(locationName, dayNumber, stopIndex, nonce) {
@@ -1969,39 +2139,88 @@
         saveCachedImageUrl(imageKey, currentUrl);
         img.dataset.cachedSrc = currentUrl;
       }
+      img.dataset.skipCached = "0";
       img.dataset.fallbackStage = "0";
     }
 
-    function imageFallback(event) {
-      const img = event.target;
+    function continueImageFallback(img) {
+      if (!img) {
+        return;
+      }
+
       const stage = Number.parseInt(img.dataset.fallbackStage || "0", 10);
 
       if (stage === 0) {
-        const cached = img.dataset.cachedSrc || "";
-        if (cached && cached !== img.src) {
-          img.dataset.fallbackStage = "1";
-          img.src = cached;
-          return;
-        }
+        img.dataset.fallbackStage = "1";
+        const keyword = img.dataset.locationName || "Iceland";
+        const seed = img.dataset.fallbackSeed || "iceland-fallback";
+        fetchGooglePlacesFallbackImage(keyword, seed)
+          .then((googlePlacesSrc) => {
+            if (googlePlacesSrc && googlePlacesSrc !== img.src) {
+              img.src = googlePlacesSrc;
+              return;
+            }
+            continueImageFallback(img);
+          })
+          .catch(() => {
+            continueImageFallback(img);
+          });
+        return;
       }
 
       if (stage <= 1) {
-        const loremSrc = img.dataset.loremSrc || "";
-        if (loremSrc && loremSrc !== img.src) {
+        const skipCached = img.dataset.skipCached === "1";
+        if (skipCached) {
           img.dataset.fallbackStage = "2";
-          img.src = loremSrc;
+        } else {
+        const cached = img.dataset.cachedSrc || "";
+        if (cached && cached !== img.src) {
+          img.dataset.fallbackStage = "2";
+          img.src = cached;
           return;
+        }
         }
       }
 
       if (stage <= 2) {
         img.dataset.fallbackStage = "3";
+        const keyword = img.dataset.locationName || "Iceland";
+        const seed = img.dataset.fallbackSeed || "iceland-fallback";
+        fetchWikimediaFallbackImage(keyword, seed)
+          .then((wikimediaSrc) => {
+            if (wikimediaSrc && wikimediaSrc !== img.src) {
+              img.src = wikimediaSrc;
+              return;
+            }
+            continueImageFallback(img);
+          })
+          .catch(() => {
+            continueImageFallback(img);
+          });
+        return;
+      }
+
+      if (stage <= 3) {
+        const loremSrc = img.dataset.loremSrc || "";
+        if (loremSrc && loremSrc !== img.src) {
+          img.dataset.fallbackStage = "4";
+          img.src = loremSrc;
+          return;
+        }
+      }
+
+      if (stage <= 4) {
+        img.dataset.fallbackStage = "5";
       } else {
         return;
       }
 
       const seed = img.dataset.fallbackSeed || "iceland-fallback";
       img.src = "https://picsum.photos/seed/" + seed + "/1200/800";
+    }
+
+    function imageFallback(event) {
+      continueImageFallback(event.target);
     }
 
     function refetchLocationImage(button) {
@@ -2035,6 +2254,7 @@
       img.addEventListener("error", unlock, { once: true });
 
       img.dataset.cachedSrc = "";
+      img.dataset.skipCached = "1";
       img.dataset.loremSrc = buildLocationRefreshLoremUrl(locationName, dayNumber, stopIndex, nonce);
       img.dataset.fallbackSeed = dayNumber + "-" + (stopIndex + 1) + "-" + nonce;
       img.dataset.fallbackStage = "0";
