@@ -1641,20 +1641,31 @@
 
     .fullscreen-head {
       color: var(--text-ui);
-      background: var(--muted-ui);
-      border-bottom: 1px solid var(--border-ui);
+      background:
+        linear-gradient(
+          145deg,
+          color-mix(in srgb, var(--day-color, #2563eb) 34%, transparent) 0%,
+          color-mix(in srgb, var(--day-color, #2563eb) 20%, transparent) 100%
+        ),
+        rgba(255, 255, 255, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.42);
       border-left: 4px solid var(--day-color, transparent);
       padding: 18px 15px 15px;
       align-items: flex-start;
       position: sticky;
       top: 0;
       z-index: 1200;
+      box-shadow:
+        0 8px 18px rgba(15, 23, 42, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.52);
+      backdrop-filter: blur(14px) saturate(1.16);
+      -webkit-backdrop-filter: blur(14px) saturate(1.16);
     }
 
     .fullscreen-title {
       font-size: 1.05rem;
       font-weight: 700;
-      color: var(--text-ui);
+      color: color-mix(in srgb, var(--day-color, #2563eb) 22%, #020617 78%);
     }
 
     #fullscreen-subtitle {
@@ -1669,17 +1680,19 @@
     }
 
     #close-fullscreen {
-      border: 1px solid var(--border-ui);
-      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      background: rgba(255, 255, 255, 0.48);
       color: var(--text-ui);
       border-radius: 7px;
       padding: 5px 11px;
       font-size: 0.8rem;
       font-weight: 500;
+      backdrop-filter: blur(10px) saturate(1.08);
+      -webkit-backdrop-filter: blur(10px) saturate(1.08);
     }
 
     #close-fullscreen:hover {
-      background: var(--muted-ui);
+      background: rgba(255, 255, 255, 0.65);
     }
 
     .fullscreen-body {
@@ -1696,6 +1709,18 @@
       padding: 12px;
       margin-bottom: 10px;
       background: #fff;
+    }
+
+    .fullscreen-card.itinerary-section-card {
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      padding: 0;
+      margin-top: 8px;
+    }
+
+    .fullscreen-card.recommendation-section-card {
+      margin-top: 8px;
     }
 
     .map-embed {
@@ -1737,16 +1762,55 @@
     }
 
     .itinerary-list {
-      gap: 10px;
+      display: grid;
+      gap: 8px;
       margin-top: 6px;
     }
 
+    .itinerary-item {
+      display: block;
+      width: 100%;
+    }
+
+    .itinerary-rail,
+    .itinerary-dot {
+      display: none;
+    }
+
     .location-card {
-      border: 1px solid var(--border-ui);
-      border-radius: 8px;
-      box-shadow: none;
-      padding: 9px 10px;
-      background: #fff;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(9, 9, 11, 0.2);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(56, 189, 248, 0.24), transparent 44%),
+        linear-gradient(160deg, #13243d 0%, #1f3555 60%, #243e63 100%);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      min-height: 272px;
+      overflow: hidden;
+      position: relative;
+      isolation: isolate;
+      padding: 0;
+    }
+
+    .location-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.22) 0%, rgba(2, 6, 23, 0.12) 34%, rgba(2, 6, 23, 0.68) 100%);
+      pointer-events: none;
+    }
+
+    .location-content {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      padding: 10px 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(15, 23, 42, 0.44);
+      backdrop-filter: blur(12px) saturate(1.12);
+      -webkit-backdrop-filter: blur(12px) saturate(1.12);
     }
 
     .location-name,
@@ -1897,27 +1961,73 @@
     }
 
     .location-card.campsite-card {
-      border-color: #bfdbfe;
-      background: linear-gradient(180deg, #eff6ff 0%, #ffffff 60%);
+      border-color: rgba(191, 219, 254, 0.72);
     }
 
-    .location-name .stop-icon {
+    .location-card.departure-card {
+      border-color: rgba(153, 246, 228, 0.62);
+    }
+
+    .location-card.end-card {
+      border-color: rgba(254, 215, 170, 0.68);
+    }
+
+    .location-step-icons {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .location-step-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.3em;
+      height: 1.3em;
+      border-radius: 999px;
+      font-size: 0.64rem;
+      line-height: 1;
+      background: var(--muted-ui);
+      color: var(--muted-text-ui);
+    }
+
+    .location-step-icon.departure {
+      background: #ecfeff;
+      color: #0f766e;
+    }
+
+    .location-step-icon.end {
+      background: #fff7ed;
+      color: #9a3412;
+    }
+
+    .location-step-icon.camp {
+      background: #eff6ff;
+      color: #1e3a8a;
     }
 
     .location-image {
-      border: 1px solid var(--border-ui);
-      border-radius: 8px;
-      transition: border-color 0.15s, background 0.15s, opacity 0.25s ease;
-      position: relative;
-      z-index: 1;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      border: none;
+      border-radius: 0;
+      transition: opacity 0.25s ease;
+      position: absolute;
+      inset: 0;
+      z-index: 0;
     }
 
     .location-media {
-      position: relative;
-      border-radius: 8px;
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
       overflow: hidden;
       background: var(--muted-ui);
+      z-index: 0;
     }
 
     .location-media.loading .location-image {
@@ -1927,16 +2037,16 @@
     .image-loader {
       position: absolute;
       inset: 0;
-      border: 1px solid var(--border-ui);
-      border-radius: 8px;
+      border: none;
+      border-radius: inherit;
       background:
         linear-gradient(
           100deg,
-          rgba(228, 228, 231, 0.65) 8%,
-          rgba(244, 244, 245, 0.95) 18%,
-          rgba(228, 228, 231, 0.65) 33%
+          rgba(148, 163, 184, 0.14) 8%,
+          rgba(226, 232, 240, 0.3) 18%,
+          rgba(148, 163, 184, 0.14) 33%
         ),
-        var(--muted-ui);
+        linear-gradient(180deg, rgba(2, 6, 23, 0.2) 20%, rgba(2, 6, 23, 0.74) 100%);
       background-size: 220% 100%;
       animation: imageLoaderShimmer 1.2s linear infinite;
       opacity: 0;
@@ -1963,7 +2073,7 @@
       right: 8px;
       bottom: 8px;
       border: 1px solid rgba(255, 255, 255, 0.85);
-      background: rgba(9, 9, 11, 0.72);
+      background: rgba(15, 23, 42, 0.62);
       color: #ffffff;
       border-radius: 999px;
       padding: 4px 8px;
@@ -1989,29 +2099,31 @@
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin: 6px 0 8px;
+      margin: 7px 0 0;
     }
 
     .discovery-link {
-      border: 1px solid var(--border-ui);
-      background: var(--muted-ui);
-      color: var(--muted-text-ui);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      background: rgba(15, 23, 42, 0.42);
+      color: rgba(241, 245, 249, 0.98);
       border-radius: 999px;
       padding: 2px 8px;
       font-size: 0.68rem;
       font-weight: 600;
       text-decoration: none;
       line-height: 1.35;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .discovery-link:hover {
-      border-color: #a1a1aa;
-      background: #ffffff;
-      color: var(--text-ui);
+      border-color: rgba(255, 255, 255, 0.56);
+      background: rgba(15, 23, 42, 0.62);
+      color: #ffffff;
     }
 
     .location-title-link {
-      color: inherit;
+      color: rgba(248, 250, 252, 0.99);
       text-decoration: none;
       text-decoration-color: transparent;
       text-underline-offset: 2px;
@@ -2019,7 +2131,7 @@
 
     .location-title-link:hover {
       text-decoration: underline;
-      text-decoration-color: currentColor;
+      text-decoration-color: rgba(248, 250, 252, 0.95);
     }
 
     .route-stop,
@@ -2032,9 +2144,18 @@
       background: var(--border-ui);
     }
 
+    .location-card .location-name {
+      color: rgba(248, 250, 252, 0.99);
+      margin: 0;
+    }
+
+    .location-card .location-note {
+      color: rgba(226, 232, 240, 0.96);
+      margin-top: 5px;
+    }
+
     .location-card:hover {
-      border-color: #a1a1aa;
-      background: var(--muted-ui);
+      filter: brightness(1.04);
     }
 
     .location-link-inline {
@@ -2049,34 +2170,55 @@
       text-decoration-color: var(--text-ui);
     }
 
+    .itinerary-leg {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      margin: 2px 0 8px;
+    }
+
+    .itinerary-leg-line {
+      width: 2px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--border-ui);
+      opacity: 0.9;
+    }
+
     .itinerary-drive-time {
-      margin: -2px 0 6px 32px;
-      width: fit-content;
+      margin: 0;
+      width: auto;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      border: 1px dashed var(--border-ui);
+      border: none;
       background: var(--muted-ui);
       color: var(--muted-text-ui);
       border-radius: 999px;
       padding: 3px 10px;
       font-size: 0.72rem;
       font-weight: 500;
+      text-align: center;
     }
 
     .itinerary-road-summary {
-      margin: -2px 0 4px 32px;
-      width: fit-content;
+      margin: 0;
+      width: auto;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
       gap: 6px;
-      border: 1px solid var(--border-ui);
-      background: #ffffff;
+      border: none;
+      background: var(--muted-ui);
       color: var(--muted-text-ui);
       border-radius: 999px;
       padding: 3px 10px;
       font-size: 0.7rem;
       font-weight: 500;
+      text-align: center;
     }
 
     .itinerary-road-summary.road-link {
@@ -2555,12 +2697,12 @@
           <p class="muted">Interactive map with the day's itinerary route overlay.</p>
         </div>
 
-        <div class="fullscreen-card">
+        <div class="fullscreen-card itinerary-section-card">
           <h4>Itinerary</h4>
           <div id="fullscreen-itinerary" class="itinerary-list"></div>
         </div>
 
-        <div class="fullscreen-card">
+        <div class="fullscreen-card recommendation-section-card">
           <h4>Recommendations</h4>
           <div id="fullscreen-reco" class="recommendation-list"></div>
         </div>
@@ -3839,6 +3981,7 @@
         mapLink: "https://www.google.com/maps/dir/Selfoss,+Iceland/Seljalandsfoss/Sk%C3%B3gafoss/Dyrh%C3%B3laey,+Iceland/Reynisfjara+Beach/Vik,+Iceland/data=!4m38!4m37!1m5!1m1!19sChIJywmZh8tf1kgRET-0iMl3mVw!2m2!1d-20.9996925!2d63.931832199999995!1m5!1m1!19sChIJFSTv6K0e10gRjRcJUiDmAa4!2m2!1d-19.9885688!2d63.615623199999995!1m5!1m1!19sChIJFYylOXY710gRSHn-zR_HYA8!2m2!1d-19.511370499999998!2d63.5320523!1m5!1m1!19sChIJmdOPSLJJ10gRcudiVCXKJSc!2m2!1d-19.1185521!2d63.4046799!1m5!1m1!19sChIJfSZn1YRJ10gR1Wuz9KNUeeA!2m2!1d-19.0716193!2d63.4057404!1m5!1m1!19sChIJ0bA2SUJK10gRjXdtABtTg74!2m2!1d-18.9974396!2d63.4176505!3e0",
         mapEmbed: buildMapEmbed([-20.2,63.35,-18.85,63.72]),
         locations: [
+          { name: "Gesthus Selfoss (Departure)", note: "Depart directly from the Day 2 campsite.", image: imageFor("Gesthus Selfoss", 300), coords: [63.9330556, -20.9888091] },
           { name: "Seljalandsfoss", note: "Walk-behind waterfall path, usually wet and windy.", image: imageFor("Seljalandsfoss", 301), coords: [63.6154571, -19.9881686] },
           { name: "Seljavallalaug", note: "Optional detour to a hidden historic pool.", image: imageFor("Seljavallalaug", 302), coords: [63.5661398, -19.6075649] },
           { name: "Skogafoss", note: "Wide waterfall with mist rainbows on sunny moments.", image: imageFor("Skogafoss", 303), coords: [63.5321038, -19.5112920] },
@@ -3859,6 +4002,7 @@
         mapLink: "https://www.google.com/maps/dir/Vik,+Iceland/Fja%C3%B0r%C3%A1rglj%C3%BAfur,+Iceland/Svartifoss,+Iceland/Sv%C3%ADnafellsj%C3%B6kull/J%C3%B6kuls%C3%A1rl%C3%B3n+Lagoon,+Iceland/Diamond+Beach,+Iceland/Vestrahorn,+Iceland/",
         mapEmbed: buildMapEmbed([-18.35,63.7,-14.75,64.35]),
         locations: [
+          { name: "Vik Campsite (Departure)", note: "Start from the previous night's campsite.", image: imageFor("Vik campsite morning", 400), coords: [63.4193981, -18.9957523] },
           { name: "Fjadrargljufur Canyon", note: "Short scenic canyon trail and viewpoints.", image: imageFor("Fjadrargljufur canyon", 401), coords: [63.771279, -18.171816] },
           { name: "Svartifoss", note: "Basalt-column waterfall hike in Skaftafell.", image: imageFor("Svartifoss", 402), coords: [64.027528, -16.975308] },
           { name: "Svinafellsjokull", note: "Close-up glacier tongue views.", image: imageFor("Svinafellsjokull glacier", 403), coords: [64.018592, -16.821478] },
@@ -3880,6 +4024,7 @@
         mapLink: "https://www.google.com/maps/dir/Vestrahorn/Lagarflj%C3%B3t+Lake/Stu%C3%B0lagil+Canyon/Egilssta%C3%B0ir,+Iceland/",
         mapEmbed: buildMapEmbed([-16.75,64.9,-14.05,65.92]),
         locations: [
+          { name: "Vestrahorn Campsite (Departure)", note: "Depart from the Day 4 campsite before nearby stops.", image: imageFor("Vestrahorn campsite morning", 500), coords: [64.2550701, -14.9940489] },
           { name: "Vestrahorn", note: "Early light shots before heading north-east.", image: imageFor("Vestrahorn sunrise", 501), coords: [64.273333, -15.008611] },
           { name: "Lagarfljot", note: "Quiet lake break around Egilsstadir region.", image: imageFor("Lagarfljot", 502), coords: [65.1696214, -14.6333108] },
           { name: "Studlagil Canyon", note: "Basalt columns and turquoise river views.", image: imageFor("Studlagil canyon", 503), coords: [65.1623267, -15.3081247] },
@@ -3898,11 +4043,13 @@
         mapLink: "https://www.google.com/maps/dir/Egilssta%C3%B0ir,+Iceland/N%C3%A1maskard/Go%C3%B0afoss+Waterfall/Akureyri,+Iceland/data=!4m26!4m25!1m5!1m1!19sChIJ056oDYAEzEgRVH98LGtBv5U!2m2!1d-14.399439399999999!2d65.2609232!1m5!1m1!19sChIJBxz9UKGfzUgR1lrqxPH-eEg!2m2!1d-16.826666799999998!2d65.6472222!1m5!1m1!19sChIJnzYfSGp-zUgROx0NTqrNu34!2m2!1d-17.5501918!2d65.6827782!1m5!1m1!19sChIJp7-wHAeP0kgR0f1xjHkytr0!2m2!1d-18.0906859!2d65.6825509!3e0",
         mapEmbed: buildMapEmbed([-18.35,65.2,-14.1,65.95]),
         locations: [
+          { name: "Egilsstadir Camp (Departure)", note: "Start from the previous campsite before heading north.", image: imageFor("Egilsstadir campsite morning", 600), coords: [65.2583124, -14.4068894] },
           { name: "Egilsstadir", note: "Coffee and supplies before crossing highlands roads.", image: imageFor("Egilsstadir city", 601), coords: [65.2620412, -14.4035258] },
           { name: "Namaskard", note: "Steaming geothermal vents and sulfur-colored hills.", image: imageFor("Namaskard", 602), coords: [65.6473428, -16.8250680] },
           { name: "Godafoss", note: "Classic horseshoe waterfall with easy access trails.", image: imageFor("Godafoss", 603), coords: [65.6828162, -17.5506240] },
           { name: "Akureyri", note: "Explore town center and harbor streets.", image: imageFor("Akureyri", 604), coords: [65.6839036, -18.1121756] },
-          { name: "Forest Lagoon", note: "Evening soak overlooking Eyjafjordur.", image: imageFor("Forest lagoon iceland", 605), coords: [65.6699183, -18.0417986] }
+          { name: "Forest Lagoon", note: "Evening soak overlooking Eyjafjordur.", image: imageFor("Forest lagoon iceland", 605), coords: [65.6699183, -18.0417986] },
+          { name: "Hamrar Campsite", note: "Overnight stop in Akureyri for a clean departure tomorrow.", image: imageFor("Hamrar campsite Akureyri", 606), coords: [65.6485410, -18.1024258], isCamp: true }
         ],
         recommendations: [
           { title: "Vogafjos Farm Resort", text: "Known for local dairy and hearty plates in a farm setting." },
@@ -3917,6 +4064,7 @@
         mapLink: "https://www.google.com/maps/dir/Akureyri,+Iceland/Fosslaug+geothermic+pool,+FJV8%2BMHM,+Unnamed+Road,+Varmahl%C3%AD%C3%B0,+Islandia/B%C3%BA%C3%B0ardalur,+Iceland/data=!4m20!4m19!1m5!1m1!19sChIJp7-wHAeP0kgR0f1xjHkytr0!2m2!1d-18.0906859!2d65.6825509!1m5!1m1!19sChIJrQl9EY0F00gRvGmSEP5icpA!2m2!1d-19.3835889!2d65.494216299999991!1m5!1m1!19sChIJJeb3swv51EgRPVpIzd0Gqpw!2m2!1d-21.7672907!2d65.1099356!3e0",
         mapEmbed: buildMapEmbed([-22.05,64.9,-18.0,65.8]),
         locations: [
+          { name: "Hamrar Campsite (Departure)", note: "Start from camp before crossing north-west Iceland.", image: imageFor("Hamrar campsite morning", 700), coords: [65.6485410, -18.1024258] },
           { name: "Akureyri Departure", note: "Quick city breakfast before westward drive.", image: imageFor("Akureyri morning", 701), coords: [65.6839036, -18.1121756] },
           { name: "Road 83 Coastal Segment", note: "Scenic fjord roads and photo pull-offs.", image: imageFor("Iceland fjord road", 702), coords: [65.9710942, -18.5304388] },
           { name: "Fosslaug", note: "Natural hot pool with river views.", image: imageFor("Fosslaug", 703), coords: [65.4964888, -19.3802608] },
@@ -3953,10 +4101,12 @@
         mapLink: "https://www.google.com/maps/dir/B%C3%BA%C3%B0ardalur,+Iceland/Reykjav%C3%ADk,+Iceland/Harpa,+Austurbakki+2,+101+Reykjav%C3%ADk,+Iceland/Perlan,+Varmahl%C3%AD%C3%B0+1,+105+Reykjav%C3%ADk,+Iceland",
         mapEmbed: buildMapEmbed([-22.05,64.03,-21.55,64.2]),
         locations: [
+          { name: "Snorrastadir Camp (Departure)", note: "Leave camp and head to Reykjavik for van return.", image: imageFor("Snorrastadir campsite morning", 900), coords: [64.7736001, -22.3012436] },
           { name: "Van Return", note: "Drop-off logistics before city mode starts. Return time: 11:00 AM.", image: imageFor("Reykjavik van rental", 901), coords: [64.1466, -21.9426] },
           { name: "Sun Voyager", note: "Iconic sculpture on the waterfront promenade.", image: imageFor("Sun Voyager Reykjavik", 902), coords: [64.1478, -21.9226] },
           { name: "Harpa Concert Hall", note: "Geometric glass facade and harbor views.", image: imageFor("Harpa Reykjavik", 903), coords: [64.1500, -21.9327] },
-          { name: "Perlan", note: "Museum and hilltop panorama over Reykjavik.", image: imageFor("Perlan Reykjavik", 904), coords: [64.1293, -21.9219] }
+          { name: "Perlan", note: "Museum and hilltop panorama over Reykjavik.", image: imageFor("Perlan Reykjavik", 904), coords: [64.1293, -21.9219] },
+          { name: "Home Exchange (Reykjavik)", note: "Overnight city base for Day 10.", image: imageFor("Reykjavik home exchange night", 905), coords: [64.1459810, -21.9422367], isCamp: true }
         ],
         recommendations: [
           { title: "Saegreifinn", text: "Famous lobster soup spot near the old harbor, casual and quick." },
@@ -3971,9 +4121,11 @@
         mapLink: "https://www.google.com/maps/dir/Reykjav%C3%ADk,+Iceland/Sky+Lagoon,+Vesturv%C3%B6r+44-48,+K%C3%B3pavogur,+Iceland/Blue+Lagoon,+Nor%C3%B0urlj%C3%B3savegur+9,+240+Grindav%C3%ADk,+Iceland/Reykjav%C3%ADk,+Iceland",
         mapEmbed: buildMapEmbed([-22.05,63.8,-21.0,64.2]),
         locations: [
+          { name: "Home Exchange (Departure)", note: "Start from your Reykjavik base.", image: imageFor("Reykjavik home exchange", 1000), coords: [64.1459810, -21.9422367] },
           { name: "Sky Lagoon", note: "Ocean-facing spa circuit and warm pools.", image: imageFor("Sky Lagoon Iceland", 1001), coords: [64.1197, -21.9112] },
           { name: "Blue Lagoon Option", note: "Alternative geothermal experience with milky-blue water.", image: imageFor("Blue Lagoon Iceland", 1002), coords: [63.8804, -22.4495] },
-          { name: "Reykjavik Evening", note: "Slow city walk and recovery evening.", image: imageFor("Reykjavik evening", 1003), coords: [64.1466, -21.9426] }
+          { name: "Reykjavik Evening", note: "Slow city walk and recovery evening.", image: imageFor("Reykjavik evening", 1003), coords: [64.1466, -21.9426] },
+          { name: "Home Exchange (Reykjavik)", note: "Final overnight city base before departure day.", image: imageFor("Reykjavik home exchange late", 1004), coords: [64.1459810, -21.9422367], isCamp: true }
         ],
         recommendations: [
           { title: "Lava Restaurant", text: "Premium option at Blue Lagoon for a special slow meal." },
@@ -3988,7 +4140,7 @@
         mapLink: "https://www.google.com/maps/dir/Reykjav%C3%ADk,+Iceland/Keflav%C3%ADk+International+Airport,+Keflav%C3%ADk,+Iceland",
         mapEmbed: buildMapEmbed([-22.85,63.95,-21.55,64.2]),
         locations: [
-          { name: "Last Reykjavik Breakfast", note: "Final bakery or coffee stop in the city.", image: imageFor("Reykjavik breakfast", 1101), coords: [64.1466, -21.9426] },
+          { name: "Last Reykjavik Breakfast", note: "Final bakery or coffee stop in the city.", image: imageFor("Reykjavik breakfast", 1101), coords: [64.1459810, -21.9422367] },
           { name: "Drive to Keflavik", note: "Leave time for fuel, drop-off, and tax-free desk.", image: imageFor("Keflavik road", 1102), coords: [64.0700, -22.1000] },
           { name: "Departure", note: "Airport check-in and final Iceland views from the gate.", image: imageFor("Keflavik airport", 1103), coords: [63.9850, -22.6056] }
         ],
@@ -7982,8 +8134,22 @@
 
       locations.forEach((location, index) => {
         const locationUrl = locationMapsUrl(location, routePoints[index]);
-        const cardClass = "location-card" + (location.isCampsite ? " campsite-card" : "");
-        const iconPrefix = location.isCampsite ? "<span class=\"stop-icon\">🏠</span>" : "";
+        const isDepartureStop = index === 0;
+        const isEndStop = index === locations.length - 1;
+        const cardClass = "location-card" + (location.isCampsite ? " campsite-card" : "") + (isDepartureStop ? " departure-card" : "") + (isEndStop ? " end-card" : "");
+        const stepIcons = [];
+        if (isDepartureStop) {
+          stepIcons.push("<span class=\"location-step-icon departure\" title=\"Departure\">🚩</span>");
+        }
+        if (location.isCampsite) {
+          stepIcons.push("<span class=\"location-step-icon camp\" title=\"Campsite\">🏠</span>");
+        }
+        if (isEndStop) {
+          stepIcons.push("<span class=\"location-step-icon end\" title=\"End\">🏁</span>");
+        }
+        const iconPrefix = stepIcons.length
+          ? "<span class=\"location-step-icons\">" + stepIcons.join("") + "</span>"
+          : "";
         const locationName = escapeHtml(location.name);
         const locationNote = escapeHtml(location.note);
         const locationPrimaryLabel = location.isCampsite ? "Open campsite in Maps" : "Open location in Maps";
@@ -8007,22 +8173,21 @@
 
         html +=
           "<article class=\"itinerary-item\">" +
-            "<div class=\"itinerary-rail\">" +
-              "<span class=\"itinerary-dot\" style=\"--itinerary-color:" + color + "\"></span>" +
-            "</div>" +
             "<div class=\"" + cardClass + "\">" +
-                "<h5 class=\"location-name\">" +
-                  "<a class=\"location-title-link\" href=\"" + locationUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"" + escapeHtml(locationPrimaryLabel) + "\">" +
-                    (index + 1) + ". " + iconPrefix + locationName +
-                  "</a>" +
-                "</h5>" +
-                "<p class=\"location-note\">" + locationNote + "</p>" +
-                campPriceLine +
-                "<div class=\"location-discovery-links\">" + discoveryLinksHtml + "</div>" +
                 "<div class=\"location-media loading\">" +
                   "<div class=\"image-loader\" aria-hidden=\"true\"></div>" +
                   "<img class=\"location-image\" loading=\"lazy\" src=\"" + imageSrc + "\" alt=\"" + locationName + " photo\" data-image-key=\"" + escapeHtml(imageKey) + "\" data-location-name=\"" + locationName + "\" data-day-number=\"" + day.day + "\" data-stop-index=\"" + index + "\"" + cachedImageAttr + " data-lorem-src=\"" + loremFallbackSrc + "\" data-fallback-seed=\"" + day.day + "-" + (index + 1) + "\" onload=\"imageLoaded(event)\" onerror=\"imageFallback(event)\">" +
                   "<button class=\"img-refresh-btn\" type=\"button\" onclick=\"refetchLocationImage(this)\" aria-label=\"Refresh photo for " + locationName + "\" title=\"Fetch another photo\">↻ New photo</button>" +
+                "</div>" +
+                "<div class=\"location-content\">" +
+                  "<h5 class=\"location-name\">" +
+                    "<a class=\"location-title-link\" href=\"" + locationUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"" + escapeHtml(locationPrimaryLabel) + "\">" +
+                      (index + 1) + ". " + iconPrefix + locationName +
+                    "</a>" +
+                  "</h5>" +
+                  "<p class=\"location-note\">" + locationNote + "</p>" +
+                  campPriceLine +
+                  "<div class=\"location-discovery-links\">" + discoveryLinksHtml + "</div>" +
                 "</div>" +
             "</div>" +
           "</article>";
@@ -8052,11 +8217,13 @@
           );
 
           html +=
-            "<a class=\"" + summaryClass + "\" href=\"" + escapeHtml(legDirectionsUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open driving itinerary between " + escapeHtml(locations[index].name) + " and " + escapeHtml(locations[index + 1].name) + "\">" +
-              "<span>🛣️ Roads: " + escapeHtml(roadNumbers) + "</span>" +
-              "<span>•</span>" +
-              "<span>Direction: " + escapeHtml(directionText) + "</span>" +
-            "</a>";
+            "<div class=\"itinerary-leg\">" +
+              "<span class=\"itinerary-leg-line\" aria-hidden=\"true\"></span>" +
+              "<a class=\"" + summaryClass + "\" href=\"" + escapeHtml(legDirectionsUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open driving itinerary between " + escapeHtml(locations[index].name) + " and " + escapeHtml(locations[index + 1].name) + "\">" +
+                "<span>🛣️ Roads: " + escapeHtml(roadNumbers) + "</span>" +
+                "<span>•</span>" +
+                "<span>Direction: " + escapeHtml(directionText) + "</span>" +
+              "</a>";
 
           const durationValue = getLegDurationSeconds(
             day,
@@ -8078,7 +8245,9 @@
             "<div class=\"" + driveClass + "\">" +
               "<span>🚗</span>" +
               "<span>" + durationText + "</span>" +
-            "</div>";
+            "</div>" +
+            "<span class=\"itinerary-leg-line\" aria-hidden=\"true\"></span>" +
+          "</div>";
         }
       });
 
