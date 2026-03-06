@@ -3536,40 +3536,72 @@
 
       const cacheKey = getDriveRouteCacheKey(day, route);
       const fallbackSummaries = getCachedDrivingLegDurations(day);
+      const summaries = [];
+      let freshLegCount = 0;
 
-      const coordinateParam = route.map((point) => point[1] + "," + point[0]).join(";");
-      const url =
-        "https://router.project-osrm.org/route/v1/driving/" +
-        coordinateParam +
-        "?overview=false&steps=true&annotations=false";
+      for (let index = 0; index < route.length - 1; index += 1) {
+        const fromPoint = route[index];
+        const toPoint = route[index + 1];
+        const legUrl =
+          "https://router.project-osrm.org/route/v1/driving/" +
+          fromPoint[1] +
+          "," +
+          fromPoint[0] +
+          ";" +
+          toPoint[1] +
+          "," +
+          toPoint[0] +
+          "?overview=false&steps=true&annotations=false&continue_straight=false";
 
-      try {
-        const response = await fetch(url, {
-          headers: {
-            Accept: "application/json"
+        try {
+          const response = await fetch(legUrl, {
+            headers: {
+              Accept: "application/json"
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error("OSRM leg request failed with status " + response.status);
           }
-        });
 
-        if (!response.ok) {
-          throw new Error("OSRM request failed with status " + response.status);
+          const data = await response.json();
+          const leg =
+            data && data.routes && data.routes[0] && Array.isArray(data.routes[0].legs)
+              ? data.routes[0].legs[0]
+              : null;
+          if (!leg) {
+            throw new Error("OSRM leg payload missing");
+          }
+
+          summaries.push(summarizeDrivingLeg(leg, fromPoint, toPoint));
+          freshLegCount += 1;
+        } catch (error) {
+          const fallbackSummary = fallbackSummaries[index];
+          if (fallbackSummary) {
+            summaries.push(fallbackSummary);
+          } else {
+            summaries.push({
+              duration: null,
+              roads: [],
+              direction: getCardinalDirection(fromPoint, toPoint)
+            });
+          }
+          console.warn(
+            "Drive leg lookup failed",
+            { day: day.day, leg: index + 1, from: fromPoint, to: toPoint },
+            error
+          );
         }
+      }
 
-        const data = await response.json();
-        const legs =
-          data && data.routes && data.routes[0] && Array.isArray(data.routes[0].legs)
-            ? data.routes[0].legs
-            : [];
-
-        const summaries = legs.map((leg, index) =>
-          summarizeDrivingLeg(leg, route[index], route[index + 1])
-        );
-        driveTimesCache.set(cacheKey, summaries);
-        savePersistedDriveLegSummaries(cacheKey, summaries);
-        return summaries;
-      } catch (error) {
-        console.warn("Drive time lookup failed", error);
+      if (!freshLegCount && fallbackSummaries.length) {
         return fallbackSummaries;
       }
+
+      const normalizedSummaries = sanitizeDriveLegSummaries(summaries);
+      driveTimesCache.set(cacheKey, normalizedSummaries);
+      savePersistedDriveLegSummaries(cacheKey, normalizedSummaries);
+      return normalizedSummaries;
     }
 
     const days = [
@@ -6235,22 +6267,52 @@
       }
     }
 
+    let todayOverviewBackgroundRefreshQueued = false;
+
+    function queueTodayOverviewBackgroundRefresh() {
+      if (todayOverviewBackgroundRefreshQueued || activeTab !== "home") {
+        return;
+      }
+
+      todayOverviewBackgroundRefreshQueued = true;
+      window.setTimeout(() => {
+        todayOverviewBackgroundRefreshQueued = false;
+        if (activeTab !== "home") {
+          return;
+        }
+        refreshTodayOverview({
+          force: true,
+          silent: true,
+          skipBackgroundRefresh: true
+        });
+      }, 0);
+    }
+
     async function refreshTodayOverview(options = {}) {
       if (!todayOverviewCardEl || activeTab !== "home") {
         return;
       }
 
       const forceRefresh = Boolean(options.force);
+      const silent = Boolean(options.silent);
       const day = getTodayOverviewTargetDay();
       if (!day) {
         return;
       }
 
       const requestId = ++todayOverviewRequestId;
-      renderTodayOverviewLoading(day);
-
       let driveLegSummaries = getCachedDrivingLegDurations(day);
-      if (forceRefresh || !driveLegSummaries.length) {
+      const hasCachedDriveSummaries = driveLegSummaries.length > 0;
+
+      if (!silent && !hasCachedDriveSummaries) {
+        renderTodayOverviewLoading(day);
+      }
+
+      if (!forceRefresh && hasCachedDriveSummaries && !options.skipBackgroundRefresh) {
+        queueTodayOverviewBackgroundRefresh();
+      }
+
+      if (forceRefresh || !hasCachedDriveSummaries) {
         const fetchedSummaries = await fetchDrivingLegDurations(day);
         if (Array.isArray(fetchedSummaries) && fetchedSummaries.length) {
           driveLegSummaries = fetchedSummaries;
