@@ -4848,10 +4848,9 @@
       };
     }
 
-    function createSyncPayload(updatedAtMs) {
+    function createSyncPayload() {
       return {
         schemaVersion: SYNC_SCHEMA_VERSION,
-        updatedAtMs,
         sourceDeviceId: syncDeviceId,
         packItems,
         budgetState: {
@@ -4912,11 +4911,7 @@
 
     function readSyncPayloadTimestampMs(row) {
       const rowTimestamp = Date.parse((row && row.updated_at) || "");
-      if (Number.isFinite(rowTimestamp) && rowTimestamp > 0) {
-        return rowTimestamp;
-      }
-      const payloadTimestamp = Number(row && row.payload && row.payload.updatedAtMs);
-      return Number.isFinite(payloadTimestamp) && payloadTimestamp > 0 ? payloadTimestamp : 0;
+      return Number.isFinite(rowTimestamp) && rowTimestamp > 0 ? rowTimestamp : 0;
     }
 
     async function pullTripState(options = {}) {
@@ -5040,8 +5035,7 @@
       }
 
       try {
-        const payloadTimestamp = Date.now();
-        const payload = createSyncPayload(payloadTimestamp);
+        const payload = createSyncPayload();
         const body = [
           {
             trip_id: syncSettings.tripId,
@@ -5064,8 +5058,10 @@
 
         const rows = await response.json().catch(() => []);
         const firstRow = Array.isArray(rows) && rows.length ? rows[0] : null;
-        const effectiveTimestamp = readSyncPayloadTimestampMs(firstRow) || payloadTimestamp;
-        setSyncLocalUpdatedAt(effectiveTimestamp);
+        const effectiveTimestamp = readSyncPayloadTimestampMs(firstRow);
+        if (effectiveTimestamp) {
+          setSyncLocalUpdatedAt(effectiveTimestamp);
+        }
         const whenLabel = syncTimestampLabel(effectiveTimestamp);
         if (!silent) {
           const syncModeLabel = reason === "auto" ? "Auto-sync complete" : "Sync complete";
