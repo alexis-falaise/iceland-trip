@@ -1129,6 +1129,56 @@
       padding: 7px 10px;
     }
 
+    .sync-form {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .sync-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.78rem;
+      color: var(--muted-text-ui);
+      line-height: 1.3;
+      user-select: none;
+    }
+
+    .sync-toggle input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+    }
+
+    .sync-status {
+      margin: 2px 0 0;
+      font-size: 0.74rem;
+      color: var(--muted-text-ui);
+      line-height: 1.35;
+      min-height: 1.2em;
+      word-break: break-word;
+    }
+
+    .sync-status.sync-ok {
+      color: #166534;
+    }
+
+    .sync-status.sync-error {
+      color: #b91c1c;
+    }
+
+    .sync-status.sync-loading {
+      color: #1f2937;
+    }
+
+    .sync-note {
+      margin: 0;
+      font-size: 0.68rem;
+      color: var(--muted-text-ui);
+      line-height: 1.35;
+    }
+
     .useful-links-list {
       display: grid;
       gap: 8px;
@@ -2021,6 +2071,19 @@
       </div>
     </section>
 
+    <section id="sync-card" class="card" aria-labelledby="sync-title">
+      <h2 id="sync-title" class="card-title">🔄 Couple Sync</h2>
+      <div class="sync-form">
+        <input id="sync-trip-input" class="text-input" type="text" maxlength="80" placeholder="Shared trip code (e.g. iceland-2026-couple)" aria-label="Shared trip code">
+        <label class="sync-toggle">
+          <input id="sync-auto-input" type="checkbox">
+          Auto-push local changes
+        </label>
+        <p id="sync-status" class="sync-status" aria-live="polite"></p>
+        <p class="sync-note">Syncs packing + budget only. Enter the same trip code on both phones.</p>
+      </div>
+    </section>
+
     <section id="useful-links-card" class="card" aria-labelledby="useful-links-title">
       <h2 id="useful-links-title" class="card-title">🔗 Useful Links</h2>
       <div class="useful-links-list">
@@ -2169,6 +2232,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const dayColors = [
       "var(--day-1)",
@@ -2195,6 +2259,16 @@
     const HEADER_VIDEO_PRIMARY_URL = "https://videos.pexels.com/video-files/31280471/13358080_1920_1080_25fps.mp4";
     const GOOGLE_PLACES_API_KEY = "AIzaSyBxwWsUASKhG8zALOa_V73RTlAj7lgDfNU";
     const GOOGLE_PLACES_STORAGE_KEY = "icelandGooglePlacesApiKey";
+    const SYNC_SETTINGS_STORAGE_KEY = "icelandTripSyncSettingsV1";
+    const SYNC_DEVICE_STORAGE_KEY = "icelandTripSyncDeviceIdV1";
+    const SYNC_META_STORAGE_KEY = "icelandTripSyncMetaV1";
+    const SYNC_TABLE_NAME = "trip_state";
+    const SYNC_SCHEMA_VERSION = 1;
+    const SYNC_SUPABASE_PROJECT_ID = "btqfcutfmnrwvpvbwulw";
+    const SYNC_SUPABASE_URL = "https://" + SYNC_SUPABASE_PROJECT_ID + ".supabase.co";
+    const SYNC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0cWZjdXRmbW5yd3ZwdmJ3dWx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjYyNDQsImV4cCI6MjA4Nzk0MjI0NH0.-DGZKD7BVWfaQkvr5LiKu9aNyBlO-pMJVgGnLWX9F6c";
+    const SYNC_REALTIME_CHANNEL_PREFIX = "trip_state_live_";
+    const SYNC_PUSH_DEBOUNCE_MS = 1200;
     let headerVideoBlobUrl = "";
 
     function readLocalStorageObject(key) {
@@ -4181,8 +4255,11 @@
     const addItemFormEl = document.getElementById("add-item-form");
     const newItemInputEl = document.getElementById("new-item-input");
 
-    function savePackItems() {
+    function savePackItems(options = {}) {
       localStorage.setItem(PACK_STORAGE_KEY, JSON.stringify(packItems));
+      if (!options.skipSync) {
+        markSyncLocalChange();
+      }
     }
 
     function updatePackProgress() {
@@ -4375,7 +4452,7 @@
       }
     }
 
-    function saveBudgetState() {
+    function saveBudgetState(options = {}) {
       localStorage.setItem(
         BUDGET_STORAGE_KEY,
         JSON.stringify({
@@ -4383,6 +4460,9 @@
           expenses: budgetState.expenses
         })
       );
+      if (!options.skipSync) {
+        markSyncLocalChange();
+      }
     }
 
     function loadFxState() {
@@ -4448,6 +4528,649 @@
     const dailyLimitSpentGaugeEl = document.getElementById("daily-limit-spent-gauge");
     const dailyLimitSpentHelpEl = document.getElementById("daily-limit-spent-help");
     const dailyLimitNoteEl = document.getElementById("daily-limit-note");
+    const syncTripInputEl = document.getElementById("sync-trip-input");
+    const syncAutoInputEl = document.getElementById("sync-auto-input");
+    const syncStatusEl = document.getElementById("sync-status");
+
+    function loadSyncSettings() {
+      try {
+        const raw = localStorage.getItem(SYNC_SETTINGS_STORAGE_KEY);
+        if (!raw) {
+          return {
+            tripId: "",
+            autoSync: true
+          };
+        }
+        const parsed = JSON.parse(raw);
+        return {
+          tripId: normalizeTripCode(parsed && parsed.tripId),
+          autoSync: parsed && parsed.autoSync !== false
+        };
+      } catch {
+        return {
+          tripId: "",
+          autoSync: true
+        };
+      }
+    }
+
+    function saveSyncSettings() {
+      localStorage.setItem(SYNC_SETTINGS_STORAGE_KEY, JSON.stringify(syncSettings));
+    }
+
+    function loadSyncMeta() {
+      try {
+        const raw = localStorage.getItem(SYNC_META_STORAGE_KEY);
+        if (!raw) {
+          return { localUpdatedAtMs: 0 };
+        }
+        const parsed = JSON.parse(raw);
+        const localUpdatedAtMs = Number(parsed && parsed.localUpdatedAtMs);
+        return {
+          localUpdatedAtMs: Number.isFinite(localUpdatedAtMs) && localUpdatedAtMs > 0
+            ? localUpdatedAtMs
+            : 0
+        };
+      } catch {
+        return { localUpdatedAtMs: 0 };
+      }
+    }
+
+    function saveSyncMeta() {
+      localStorage.setItem(
+        SYNC_META_STORAGE_KEY,
+        JSON.stringify({
+          localUpdatedAtMs: syncLocalUpdatedAtMs
+        })
+      );
+    }
+
+    function getOrCreateSyncDeviceId() {
+      try {
+        const existing = String(localStorage.getItem(SYNC_DEVICE_STORAGE_KEY) || "").trim();
+        if (existing) {
+          return existing;
+        }
+      } catch {
+        // Continue with generated id.
+      }
+
+      const generated = "device-" + Math.random().toString(36).slice(2, 10);
+      try {
+        localStorage.setItem(SYNC_DEVICE_STORAGE_KEY, generated);
+      } catch {
+        // Ignore storage failures.
+      }
+      return generated;
+    }
+
+    let syncSettings = loadSyncSettings();
+    const syncMeta = loadSyncMeta();
+    const syncDeviceId = getOrCreateSyncDeviceId();
+    let syncLocalUpdatedAtMs = syncMeta.localUpdatedAtMs;
+    let syncRealtimeClient = null;
+    let syncRealtimeChannel = null;
+    let syncRealtimeTripId = "";
+    let syncPushDebounceId = 0;
+    let syncIsPushing = false;
+    let syncIsPulling = false;
+    let syncApplyingRemote = false;
+
+    function setSyncStatus(text, tone = "muted") {
+      if (!syncStatusEl) {
+        return;
+      }
+      syncStatusEl.textContent = String(text || "");
+      syncStatusEl.classList.remove("sync-ok", "sync-error", "sync-loading");
+      if (tone === "ok") {
+        syncStatusEl.classList.add("sync-ok");
+      } else if (tone === "error") {
+        syncStatusEl.classList.add("sync-error");
+      } else if (tone === "loading") {
+        syncStatusEl.classList.add("sync-loading");
+      }
+    }
+
+    function hasSyncConfig() {
+      return Boolean(syncSettings && isValidTripCode(syncSettings.tripId));
+    }
+
+    function normalizeTripCode(value) {
+      return String(value || "").trim().toLowerCase().slice(0, 80);
+    }
+
+    function isValidTripCode(value) {
+      return /^[a-z0-9][a-z0-9-]{2,79}$/.test(String(value || ""));
+    }
+
+    function syncRequestHeaders(extraHeaders = {}) {
+      const key = String(SYNC_SUPABASE_ANON_KEY || "").trim();
+      const headers = {
+        apikey: key,
+        Accept: "application/json"
+      };
+
+      // Hardcoded anon key is a JWT, so bearer auth is expected.
+      if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(key)) {
+        headers.Authorization = "Bearer " + key;
+      }
+
+      return {
+        ...headers,
+        ...extraHeaders
+      };
+    }
+
+    function updateSyncActionButtons(isBusy) {
+      const busy = Boolean(isBusy);
+      if (syncTripInputEl) {
+        syncTripInputEl.disabled = busy;
+      }
+      if (syncAutoInputEl) {
+        syncAutoInputEl.disabled = busy;
+      }
+    }
+
+    function syncTimestampLabel(timestampMs) {
+      if (!Number.isFinite(timestampMs) || timestampMs <= 0) {
+        return "";
+      }
+      try {
+        return new Date(timestampMs).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch {
+        return "";
+      }
+    }
+
+    function setSyncLocalUpdatedAt(timestampMs) {
+      syncLocalUpdatedAtMs = Number.isFinite(timestampMs) && timestampMs > 0
+        ? Math.round(timestampMs)
+        : 0;
+      saveSyncMeta();
+    }
+
+    function getSyncRealtimeClient() {
+      if (syncRealtimeClient) {
+        return syncRealtimeClient;
+      }
+      if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        return null;
+      }
+      syncRealtimeClient = window.supabase.createClient(
+        SYNC_SUPABASE_URL,
+        SYNC_SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );
+      return syncRealtimeClient;
+    }
+
+    async function stopSyncLiveSubscription() {
+      if (!syncRealtimeClient || !syncRealtimeChannel) {
+        syncRealtimeChannel = null;
+        syncRealtimeTripId = "";
+        return;
+      }
+      const channel = syncRealtimeChannel;
+      syncRealtimeChannel = null;
+      syncRealtimeTripId = "";
+      try {
+        await syncRealtimeClient.removeChannel(channel);
+      } catch {
+        // Non-blocking cleanup.
+      }
+    }
+
+    function onTripRealtimePayload(row) {
+      if (!row || typeof row !== "object") {
+        return;
+      }
+      const rowTripId = normalizeTripCode(row.trip_id);
+      if (!hasSyncConfig() || rowTripId !== syncSettings.tripId) {
+        return;
+      }
+      const remoteUpdatedAtMs = readSyncPayloadTimestampMs(row);
+      if (!remoteUpdatedAtMs || remoteUpdatedAtMs <= syncLocalUpdatedAtMs) {
+        return;
+      }
+      const payload = row.payload;
+      if (!payload || typeof payload !== "object") {
+        return;
+      }
+
+      const applied = applySyncPayload(payload, remoteUpdatedAtMs);
+      if (!applied) {
+        return;
+      }
+      const whenLabel = syncTimestampLabel(remoteUpdatedAtMs);
+      setSyncStatus(
+        "Live update received" + (whenLabel ? " · " + whenLabel : ""),
+        "ok"
+      );
+    }
+
+    async function subscribeToSyncLiveUpdates() {
+      if (!hasSyncConfig()) {
+        await stopSyncLiveSubscription();
+        return false;
+      }
+
+      const tripId = syncSettings.tripId;
+      if (syncRealtimeChannel && syncRealtimeTripId === tripId) {
+        return true;
+      }
+
+      await stopSyncLiveSubscription();
+
+      const client = getSyncRealtimeClient();
+      if (!client) {
+        setSyncStatus("Live sync unavailable (Supabase client not loaded).", "error");
+        return false;
+      }
+
+      syncRealtimeTripId = tripId;
+      const channelName =
+        SYNC_REALTIME_CHANNEL_PREFIX + tripId + "_" + Math.random().toString(36).slice(2, 8);
+
+      syncRealtimeChannel = client
+        .channel(channelName)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: SYNC_TABLE_NAME,
+            filter: "trip_id=eq." + tripId
+          },
+          (eventPayload) => {
+            const row = eventPayload && eventPayload.new ? eventPayload.new : null;
+            onTripRealtimePayload(row);
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            setSyncStatus("Live sync connected.", "ok");
+          } else if (status === "CHANNEL_ERROR") {
+            setSyncStatus("Live sync channel error. Manual pull still works.", "error");
+          } else if (status === "TIMED_OUT") {
+            setSyncStatus("Live sync timeout. Retrying…", "error");
+          }
+        });
+
+      return true;
+    }
+
+    function sanitizeSyncedPackItems(rawItems) {
+      if (!Array.isArray(rawItems)) {
+        return [];
+      }
+      let fallbackId = 1;
+      return rawItems
+        .filter((item) => item && (typeof item.text === "string" || typeof item.label === "string"))
+        .map((item) => {
+          const text = String(item.text ?? item.label).trim().slice(0, 100);
+          const rawId = Number(item.id);
+          const id = Number.isFinite(rawId) && rawId > 0 ? rawId : fallbackId++;
+          return {
+            id,
+            text,
+            done: Boolean(item.done ?? item.checked)
+          };
+        })
+        .filter((item) => item.text.length > 0);
+    }
+
+    function sanitizeSyncedBudgetState(rawState) {
+      const parsed = rawState && typeof rawState === "object" ? rawState : {};
+      const maxBudgetISK = toNonNegativeInteger(parsed.maxBudgetISK);
+      const expenses = Array.isArray(parsed.expenses)
+        ? parsed.expenses
+            .filter((item) => item && typeof item.name === "string")
+            .map((item, index) => ({
+              id: Number.isFinite(Number(item.id)) ? Number(item.id) : index + 1,
+              name: item.name.trim().slice(0, 100),
+              amountISK: toNonNegativeInteger(item.amountISK),
+              createdAt: Number.isFinite(Number(item.createdAt)) ? Number(item.createdAt) : null
+            }))
+            .filter((item) => item.name.length > 0)
+        : [];
+      return {
+        maxBudgetISK,
+        expenses
+      };
+    }
+
+    function createSyncPayload(updatedAtMs) {
+      return {
+        schemaVersion: SYNC_SCHEMA_VERSION,
+        updatedAtMs,
+        sourceDeviceId: syncDeviceId,
+        packItems,
+        budgetState: {
+          maxBudgetISK: toNonNegativeInteger(budgetState.maxBudgetISK),
+          expenses: budgetState.expenses
+        }
+      };
+    }
+
+    function applySyncPayload(payload, remoteUpdatedAtMs) {
+      if (!payload || typeof payload !== "object") {
+        return false;
+      }
+
+      const nextPackItems = sanitizeSyncedPackItems(payload.packItems);
+      const nextBudgetState = sanitizeSyncedBudgetState(payload.budgetState);
+
+      syncApplyingRemote = true;
+      try {
+        packItems = nextPackItems;
+        nextPackId = packItems.length ? Math.max(...packItems.map((item) => item.id)) + 1 : 1;
+        savePackItems({ skipSync: true });
+        renderPackList();
+
+        budgetState = nextBudgetState;
+        nextExpenseId = budgetState.expenses.length
+          ? Math.max(...budgetState.expenses.map((item) => item.id)) + 1
+          : 1;
+        saveBudgetState({ skipSync: true });
+        renderBudgetCard();
+      } finally {
+        syncApplyingRemote = false;
+      }
+
+      setSyncLocalUpdatedAt(remoteUpdatedAtMs);
+      return true;
+    }
+
+    function markSyncLocalChange() {
+      if (syncApplyingRemote) {
+        return;
+      }
+      setSyncLocalUpdatedAt(Date.now());
+      if (!hasSyncConfig()) {
+        return;
+      }
+      setSyncStatus("Local changes pending sync…", "loading");
+      if (!syncSettings.autoSync) {
+        return;
+      }
+      if (syncPushDebounceId) {
+        clearTimeout(syncPushDebounceId);
+      }
+      syncPushDebounceId = window.setTimeout(() => {
+        syncPushDebounceId = 0;
+        pushTripState("auto");
+      }, SYNC_PUSH_DEBOUNCE_MS);
+    }
+
+    function readSyncPayloadTimestampMs(row) {
+      const payloadTimestamp = Number(row && row.payload && row.payload.updatedAtMs);
+      if (Number.isFinite(payloadTimestamp) && payloadTimestamp > 0) {
+        return payloadTimestamp;
+      }
+      const rowTimestamp = Date.parse((row && row.updated_at) || "");
+      return Number.isFinite(rowTimestamp) && rowTimestamp > 0 ? rowTimestamp : 0;
+    }
+
+    async function pullTripState(options = {}) {
+      const silent = Boolean(options.silent);
+      const createIfMissing = Boolean(options.createIfMissing);
+      if (!hasSyncConfig()) {
+        if (!silent) {
+          setSyncStatus("Enter a trip code to enable sync.");
+        }
+        return false;
+      }
+      if (syncIsPulling) {
+        return false;
+      }
+
+      syncIsPulling = true;
+      updateSyncActionButtons(true);
+      if (!silent) {
+        setSyncStatus("Pulling latest shared data…", "loading");
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.set("select", "trip_id,payload,updated_at");
+        params.set("trip_id", "eq." + syncSettings.tripId);
+        params.set("limit", "1");
+
+        const response = await fetch(
+          SYNC_SUPABASE_URL + "/rest/v1/" + SYNC_TABLE_NAME + "?" + params.toString(),
+          {
+            method: "GET",
+            headers: syncRequestHeaders()
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Supabase pull failed (" + response.status + ")");
+        }
+
+        const rows = await response.json();
+        if (!Array.isArray(rows) || rows.length === 0) {
+          if (createIfMissing) {
+            const created = await pushTripState("bootstrap", { silent: true });
+            if (!silent) {
+              setSyncStatus(
+                created
+                  ? "Trip cloud row created. Live sync is ready."
+                  : "No cloud state yet. Push once from one phone."
+              );
+            }
+            return created;
+          }
+          if (!silent) {
+            setSyncStatus("No cloud state yet. Push once from one phone.");
+          }
+          return true;
+        }
+
+        const row = rows[0];
+        const remoteUpdatedAtMs = readSyncPayloadTimestampMs(row);
+        if (!remoteUpdatedAtMs || !row.payload || typeof row.payload !== "object") {
+          if (!silent) {
+            setSyncStatus("Cloud state is invalid. Push once to reset.", "error");
+          }
+          return false;
+        }
+
+        if (remoteUpdatedAtMs > syncLocalUpdatedAtMs) {
+          const applied = applySyncPayload(row.payload, remoteUpdatedAtMs);
+          if (!silent) {
+            setSyncStatus(applied ? "Pulled latest shared data." : "Nothing to apply.");
+          }
+          return applied;
+        }
+
+        if (!silent) {
+          if (syncLocalUpdatedAtMs > remoteUpdatedAtMs) {
+            setSyncStatus("Local data is newer. Push to share updates.");
+          } else {
+            setSyncStatus("Already up to date.");
+          }
+        }
+        return true;
+      } catch (error) {
+        if (!silent) {
+          setSyncStatus(error && error.message ? error.message : "Pull failed.", "error");
+        }
+        return false;
+      } finally {
+        syncIsPulling = false;
+        updateSyncActionButtons(false);
+      }
+    }
+
+    async function pushTripState(reason = "manual", options = {}) {
+      const silent = Boolean(options.silent);
+      if (!hasSyncConfig()) {
+        if (!silent) {
+          setSyncStatus("Enter a trip code to enable sync.");
+        }
+        return false;
+      }
+      if (syncIsPushing) {
+        return false;
+      }
+      if (syncPushDebounceId) {
+        clearTimeout(syncPushDebounceId);
+        syncPushDebounceId = 0;
+      }
+
+      syncIsPushing = true;
+      updateSyncActionButtons(true);
+      if (!silent) {
+        setSyncStatus("Pushing local changes…", "loading");
+      }
+
+      try {
+        const payloadTimestamp = syncLocalUpdatedAtMs > 0 ? syncLocalUpdatedAtMs : Date.now();
+        if (payloadTimestamp !== syncLocalUpdatedAtMs) {
+          setSyncLocalUpdatedAt(payloadTimestamp);
+        }
+        const payload = createSyncPayload(payloadTimestamp);
+        const body = [
+          {
+            trip_id: syncSettings.tripId,
+            payload,
+            updated_at: new Date(payloadTimestamp).toISOString()
+          }
+        ];
+
+        const response = await fetch(SYNC_SUPABASE_URL + "/rest/v1/" + SYNC_TABLE_NAME, {
+          method: "POST",
+          headers: syncRequestHeaders({
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates,return=representation"
+          }),
+          body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+          throw new Error("Supabase push failed (" + response.status + ")");
+        }
+
+        const whenLabel = syncTimestampLabel(payloadTimestamp);
+        if (!silent) {
+          const syncModeLabel = reason === "auto" ? "Auto-sync complete" : "Sync complete";
+          setSyncStatus(syncModeLabel + (whenLabel ? " · " + whenLabel : ""), "ok");
+        }
+        return true;
+      } catch (error) {
+        if (!silent) {
+          setSyncStatus(error && error.message ? error.message : "Push failed.", "error");
+        }
+        return false;
+      } finally {
+        syncIsPushing = false;
+        updateSyncActionButtons(false);
+      }
+    }
+
+    async function activateSyncForCurrentTrip(options = {}) {
+      const silent = Boolean(options.silent);
+      if (!hasSyncConfig()) {
+        await stopSyncLiveSubscription();
+        if (!silent) {
+          setSyncStatus("Enter your trip code to sync budget and packing.");
+        }
+        return false;
+      }
+
+      if (!silent) {
+        setSyncStatus("Preparing live sync…", "loading");
+      }
+
+      const pulled = await pullTripState({
+        silent: true,
+        createIfMissing: true
+      });
+      const subscribed = await subscribeToSyncLiveUpdates();
+
+      if (!silent) {
+        if (!pulled) {
+          setSyncStatus("Could not sync current trip snapshot.", "error");
+        } else if (!subscribed) {
+          setSyncStatus("Live sync unavailable. Pull/Push still works.", "error");
+        } else {
+          setSyncStatus("Live sync ready.", "ok");
+        }
+      }
+
+      return pulled && subscribed;
+    }
+
+    function applySyncSettingsToInputs() {
+      if (syncTripInputEl) {
+        syncTripInputEl.value = syncSettings.tripId;
+      }
+      if (syncAutoInputEl) {
+        syncAutoInputEl.checked = Boolean(syncSettings.autoSync);
+      }
+    }
+
+    function readSyncSettingsFromInputs() {
+      return {
+        tripId: normalizeTripCode(syncTripInputEl && syncTripInputEl.value),
+        autoSync: Boolean(syncAutoInputEl && syncAutoInputEl.checked)
+      };
+    }
+
+    function saveSyncSettingsFromInputs() {
+      syncSettings = readSyncSettingsFromInputs();
+      saveSyncSettings();
+
+      if (!hasSyncConfig()) {
+        setSyncStatus("Saved locally. Enter a trip code to enable sync.");
+        return;
+      }
+
+      activateSyncForCurrentTrip({ silent: false });
+    }
+
+    function initializeSyncCard() {
+      applySyncSettingsToInputs();
+
+      if (syncTripInputEl) {
+        syncTripInputEl.addEventListener("change", () => {
+          saveSyncSettingsFromInputs();
+        });
+        syncTripInputEl.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") {
+            return;
+          }
+          event.preventDefault();
+          saveSyncSettingsFromInputs();
+          if (syncTripInputEl) {
+            syncTripInputEl.blur();
+          }
+        });
+      }
+      if (syncAutoInputEl) {
+        syncAutoInputEl.addEventListener("change", () => {
+          syncSettings.autoSync = Boolean(syncAutoInputEl.checked);
+          saveSyncSettings();
+          setSyncStatus(syncSettings.autoSync ? "Auto-push enabled." : "Auto-push disabled.");
+        });
+      }
+
+      if (hasSyncConfig()) {
+        activateSyncForCurrentTrip({ silent: false });
+      } else {
+        setSyncStatus("Enter your trip code to sync budget and packing.");
+      }
+    }
 
     function eurFromISK(iskAmount) {
       return toNonNegativeInteger(iskAmount) * fxState.rate;
@@ -5021,6 +5744,7 @@
     const daysSectionTitleEl = document.getElementById("days-section-title");
     const packingCardEl = document.getElementById("packing-card");
     const fxCardEl = document.getElementById("fx-card");
+    const syncCardEl = document.getElementById("sync-card");
     const usefulLinksCardEl = document.getElementById("useful-links-card");
     const budgetCardViewEl = document.getElementById("budget-card");
     const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
@@ -5030,6 +5754,9 @@
     }
     if (packingCardEl && usefulLinksCardEl) {
       packingCardEl.insertAdjacentElement("afterend", usefulLinksCardEl);
+    }
+    if (usefulLinksCardEl && syncCardEl) {
+      usefulLinksCardEl.insertAdjacentElement("afterend", syncCardEl);
     }
 
     const TRIP_START_DATE = new Date(2026, 2, 4);
@@ -5162,6 +5889,7 @@
         setElementVisibility(flightCardEl, true);
         setElementVisibility(packingCardEl, false);
         setElementVisibility(fxCardEl, false);
+        setElementVisibility(syncCardEl, false);
         setElementVisibility(usefulLinksCardEl, false);
         setElementVisibility(budgetCardViewEl, false);
         setElementVisibility(daysSectionTitleEl, true);
@@ -5178,6 +5906,7 @@
         setElementVisibility(flightCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, true);
+        setElementVisibility(syncCardEl, true);
         setElementVisibility(usefulLinksCardEl, true);
         setElementVisibility(budgetCardViewEl, true);
         setElementVisibility(daysSectionTitleEl, false);
@@ -5192,6 +5921,7 @@
         setElementVisibility(flightCardEl, true);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, false);
+        setElementVisibility(syncCardEl, false);
         setElementVisibility(usefulLinksCardEl, false);
         setElementVisibility(budgetCardViewEl, false);
         setElementVisibility(daysSectionTitleEl, false);
@@ -5205,6 +5935,7 @@
       setElementVisibility(flightCardEl, false);
       setElementVisibility(packingCardEl, false);
       setElementVisibility(fxCardEl, false);
+      setElementVisibility(syncCardEl, false);
       setElementVisibility(usefulLinksCardEl, false);
       setElementVisibility(budgetCardViewEl, false);
       setElementVisibility(daysSectionTitleEl, true);
@@ -5624,6 +6355,7 @@
 
     renderPackList();
     renderBudgetCard();
+    initializeSyncCard();
     refreshIskEurRate();
     cacheHeaderVideo();
     applyTabView("home");
