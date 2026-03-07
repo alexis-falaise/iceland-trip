@@ -844,7 +844,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 1800;
+      z-index: 2800;
       display: flex;
       justify-content: center;
       padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));
@@ -2814,6 +2814,97 @@
       background: rgba(6, 95, 70, 0.84);
     }
 
+    .location-actions {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 6;
+    }
+
+    .location-actions-toggle {
+      border: 1px solid rgba(255, 255, 255, 0.68);
+      background: rgba(15, 23, 42, 0.56);
+      color: rgba(241, 245, 249, 0.98);
+      border-radius: 999px;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .location-actions-toggle:hover {
+      background: rgba(15, 23, 42, 0.78);
+      border-color: rgba(255, 255, 255, 0.86);
+    }
+
+    .location-actions-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 156px;
+      padding: 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(2, 6, 23, 0.9);
+      box-shadow: 0 12px 26px rgba(2, 6, 23, 0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: none;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 5px;
+    }
+
+    .location-actions.open .location-actions-menu {
+      display: grid;
+    }
+
+    .location-action-item {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.7);
+      color: rgba(241, 245, 249, 0.98);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 0.71rem;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .location-action-item:hover {
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(226, 232, 240, 0.72);
+    }
+
+    .location-action-item.danger {
+      border-color: rgba(248, 113, 113, 0.6);
+      background: rgba(127, 29, 29, 0.55);
+      color: #fee2e2;
+    }
+
+    .location-action-item.danger:hover {
+      border-color: rgba(252, 165, 165, 0.88);
+      background: rgba(153, 27, 27, 0.8);
+    }
+
+    .location-action-item:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .location-action-item:disabled:hover {
+      border-color: rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.7);
+    }
+
     .location-disabled-overlay {
       position: absolute;
       inset: auto 10px 10px 10px;
@@ -2840,7 +2931,7 @@
     .location-passed-badge {
       position: absolute;
       top: 8px;
-      right: 8px;
+      right: 44px;
       z-index: 4;
       display: inline-flex;
       align-items: center;
@@ -2856,6 +2947,72 @@
       line-height: 1;
       box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);
       pointer-events: none;
+    }
+
+    .stop-remove-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2900;
+      padding: 18px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.62);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .stop-remove-modal.open {
+      display: flex;
+    }
+
+    .stop-remove-panel {
+      width: min(100%, 360px);
+      border: 1px solid var(--border-ui);
+      border-radius: 14px;
+      background: var(--card-ui);
+      box-shadow: 0 22px 42px rgba(2, 6, 23, 0.44);
+      padding: 14px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .stop-remove-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-ui);
+    }
+
+    .stop-remove-text {
+      margin: 0;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: var(--muted-text-ui);
+    }
+
+    .stop-remove-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .stop-remove-confirm-btn {
+      border: 1px solid rgba(248, 113, 113, 0.76);
+      background: rgba(153, 27, 27, 0.88);
+      color: #fee2e2;
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .stop-remove-confirm-btn:hover {
+      background: rgba(185, 28, 28, 0.95);
+      border-color: rgba(252, 165, 165, 0.9);
     }
 
     .location-link-inline {
@@ -3637,6 +3794,17 @@
           <h4>Recommendations</h4>
           <div id="fullscreen-reco" class="recommendation-list"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stop-remove-modal" class="stop-remove-modal" role="dialog" aria-modal="true" aria-labelledby="stop-remove-title" hidden>
+    <div class="stop-remove-panel">
+      <h3 id="stop-remove-title" class="stop-remove-title">Remove stop?</h3>
+      <p id="stop-remove-text" class="stop-remove-text"></p>
+      <div class="stop-remove-actions">
+        <button id="stop-remove-cancel" class="btn btn-ghost" type="button">Cancel</button>
+        <button id="stop-remove-confirm" class="stop-remove-confirm-btn" type="button">Remove stop</button>
       </div>
     </div>
   </div>
@@ -4760,6 +4928,46 @@
       };
       setCustomDayStops(nextState);
       return nextStop;
+    }
+
+    function removeCustomStopForDay(day, locationKey) {
+      if (!day || !Number.isFinite(Number(day.day))) {
+        return false;
+      }
+      const parsedKey = parseLocationStateKey(locationKey);
+      if (!parsedKey || parsedKey.dayNumber !== Number(day.day)) {
+        return false;
+      }
+
+      const dayKey = String(day.day);
+      const currentStops = getDayCustomStops(day.day);
+      let removed = false;
+      const nextStops = currentStops.filter((stop) => {
+        const sourceIndex = Number(stop && stop.sourceIndex);
+        const shouldRemove = Number.isFinite(sourceIndex) && sourceIndex === parsedKey.locationIndex;
+        if (shouldRemove) {
+          removed = true;
+          return false;
+        }
+        return true;
+      });
+
+      if (!removed) {
+        return false;
+      }
+
+      const nextState = { ...customDayStops };
+      if (nextStops.length) {
+        nextState[dayKey] = nextStops;
+      } else {
+        delete nextState[dayKey];
+      }
+      setCustomDayStops(nextState);
+
+      if (isLocationDisabled(locationKey)) {
+        appActions.setLocationDisabled(locationKey, false);
+      }
+      return true;
     }
 
     function buildCustomStopLocation(day, stop) {
@@ -12267,6 +12475,10 @@
     const modalRecoEl = document.getElementById("fullscreen-reco");
     const closeModalBtnEl = document.getElementById("close-fullscreen");
     const modalBodyEl = modalEl.querySelector(".fullscreen-body");
+    const stopRemoveModalEl = document.getElementById("stop-remove-modal");
+    const stopRemoveTextEl = document.getElementById("stop-remove-text");
+    const stopRemoveCancelEl = document.getElementById("stop-remove-cancel");
+    const stopRemoveConfirmEl = document.getElementById("stop-remove-confirm");
 
     let fullscreenMap = null;
     let mapRouteLayer = null;
@@ -12275,6 +12487,8 @@
     let itineraryLegContextRequestId = 0;
     let locationImagePopulateRequestId = 0;
     let activeFullscreenDay = null;
+    let activeLocationActionMenuKey = "";
+    let pendingRemoveStopState = null;
 
     function resolveDayColorHex(dayNumber) {
       return getComputedStyle(document.documentElement)
@@ -12435,6 +12649,76 @@
           modalAddStopSubmitEl.disabled = false;
         }
       }
+    }
+
+    function syncLocationActionMenusUi() {
+      if (!modalItineraryEl) {
+        return;
+      }
+      const actionContainers = Array.from(
+        modalItineraryEl.querySelectorAll("[data-location-actions][data-location-key]")
+      );
+      let hasActive = false;
+      actionContainers.forEach((container) => {
+        const locationKey = String(container.getAttribute("data-location-key") || "").trim();
+        const isOpen = Boolean(locationKey) && locationKey === activeLocationActionMenuKey;
+        container.classList.toggle("open", isOpen);
+        const toggleBtn = container.querySelector("[data-location-menu-toggle]");
+        if (toggleBtn) {
+          toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        }
+        if (isOpen) {
+          hasActive = true;
+        }
+      });
+      if (!hasActive) {
+        activeLocationActionMenuKey = "";
+      }
+    }
+
+    function closeLocationActionMenu() {
+      if (!activeLocationActionMenuKey) {
+        return;
+      }
+      activeLocationActionMenuKey = "";
+      syncLocationActionMenusUi();
+    }
+
+    function openStopRemoveModal(options = {}) {
+      if (!stopRemoveModalEl || !stopRemoveTextEl) {
+        return;
+      }
+      const locationKey = String(options.locationKey || "").trim();
+      const dayNumber = Number(options.dayNumber);
+      if (!locationKey || !Number.isFinite(dayNumber)) {
+        return;
+      }
+      const locationName = String(options.locationName || "this stop").trim() || "this stop";
+      pendingRemoveStopState = {
+        locationKey,
+        dayNumber,
+        locationName
+      };
+      stopRemoveTextEl.textContent =
+        "Remove " +
+        locationName +
+        " from Day " +
+        dayNumber +
+        "? This cannot be undone.";
+      stopRemoveModalEl.hidden = false;
+      stopRemoveModalEl.classList.add("open");
+      if (stopRemoveConfirmEl) {
+        stopRemoveConfirmEl.focus();
+      }
+    }
+
+    function closeStopRemoveModal() {
+      pendingRemoveStopState = null;
+      if (!stopRemoveModalEl) {
+        return;
+      }
+      stopRemoveModalEl.classList.remove("open");
+      stopRemoveModalEl.hidden = true;
     }
 
     function ensureFullscreenMap() {
@@ -12656,8 +12940,29 @@
         const campPriceLine = location.isCampsite && dayCampPricing
           ? "<p class=\"location-note\">💳 " + escapeHtml(getCampPriceDisplayText(dayCampPricing)) + "</p>"
           : "";
-        const locationStateButton = location.canDisable && !isDisabledStop
-          ? "<button class=\"location-toggle-btn\" type=\"button\" data-location-toggle=\"disable\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" aria-label=\"Disable " + locationName + "\">Disable stop</button>"
+        const isIntermediaryStop = index > 0 && index < locations.length - 1;
+        const canShowLocationActions =
+          isIntermediaryStop &&
+          location.canDisable &&
+          !isPassedStop;
+        const canRemoveLocation =
+          canShowLocationActions &&
+          Boolean(location.isCustomStop);
+        const toggleAction = isDisabledStop ? "enable" : "disable";
+        const toggleLabel = isDisabledStop ? "Re-enable stop" : "Disable stop";
+        const removeActionDisabledAttr = canRemoveLocation
+          ? ""
+          : " disabled aria-disabled=\"true\" title=\"Only custom added stops can be removed.\"";
+        const actionMenuHtml = canShowLocationActions
+          ? (
+            "<div class=\"location-actions\" data-location-actions=\"1\" data-location-key=\"" + escapeHtml(location.locationKey) + "\">" +
+              "<button class=\"location-actions-toggle\" type=\"button\" data-location-menu-toggle=\"1\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" aria-haspopup=\"menu\" aria-expanded=\"false\" aria-label=\"Open actions for " + locationName + "\">⋯</button>" +
+              "<div class=\"location-actions-menu\" role=\"menu\" aria-label=\"Stop actions\">" +
+                "<button class=\"location-action-item\" type=\"button\" data-location-toggle=\"" + toggleAction + "\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" role=\"menuitem\">" + escapeHtml(toggleLabel) + "</button>" +
+                "<button class=\"location-action-item danger\" type=\"button\" data-location-action=\"remove\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" data-location-name=\"" + locationName + "\" role=\"menuitem\"" + removeActionDisabledAttr + ">Remove stop</button>" +
+              "</div>" +
+            "</div>"
+          )
           : "";
         const disabledOverlay = isDisabledStop && location.canDisable
           ? (
@@ -12685,6 +12990,7 @@
         html +=
           "<article class=\"itinerary-item\">" +
             "<div class=\"" + cardClass + "\">" +
+                actionMenuHtml +
                 (isPassedStop
                   ? "<span class=\"location-passed-badge\" aria-label=\"Passed stop\" title=\"Passed\">✓ Passed</span>"
                   : "") +
@@ -12702,7 +13008,6 @@
                   "<p class=\"location-note\">" + locationNote + "</p>" +
                   campPriceLine +
                   "<div class=\"location-discovery-links\">" + discoveryLinksHtml + "</div>" +
-                  locationStateButton +
                 "</div>" +
                 disabledOverlay +
             "</div>" +
@@ -12807,6 +13112,7 @@
       });
 
       modalItineraryEl.innerHTML = html;
+      syncLocationActionMenusUi();
       populateItineraryLocationImages(day);
     }
 
@@ -13069,6 +13375,8 @@
         return;
       }
       activeFullscreenDay = day.day;
+      activeLocationActionMenuKey = "";
+      closeStopRemoveModal();
       const cachedDriveSummaries = getCachedDrivingLegDurations(day);
 
       const color = dayColors[(day.day - 1) % dayColors.length];
@@ -13116,6 +13424,8 @@
       driveTimesRequestId += 1;
       itineraryLegContextRequestId += 1;
       activeFullscreenDay = null;
+      closeLocationActionMenu();
+      closeStopRemoveModal();
       setAddStopFormVisible(false);
       setAddStopStatus("");
       modalEl.classList.remove("open");
@@ -13189,8 +13499,56 @@
     }
 
     modalItineraryEl.addEventListener("click", (event) => {
+      const menuToggle = event.target.closest("[data-location-menu-toggle]");
+      if (menuToggle) {
+        event.preventDefault();
+        event.stopPropagation();
+        const locationKey = String(menuToggle.getAttribute("data-location-key") || "").trim();
+        if (!locationKey) {
+          return;
+        }
+        activeLocationActionMenuKey =
+          activeLocationActionMenuKey === locationKey
+            ? ""
+            : locationKey;
+        syncLocationActionMenusUi();
+        return;
+      }
+
+      const removeActionTrigger = event.target.closest("[data-location-action]");
+      if (removeActionTrigger) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (removeActionTrigger.hasAttribute("disabled")) {
+          return;
+        }
+
+        const actionType = String(removeActionTrigger.getAttribute("data-location-action") || "").trim();
+        if (actionType !== "remove") {
+          return;
+        }
+
+        const locationKey = String(removeActionTrigger.getAttribute("data-location-key") || "").trim();
+        const dayNumber = Number(removeActionTrigger.getAttribute("data-day-number"));
+        const locationName = String(removeActionTrigger.getAttribute("data-location-name") || "this stop").trim();
+        if (!locationKey || !Number.isFinite(dayNumber)) {
+          return;
+        }
+
+        openStopRemoveModal({
+          locationKey,
+          dayNumber,
+          locationName
+        });
+        closeLocationActionMenu();
+        return;
+      }
+
       const trigger = event.target.closest("[data-location-toggle]");
       if (!trigger) {
+        if (!event.target.closest("[data-location-actions]")) {
+          closeLocationActionMenu();
+        }
         return;
       }
       event.preventDefault();
@@ -13213,19 +13571,69 @@
 
       appActions.setLocationDisabled(locationKey, toggleType === "disable");
       markSyncLocalChange();
+      closeLocationActionMenu();
       refreshRoutingDependentUiForDay(day, {
         refreshTodayOverview: true,
         forceItineraryOverviewRefit: true
       });
     });
 
+    if (stopRemoveCancelEl) {
+      stopRemoveCancelEl.addEventListener("click", () => {
+        closeStopRemoveModal();
+      });
+    }
+
+    if (stopRemoveConfirmEl) {
+      stopRemoveConfirmEl.addEventListener("click", () => {
+        if (!pendingRemoveStopState) {
+          closeStopRemoveModal();
+          return;
+        }
+        const day = days.find((entry) => entry.day === pendingRemoveStopState.dayNumber);
+        if (!day) {
+          closeStopRemoveModal();
+          return;
+        }
+
+        const removed = removeCustomStopForDay(day, pendingRemoveStopState.locationKey);
+        if (!removed) {
+          closeStopRemoveModal();
+          return;
+        }
+        closeStopRemoveModal();
+        closeLocationActionMenu();
+        refreshRoutingDependentUiForDay(day, {
+          refreshTodayOverview: true,
+          forceItineraryOverviewRefit: true
+        });
+      });
+    }
+
     modalEl.addEventListener("click", (event) => {
       if (event.target === modalEl) {
         closeDayFullscreen();
+        return;
+      }
+      if (!event.target.closest("[data-location-actions]")) {
+        closeLocationActionMenu();
       }
     });
 
+    if (stopRemoveModalEl) {
+      stopRemoveModalEl.addEventListener("click", (event) => {
+        if (event.target === stopRemoveModalEl) {
+          closeStopRemoveModal();
+        }
+      });
+    }
+
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && stopRemoveModalEl && stopRemoveModalEl.classList.contains("open")) {
+        event.preventDefault();
+        closeStopRemoveModal();
+        return;
+      }
       if (event.key === "Escape" && modalEl.classList.contains("open")) {
         closeDayFullscreen();
       }
