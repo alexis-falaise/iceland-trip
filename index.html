@@ -946,6 +946,60 @@
       font-style: italic;
     }
 
+    #daily-limit-card {
+      background: var(--card-ui);
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      padding: 14px 16px;
+    }
+
+    .daily-limit-main {
+      font-size: 1.06rem;
+      font-weight: 700;
+      color: var(--text-ui);
+      letter-spacing: -0.01em;
+      margin-bottom: 2px;
+    }
+
+    .daily-limit-sub {
+      font-size: 0.76rem;
+      color: var(--muted-text-ui);
+      margin-bottom: 10px;
+    }
+
+    .daily-limit-metric {
+      margin-top: 8px;
+    }
+
+    .daily-limit-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 0.74rem;
+      color: var(--muted-text-ui);
+    }
+
+    .daily-limit-value {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-ui);
+      white-space: nowrap;
+    }
+
+    .daily-limit-help {
+      margin-top: 4px;
+      font-size: 0.68rem;
+      color: var(--muted-text-ui);
+    }
+
+    .daily-limit-note {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: var(--muted-text-ui);
+    }
+
     .budget-form {
       display: grid;
       gap: 7px;
@@ -1906,6 +1960,36 @@
         <div class="flight-route">Keflavik 17:15 → Orly 21:35</div>
         <div class="flight-ref">EJU4898 · Ref: KBHPM1R</div>
       </div>
+    </section>
+
+    <section id="daily-limit-card" class="card" aria-labelledby="daily-limit-title" style="display:none;">
+      <h2 id="daily-limit-title" class="card-title">🎯 Today's Budget Limit</h2>
+      <div id="daily-limit-main" class="daily-limit-main">0 ISK · €0.00</div>
+      <div id="daily-limit-sub" class="daily-limit-sub">Remaining budget split across remaining trip days.</div>
+
+      <div class="daily-limit-metric">
+        <div class="daily-limit-row">
+          <span>Plan pace</span>
+          <span id="daily-limit-pace-value" class="daily-limit-value">0%</span>
+        </div>
+        <div class="prog-bar" aria-hidden="true">
+          <div class="prog-fill" id="daily-limit-pace-gauge"></div>
+        </div>
+        <div class="daily-limit-help">100% = exactly on original daily plan.</div>
+      </div>
+
+      <div class="daily-limit-metric">
+        <div class="daily-limit-row">
+          <span>Today spent vs today limit</span>
+          <span id="daily-limit-spent-value" class="daily-limit-value">0%</span>
+        </div>
+        <div class="prog-bar" aria-hidden="true">
+          <div class="prog-fill" id="daily-limit-spent-gauge"></div>
+        </div>
+        <div id="daily-limit-spent-help" class="daily-limit-help">0 ISK spent today.</div>
+      </div>
+
+      <div id="daily-limit-note" class="daily-limit-note">Set a max budget to enable this card.</div>
     </section>
 
     <section id="packing-card" class="card" aria-labelledby="pack-title">
@@ -4279,7 +4363,8 @@
               .map((item, index) => ({
                 id: Number.isFinite(Number(item.id)) ? Number(item.id) : index + 1,
                 name: item.name.trim().slice(0, 100),
-                amountISK: toNonNegativeInteger(item.amountISK)
+                amountISK: toNonNegativeInteger(item.amountISK),
+                createdAt: Number.isFinite(Number(item.createdAt)) ? Number(item.createdAt) : null
               }))
               .filter((item) => item.name.length > 0)
           : [];
@@ -4354,6 +4439,15 @@
     const budgetListEl = document.getElementById("budget-list");
     const budgetCalcInputEl = document.getElementById("budget-calc-isk-input");
     const budgetCalcOutputEl = document.getElementById("budget-calc-output");
+    const dailyLimitCardEl = document.getElementById("daily-limit-card");
+    const dailyLimitMainEl = document.getElementById("daily-limit-main");
+    const dailyLimitSubEl = document.getElementById("daily-limit-sub");
+    const dailyLimitPaceValueEl = document.getElementById("daily-limit-pace-value");
+    const dailyLimitPaceGaugeEl = document.getElementById("daily-limit-pace-gauge");
+    const dailyLimitSpentValueEl = document.getElementById("daily-limit-spent-value");
+    const dailyLimitSpentGaugeEl = document.getElementById("daily-limit-spent-gauge");
+    const dailyLimitSpentHelpEl = document.getElementById("daily-limit-spent-help");
+    const dailyLimitNoteEl = document.getElementById("daily-limit-note");
 
     function eurFromISK(iskAmount) {
       return toNonNegativeInteger(iskAmount) * fxState.rate;
@@ -4438,6 +4532,139 @@
         .filter(Boolean);
     }
 
+    function getBudgetSnapshot() {
+      const baseExpenses = getCampsiteBaseExpenses();
+      const baseISK = baseExpenses.reduce(
+        (sum, expense) => sum + toNonNegativeInteger(expense.amountISK),
+        0
+      );
+      const variableISK = budgetState.expenses.reduce(
+        (sum, expense) => sum + toNonNegativeInteger(expense.amountISK),
+        0
+      );
+      const spentISK = baseISK + variableISK;
+      const maxISK = toNonNegativeInteger(budgetState.maxBudgetISK);
+      return {
+        baseISK,
+        variableISK,
+        spentISK,
+        maxISK,
+        remainingISK: Math.max(0, maxISK - spentISK)
+      };
+    }
+
+    function getTotalTripDayCount() {
+      const tripStart = startOfLocalDay(TRIP_START_DATE);
+      const tripEnd = startOfLocalDay(TRIP_END_DATE);
+      return Math.max(
+        1,
+        Math.floor((tripEnd.getTime() - tripStart.getTime()) / (24 * 60 * 60 * 1000)) + 1
+      );
+    }
+
+    function getRemainingTripDayCount(now = new Date()) {
+      const today = startOfLocalDay(now);
+      const tripEnd = startOfLocalDay(TRIP_END_DATE);
+      return Math.max(
+        1,
+        Math.floor((tripEnd.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)) + 1
+      );
+    }
+
+    function isSameLocalDay(leftDate, rightDate) {
+      return (
+        leftDate.getFullYear() === rightDate.getFullYear() &&
+        leftDate.getMonth() === rightDate.getMonth() &&
+        leftDate.getDate() === rightDate.getDate()
+      );
+    }
+
+    function getTodayUserExpenseTotalISK(now = new Date()) {
+      const today = startOfLocalDay(now);
+      return budgetState.expenses.reduce((sum, expense) => {
+        const createdAt = Number(expense && expense.createdAt);
+        if (!Number.isFinite(createdAt) || createdAt <= 0) {
+          return sum;
+        }
+        const expenseDate = startOfLocalDay(createdAt);
+        return isSameLocalDay(expenseDate, today)
+          ? sum + toNonNegativeInteger(expense.amountISK)
+          : sum;
+      }, 0);
+    }
+
+    function renderDailyBudgetLimitCard(now = new Date()) {
+      if (
+        !dailyLimitCardEl ||
+        !dailyLimitMainEl ||
+        !dailyLimitSubEl ||
+        !dailyLimitPaceValueEl ||
+        !dailyLimitPaceGaugeEl ||
+        !dailyLimitSpentValueEl ||
+        !dailyLimitSpentGaugeEl ||
+        !dailyLimitSpentHelpEl ||
+        !dailyLimitNoteEl
+      ) {
+        return;
+      }
+
+      const snapshot = getBudgetSnapshot();
+      const totalTripDays = getTotalTripDayCount();
+      const remainingDays = getRemainingTripDayCount(now);
+      const baselinePerDay = snapshot.maxISK > 0
+        ? Math.max(0, Math.round(snapshot.maxISK / totalTripDays))
+        : 0;
+      const todayLimitISK = snapshot.maxISK > 0
+        ? Math.max(0, Math.floor(snapshot.remainingISK / remainingDays))
+        : 0;
+      const todayLimitEUR = eurFromISK(todayLimitISK);
+      const paceRatio = baselinePerDay > 0
+        ? Math.round((todayLimitISK / baselinePerDay) * 100)
+        : 0;
+      const paceGaugeWidth = Math.min(100, Math.max(0, paceRatio));
+      const todaySpentISK = getTodayUserExpenseTotalISK(now);
+      const todaySpentRatio = todayLimitISK > 0
+        ? Math.round((todaySpentISK / todayLimitISK) * 100)
+        : todaySpentISK > 0
+          ? 100
+          : 0;
+      const todaySpentGaugeWidth = Math.min(100, Math.max(0, todaySpentRatio));
+
+      if (snapshot.maxISK <= 0) {
+        dailyLimitMainEl.textContent = "Set max budget";
+        dailyLimitSubEl.textContent = "Define total trip budget to compute daily target.";
+        dailyLimitPaceValueEl.textContent = "0%";
+        dailyLimitPaceGaugeEl.style.width = "0%";
+        dailyLimitPaceGaugeEl.style.background = "var(--muted-text-ui)";
+        dailyLimitSpentValueEl.textContent = "0%";
+        dailyLimitSpentGaugeEl.style.width = "0%";
+        dailyLimitSpentGaugeEl.style.background = "var(--muted-text-ui)";
+        dailyLimitSpentHelpEl.textContent = "No max budget: today limit unavailable.";
+        dailyLimitNoteEl.textContent = "Set a max budget to unlock both gauges.";
+        return;
+      }
+
+      dailyLimitMainEl.textContent = formatISKAmount(todayLimitISK) + " · " + formatEURAmount(todayLimitEUR);
+      dailyLimitSubEl.textContent =
+        remainingDays + " day" + (remainingDays === 1 ? "" : "s") + " left in the trip.";
+      dailyLimitPaceValueEl.textContent = paceRatio + "%";
+      dailyLimitPaceGaugeEl.style.width = paceGaugeWidth + "%";
+      dailyLimitPaceGaugeEl.style.background =
+        paceRatio < 85 ? "#dc2626" : paceRatio <= 100 ? "#f59e0b" : "var(--success-ui)";
+      dailyLimitSpentValueEl.textContent = todaySpentRatio + "%";
+      dailyLimitSpentGaugeEl.style.width = todaySpentGaugeWidth + "%";
+      dailyLimitSpentGaugeEl.style.background =
+        todaySpentRatio <= 100 ? "var(--success-ui)" : todaySpentRatio <= 130 ? "#f59e0b" : "#dc2626";
+      dailyLimitSpentHelpEl.textContent =
+        formatISKAmount(todaySpentISK) + " spent today vs " + formatISKAmount(todayLimitISK) + " limit.";
+      dailyLimitNoteEl.textContent =
+        "Plan pace: " +
+        paceRatio +
+        "% of original daily average (" +
+        formatISKAmount(baselinePerDay) +
+        ")";
+    }
+
     function renderFxRateLabel(isLoading = false) {
       const formattedRate = "€" + fxState.rate.toFixed(5);
       budgetRateEl.classList.toggle("loading", Boolean(isLoading));
@@ -4518,20 +4745,20 @@
         const delBtn = row.querySelector('[data-action="del"]');
 
         editBtn.addEventListener("click", () => {
-          const nextName = window.prompt("Expense name", expense.name);
-          if (nextName === null) {
+          const nextNameInput = window.prompt("Expense name", expense.name);
+          if (nextNameInput === null) {
             return;
           }
-          const normalizedName = nextName.trim().slice(0, 100);
+          const normalizedName = String(nextNameInput).trim().slice(0, 100);
           if (!normalizedName) {
             return;
           }
 
-          const nextAmountRaw = window.prompt("Amount in ISK", String(expense.amountISK));
-          if (nextAmountRaw === null) {
+          const nextAmountInput = window.prompt("Amount in ISK", String(expense.amountISK));
+          if (nextAmountInput === null) {
             return;
           }
-          const nextAmount = toNonNegativeInteger(nextAmountRaw);
+          const nextAmount = toNonNegativeInteger(nextAmountInput);
           if (!nextAmount) {
             return;
           }
@@ -4553,17 +4780,10 @@
     }
 
     function renderBudgetCard() {
-      const baseExpenses = getCampsiteBaseExpenses();
-      const baseISK = baseExpenses.reduce(
-        (sum, expense) => sum + toNonNegativeInteger(expense.amountISK),
-        0
-      );
-      const variableISK = budgetState.expenses.reduce(
-        (sum, expense) => sum + toNonNegativeInteger(expense.amountISK),
-        0
-      );
-      const spentISK = baseISK + variableISK;
-      const maxISK = toNonNegativeInteger(budgetState.maxBudgetISK);
+      const snapshot = getBudgetSnapshot();
+      const baseISK = snapshot.baseISK;
+      const spentISK = snapshot.spentISK;
+      const maxISK = snapshot.maxISK;
       const spentEUR = eurFromISK(spentISK);
       const maxEUR = eurFromISK(maxISK);
       const ratio = maxISK > 0 ? Math.round((spentISK / maxISK) * 100) : 0;
@@ -4590,6 +4810,7 @@
       renderBudgetList();
       renderBudgetCalculator();
       renderFxRateLabel(false);
+      renderDailyBudgetLimitCard();
     }
 
     async function refreshIskEurRate() {
@@ -4639,7 +4860,8 @@
       budgetState.expenses.push({
         id: nextExpenseId++,
         name,
-        amountISK
+        amountISK,
+        createdAt: Date.now()
       });
       saveBudgetState();
       renderBudgetCard();
@@ -4812,6 +5034,7 @@
 
     const TRIP_START_DATE = new Date(2026, 2, 4);
     const TRIP_END_DATE = new Date(2026, 2, 14);
+    const DAILY_LIMIT_START_DATE = new Date(2026, 2, 5);
     const OUTBOUND_DEPARTURE_DATE = new Date("2026-03-04T14:25:00+01:00");
     const COUNTDOWN_HIDE_DATE = new Date("2026-03-05T00:00:00+00:00");
     const OUTBOUND_HIDE_DATE = new Date("2026-03-04T17:15:00+00:00");
@@ -4903,10 +5126,20 @@
 
     function updateTimeAwareVisibility() {
       const now = Date.now();
+      const today = startOfLocalDay(now);
       const shouldShowCountdown = activeTab === "home" && now < COUNTDOWN_HIDE_DATE.getTime();
       setElementVisibility(departureCountdownCardEl, shouldShowCountdown);
       if (appHeaderEl) {
         appHeaderEl.classList.toggle("home-hero", shouldShowCountdown);
+      }
+
+      const dailyLimitStart = startOfLocalDay(DAILY_LIMIT_START_DATE);
+      const dailyLimitEnd = startOfLocalDay(TRIP_END_DATE);
+      const shouldShowDailyLimit =
+        activeTab === "home" && today >= dailyLimitStart && today <= dailyLimitEnd;
+      setElementVisibility(dailyLimitCardEl, shouldShowDailyLimit);
+      if (shouldShowDailyLimit) {
+        renderDailyBudgetLimitCard(today);
       }
 
       const hideOutbound = now >= OUTBOUND_HIDE_DATE.getTime();
@@ -4925,6 +5158,7 @@
 
       if (nextTab === "itinerary") {
         setElementVisibility(departureCountdownCardEl, false);
+        setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(packingCardEl, false);
         setElementVisibility(fxCardEl, false);
@@ -4940,6 +5174,7 @@
 
       if (nextTab === "tools") {
         setElementVisibility(departureCountdownCardEl, false);
+        setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(flightCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, true);
@@ -4953,6 +5188,7 @@
 
       if (trip.phase === "before") {
         setElementVisibility(departureCountdownCardEl, true);
+        setElementVisibility(dailyLimitCardEl, false);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, false);
