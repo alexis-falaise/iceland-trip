@@ -3000,6 +3000,43 @@
       color: var(--muted-text-ui);
     }
 
+    .itinerary-driving-times-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .itinerary-driving-times-item {
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .itinerary-driving-times-label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted-text-ui);
+      margin-bottom: 3px;
+    }
+
+    .itinerary-driving-times-value {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-ui);
+      line-height: 1.25;
+    }
+
+    .itinerary-driving-times-note {
+      margin: 8px 0 0;
+      font-size: 0.72rem;
+      color: var(--muted-text-ui);
+    }
+
     .itinerary-drive-time.loading {
       opacity: 0.82;
       font-style: italic;
@@ -3086,6 +3123,10 @@
 
       .itinerary-overview-map {
         min-height: 240px;
+      }
+
+      .itinerary-driving-times-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -3384,6 +3425,29 @@
       <div id="itinerary-overview-map" class="itinerary-overview-map" role="img" aria-label="Full itinerary map"></div>
       <div id="itinerary-overview-legend" class="itinerary-overview-legend" aria-label="Day colors"></div>
       <p class="itinerary-overview-hint">Tap a colored route or day chip to open that day in fullscreen.</p>
+    </section>
+
+    <section id="itinerary-driving-times-card" class="card" aria-labelledby="itinerary-driving-times-title" style="display:none;">
+      <h2 id="itinerary-driving-times-title" class="card-title">🚗 Driving Times</h2>
+      <div class="itinerary-driving-times-grid">
+        <div class="itinerary-driving-times-item">
+          <span class="itinerary-driving-times-label">Total driving time</span>
+          <span id="itinerary-driving-total" class="itinerary-driving-times-value">Loading…</span>
+        </div>
+        <div class="itinerary-driving-times-item">
+          <span class="itinerary-driving-times-label">Average per day</span>
+          <span id="itinerary-driving-average" class="itinerary-driving-times-value">Loading…</span>
+        </div>
+        <div class="itinerary-driving-times-item">
+          <span class="itinerary-driving-times-label">Minimum day</span>
+          <span id="itinerary-driving-min" class="itinerary-driving-times-value">Loading…</span>
+        </div>
+        <div class="itinerary-driving-times-item">
+          <span class="itinerary-driving-times-label">Maximum day</span>
+          <span id="itinerary-driving-max" class="itinerary-driving-times-value">Loading…</span>
+        </div>
+      </div>
+      <p id="itinerary-driving-note" class="itinerary-driving-times-note">Computing route-based durations…</p>
     </section>
 
     <h2 id="days-section-title" class="section-title">Itinerary Days</h2>
@@ -5276,6 +5340,7 @@
     function renderDayDriveTag(day, driveLegSummaries = []) {
       const tag = document.querySelector('[data-day-drive="' + day.day + '"]');
       if (!tag) {
+        renderItineraryDrivingTimesCard();
         return;
       }
 
@@ -5287,6 +5352,87 @@
         "🚗 " +
         "<span class=\"drive-main\">" + escapeHtml(display.main) + "</span>" +
         planHtml;
+      renderItineraryDrivingTimesCard();
+    }
+
+    function getItineraryDrivingTimesSummary() {
+      const perDayTotals = days
+        .map((day) => {
+          const summaries = getCachedDrivingLegDurations(day);
+          const aggregate = getDayDriveAggregate(day, summaries);
+          if (!Number.isFinite(aggregate.totalSeconds) || aggregate.totalSeconds <= 0) {
+            return null;
+          }
+          return {
+            dayNumber: day.day,
+            totalSeconds: Number(aggregate.totalSeconds)
+          };
+        })
+        .filter(Boolean);
+
+      if (!perDayTotals.length) {
+        return null;
+      }
+
+      const totalSeconds = perDayTotals.reduce((sum, entry) => sum + entry.totalSeconds, 0);
+      const averageSeconds = totalSeconds / perDayTotals.length;
+      const minDay = perDayTotals.reduce(
+        (lowest, entry) => (entry.totalSeconds < lowest.totalSeconds ? entry : lowest),
+        perDayTotals[0]
+      );
+      const maxDay = perDayTotals.reduce(
+        (highest, entry) => (entry.totalSeconds > highest.totalSeconds ? entry : highest),
+        perDayTotals[0]
+      );
+
+      return {
+        totalSeconds,
+        averageSeconds,
+        minDay,
+        maxDay,
+        loadedDayCount: perDayTotals.length,
+        totalDayCount: days.length
+      };
+    }
+
+    function renderItineraryDrivingTimesCard() {
+      if (
+        !itineraryDrivingTimesCardEl ||
+        !itineraryDrivingTotalEl ||
+        !itineraryDrivingAverageEl ||
+        !itineraryDrivingMinEl ||
+        !itineraryDrivingMaxEl ||
+        !itineraryDrivingNoteEl
+      ) {
+        return;
+      }
+
+      const summary = getItineraryDrivingTimesSummary();
+      if (!summary) {
+        itineraryDrivingTotalEl.textContent = "Loading…";
+        itineraryDrivingAverageEl.textContent = "Loading…";
+        itineraryDrivingMinEl.textContent = "Loading…";
+        itineraryDrivingMaxEl.textContent = "Loading…";
+        itineraryDrivingNoteEl.textContent = "Computing route-based durations…";
+        return;
+      }
+
+      itineraryDrivingTotalEl.textContent = formatDriveDuration(summary.totalSeconds);
+      itineraryDrivingAverageEl.textContent = formatDriveDuration(summary.averageSeconds);
+      itineraryDrivingMinEl.textContent =
+        "Day " + summary.minDay.dayNumber + " · " + formatDriveDuration(summary.minDay.totalSeconds);
+      itineraryDrivingMaxEl.textContent =
+        "Day " + summary.maxDay.dayNumber + " · " + formatDriveDuration(summary.maxDay.totalSeconds);
+      itineraryDrivingNoteEl.textContent =
+        summary.loadedDayCount >= summary.totalDayCount
+          ? "Based on route durations for all " + summary.totalDayCount + " days."
+          : (
+            "Based on route durations for " +
+            summary.loadedDayCount +
+            "/" +
+            summary.totalDayCount +
+            " days."
+          );
     }
 
     function ordinalSuffix(dayOfMonth) {
@@ -10520,6 +10666,12 @@
     const flightCardEl = document.getElementById("flight-card");
     const outboundFlightBlockEl = document.getElementById("outbound-flight-block");
     const itineraryOverviewCardEl = document.getElementById("itinerary-overview-card");
+    const itineraryDrivingTimesCardEl = document.getElementById("itinerary-driving-times-card");
+    const itineraryDrivingTotalEl = document.getElementById("itinerary-driving-total");
+    const itineraryDrivingAverageEl = document.getElementById("itinerary-driving-average");
+    const itineraryDrivingMinEl = document.getElementById("itinerary-driving-min");
+    const itineraryDrivingMaxEl = document.getElementById("itinerary-driving-max");
+    const itineraryDrivingNoteEl = document.getElementById("itinerary-driving-note");
     const itineraryOverviewMapEl = document.getElementById("itinerary-overview-map");
     const itineraryOverviewLegendEl = document.getElementById("itinerary-overview-legend");
     const daysSectionTitleEl = document.getElementById("days-section-title");
@@ -11180,6 +11332,7 @@
         setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(itineraryOverviewCardEl, true);
+        setElementVisibility(itineraryDrivingTimesCardEl, true);
         setElementVisibility(packingCardEl, false);
         setElementVisibility(fxCardEl, false);
         setElementVisibility(fuelPlannerCardEl, false);
@@ -11191,6 +11344,7 @@
         daysSectionTitleEl.textContent = "Itinerary Days";
         showAllDayCards();
         renderItineraryOverviewMap(false);
+        renderItineraryDrivingTimesCard();
         updateTimeAwareVisibility();
         return;
       }
@@ -11202,6 +11356,7 @@
         setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, false);
         setElementVisibility(itineraryOverviewCardEl, false);
+        setElementVisibility(itineraryDrivingTimesCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, true);
         setElementVisibility(fuelPlannerCardEl, true);
@@ -11221,6 +11376,7 @@
         setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(itineraryOverviewCardEl, false);
+        setElementVisibility(itineraryDrivingTimesCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, false);
         setElementVisibility(fuelPlannerCardEl, false);
@@ -11240,6 +11396,7 @@
       setElementVisibility(nearbyServiceCardEl, true);
       setElementVisibility(flightCardEl, false);
       setElementVisibility(itineraryOverviewCardEl, false);
+      setElementVisibility(itineraryDrivingTimesCardEl, false);
       setElementVisibility(packingCardEl, false);
       setElementVisibility(fxCardEl, false);
       setElementVisibility(fuelPlannerCardEl, false);
