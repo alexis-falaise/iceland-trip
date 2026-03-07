@@ -3719,6 +3719,8 @@
     const MODULE_COLLAPSE_STORAGE_KEY = "icelandModuleCollapseV1";
     const UMFERDIN_ROAD_STATUS_PROXY_URL =
       SYNC_SUPABASE_URL + "/functions/v1/umferdin-road-status";
+    const GOOGLE_MAPS_LINK_EXPAND_PROXY_URL =
+      SYNC_SUPABASE_URL + "/functions/v1/google-maps-expand-link";
     const SERVICE_POINTS = Array.isArray(window.ICELAND_SERVICE_POINTS)
       ? window.ICELAND_SERVICE_POINTS
       : [];
@@ -3759,6 +3761,7 @@
     let syncSettings = { tripId: "", autoSync: true };
     let customDayStops = {};
     let nextCustomStopId = 1;
+    const googleMapsExpandedLinkCache = new Map();
 
     function syncStateRefs(nextState = appStore.getState()) {
       packItems = Array.isArray(nextState.packItems) ? nextState.packItems : [];
@@ -4898,6 +4901,59 @@
         } catch {
           return null;
         }
+      }
+    }
+
+    function isGoogleMapsShortLink(link) {
+      const url = tryParseUrl(link);
+      if (!url) {
+        return false;
+      }
+      const host = String(url.hostname || "").toLowerCase();
+      if (host === "maps.app.goo.gl") {
+        return true;
+      }
+      if (host === "goo.gl" && /^\/maps(?:\/|$)/i.test(String(url.pathname || ""))) {
+        return true;
+      }
+      return false;
+    }
+
+    async function expandGoogleMapsLink(link) {
+      const raw = String(link || "").trim();
+      if (!raw || !isGoogleMapsShortLink(raw)) {
+        return raw;
+      }
+      if (googleMapsExpandedLinkCache.has(raw)) {
+        return googleMapsExpandedLinkCache.get(raw) || raw;
+      }
+
+      try {
+        const response = await fetch(GOOGLE_MAPS_LINK_EXPAND_PROXY_URL, {
+          method: "POST",
+          headers: {
+            apikey: SYNC_SUPABASE_ANON_KEY,
+            Authorization: "Bearer " + SYNC_SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+            Accept: "application/json"
+          },
+          body: JSON.stringify({ url: raw })
+        });
+
+        if (!response.ok) {
+          googleMapsExpandedLinkCache.set(raw, raw);
+          return raw;
+        }
+
+        const payload = await response.json();
+        const expandedUrl = String(payload && payload.expandedUrl ? payload.expandedUrl : "").trim();
+        const parsedExpandedUrl = tryParseUrl(expandedUrl);
+        const resolved = parsedExpandedUrl ? parsedExpandedUrl.toString() : raw;
+        googleMapsExpandedLinkCache.set(raw, resolved);
+        return resolved;
+      } catch {
+        googleMapsExpandedLinkCache.set(raw, raw);
+        return raw;
       }
     }
 
@@ -6448,7 +6504,7 @@
         mapLink: "https://www.google.com/maps/dir/Vik,+Iceland/Fja%C3%B0r%C3%A1rglj%C3%BAfur,+Iceland/Svartifoss,+Iceland/Sv%C3%ADnafellsj%C3%B6kull/J%C3%B6kuls%C3%A1rl%C3%B3n+Lagoon,+Iceland/Diamond+Beach,+Iceland/Vestrahorn,+Iceland/",
         mapEmbed: buildMapEmbed([-18.35,63.7,-14.75,64.35]),
         locations: [
-          { name: "Vik Campsite (Departure)", note: "Start from the previous night's campsite.", image: imageFor("Vik campsite morning", 400), coords: [63.4193981, -18.9957523] },
+          { name: "Vik Campsite (Departure)", note: "Start from the previous night's campsite.", image: imageFor("Vik camp", 400), coords: [63.4193981, -18.9957523] },
           { name: "Fjadrargljufur Canyon", note: "Short scenic canyon trail and viewpoints.", image: imageFor("Fjadrargljufur canyon", 401), coords: [63.771279, -18.171816] },
           { name: "Svartifoss", note: "Basalt-column waterfall hike in Skaftafell.", image: imageFor("Svartifoss", 402), coords: [64.027528, -16.975308] },
           { name: "Svinafellsjokull", note: "Close-up glacier tongue views.", image: imageFor("Svinafellsjokull glacier", 403), coords: [64.018592, -16.821478] },
@@ -12286,7 +12342,7 @@
       );
       modalAddStopAfterSelectEl.value = hasPreferred
         ? String(preferredKey)
-        : String(locations[locations.length - 1].locationKey || "");
+        : String(locations[0].locationKey || "");
     }
 
     function resetAddStopForm(day) {
@@ -12319,8 +12375,15 @@
       setAddStopStatus("Resolving place from Google Maps link…");
 
       try {
-        const linkCoords = parseCoordsFromGoogleMapsLink(mapsLink);
-        const placeSummary = await resolveStopPlaceFromGoogleMapsLink(mapsLink, linkCoords);
+        let resolvedMapsLink = mapsLink;
+        if (isGoogleMapsShortLink(mapsLink)) {
+          setAddStopStatus("Resolving short Google Maps link…");
+          resolvedMapsLink = await expandGoogleMapsLink(mapsLink);
+        }
+
+        setAddStopStatus("Resolving place from Google Maps link…");
+        const linkCoords = parseCoordsFromGoogleMapsLink(resolvedMapsLink);
+        const placeSummary = await resolveStopPlaceFromGoogleMapsLink(resolvedMapsLink, linkCoords);
         const resolvedCoords =
           (placeSummary && Array.isArray(placeSummary.coords) && placeSummary.coords.length === 2
             ? placeSummary.coords
@@ -12328,13 +12391,13 @@
           linkCoords;
         if (!resolvedCoords) {
           setAddStopStatus(
-            "Could not extract coordinates. Use a full Google Maps place link with coordinates.",
+            "Could not extract coordinates. Try a Google Maps place or share link with coordinates.",
             "error"
           );
           return;
         }
 
-        const fallbackName = extractGoogleMapsTextQuery(mapsLink);
+        const fallbackName = extractGoogleMapsTextQuery(resolvedMapsLink);
         const resolvedName = String(
           (placeSummary && placeSummary.name) ||
           fallbackName ||
@@ -12345,7 +12408,7 @@
           name: resolvedName,
           coords: resolvedCoords,
           afterKey,
-          mapLink: mapsLink,
+          mapLink: resolvedMapsLink,
           note: "Added from Google Maps link."
         });
         if (!addedStop) {
