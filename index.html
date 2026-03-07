@@ -102,6 +102,16 @@
       --leg-weather-border: rgba(125, 211, 252, 0.48);
       --leg-weather-bg: rgba(30, 64, 175, 0.28);
       --leg-weather-text: #dbeafe;
+      --wind-go-bg: rgba(22, 163, 74, 0.26);
+      --wind-go-text: #bbf7d0;
+      --wind-caution-bg: rgba(202, 138, 4, 0.28);
+      --wind-caution-text: #fde68a;
+      --wind-wait-bg: rgba(234, 88, 12, 0.3);
+      --wind-wait-text: #fed7aa;
+      --wind-nogo-bg: rgba(220, 38, 38, 0.3);
+      --wind-nogo-text: #fecaca;
+      --wind-unknown-bg: rgba(148, 163, 184, 0.24);
+      --wind-unknown-text: #cbd5e1;
       --campsite-chip-border: rgba(147, 197, 253, 0.6);
       --campsite-chip-bg: rgba(30, 64, 175, 0.34);
       --campsite-chip-text: #dbeafe;
@@ -178,6 +188,16 @@
       --leg-weather-border: rgba(37, 99, 235, 0.28);
       --leg-weather-bg: rgba(239, 246, 255, 0.92);
       --leg-weather-text: #1e3a8a;
+      --wind-go-bg: #dcfce7;
+      --wind-go-text: #166534;
+      --wind-caution-bg: #fef9c3;
+      --wind-caution-text: #854d0e;
+      --wind-wait-bg: #ffedd5;
+      --wind-wait-text: #9a3412;
+      --wind-nogo-bg: #fee2e2;
+      --wind-nogo-text: #991b1b;
+      --wind-unknown-bg: #eef2ff;
+      --wind-unknown-text: #475569;
       --campsite-chip-border: #bfdbfe;
       --campsite-chip-bg: #eff6ff;
       --campsite-chip-text: #1e3a8a;
@@ -1385,6 +1405,59 @@
       font-weight: 600;
       color: var(--text-ui);
       line-height: 1.25;
+    }
+
+    .today-overview-main-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .today-overview-wind-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.66rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .today-overview-wind-chip.level-go {
+      background: var(--wind-go-bg);
+      color: var(--wind-go-text);
+    }
+
+    .today-overview-wind-chip.level-caution {
+      background: var(--wind-caution-bg);
+      color: var(--wind-caution-text);
+    }
+
+    .today-overview-wind-chip.level-wait {
+      background: var(--wind-wait-bg);
+      color: var(--wind-wait-text);
+    }
+
+    .today-overview-wind-chip.level-nogo {
+      background: var(--wind-nogo-bg);
+      color: var(--wind-nogo-text);
+    }
+
+    .today-overview-wind-chip.level-unknown {
+      background: var(--wind-unknown-bg);
+      color: var(--wind-unknown-text);
+    }
+
+    .today-overview-window-row {
+      margin-top: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
     }
 
     .today-overview-sub {
@@ -3440,10 +3513,16 @@
     const SYNC_PUSH_DEBOUNCE_MS = 1200;
     const TODAY_OVERVIEW_WEATHER_CACHE_KEY = "icelandTodayOverviewWeatherV1";
     const TODAY_OVERVIEW_WEATHER_TTL_MS = 20 * 60 * 1000;
+    const WEATHER_PROVIDER_CHAIN = ["vedur", "openmeteo"];
+    const VEDUR_WEATHER_API_BASE_URL = "https://api.vedur.is/weather";
+    const VEDUR_STATIONS_TTL_MS = 12 * 60 * 60 * 1000;
     const TODAY_OVERVIEW_ROAD_STATUS_CACHE_KEY = "icelandTodayOverviewRoadStatusV1";
     const TODAY_OVERVIEW_ROAD_STATUS_TTL_MS = 8 * 60 * 1000;
     const TODAY_OVERVIEW_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
     const ITINERARY_LEG_FORECAST_TTL_MS = 3 * 60 * 60 * 1000;
+    const NEXT_LEG_WIND_WINDOW_TTL_MS = 20 * 60 * 1000;
+    const NEXT_LEG_WIND_WINDOW_OFFSETS_HOURS = [1, 2, 6, 12, 24];
+    const CROSSWIND_TIGHTENING_KMH = 7;
     const NEARBY_SERVICE_LIST_LIMIT = 3;
     const NEARBY_SERVICE_REFRESH_INTERVAL_MS = 90 * 1000;
     const PASSED_STOP_PROGRESS_BUFFER_KM = 0.1;
@@ -3632,6 +3711,11 @@
     const googlePlacesImageSearchCache = {};
     const itineraryLegContextCache = {};
     const itineraryLegContextInFlight = {};
+    let vedurStationsCache = {
+      updatedAt: 0,
+      stations: []
+    };
+    let vedurStationsInFlight = null;
 
     function compactObjectCache(cacheObject, maxItems) {
       const entries = Object.entries(cacheObject || {});
@@ -7648,6 +7732,243 @@
       return "Mixed weather";
     }
 
+    function weatherConditionLabel(payload) {
+      if (payload && typeof payload === "object") {
+        const customLabel =
+          typeof payload.conditionLabel === "string" ? payload.conditionLabel.trim() : "";
+        if (customLabel) {
+          return customLabel;
+        }
+        return openMeteoCodeLabel(payload.weatherCode);
+      }
+      return openMeteoCodeLabel(payload);
+    }
+
+    function convertMetersPerSecondToKmh(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return NaN;
+      }
+      return parsed * 3.6;
+    }
+
+    function deriveWeatherCodeFromVedurObservation(observation = {}) {
+      const tempC = Number(observation.t);
+      const precipMm = Number(observation.r);
+      if (Number.isFinite(precipMm) && precipMm >= 0.2) {
+        if (Number.isFinite(tempC) && tempC <= 1) {
+          return 71;
+        }
+        return 61;
+      }
+      if (Number.isFinite(precipMm) && precipMm > 0) {
+        return 51;
+      }
+      return NaN;
+    }
+
+    function normalizeVedurStation(entry) {
+      const stationId = Number(entry && entry.station);
+      const lat = Number(entry && entry.lat);
+      const lon = Number(entry && entry.lon);
+      if (!Number.isFinite(stationId) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return null;
+      }
+      return {
+        station: stationId,
+        name: entry && entry.name ? String(entry.name) : "Station " + stationId,
+        coords: [lat, lon],
+        type: entry && entry.type ? String(entry.type) : "",
+        ending:
+          entry && Object.prototype.hasOwnProperty.call(entry, "ending") ? entry.ending : null
+      };
+    }
+
+    async function fetchVedurStations(options = {}) {
+      const nowMs = Date.now();
+      const useCache = options.useCache !== false;
+      if (
+        useCache &&
+        Array.isArray(vedurStationsCache.stations) &&
+        vedurStationsCache.stations.length &&
+        Number.isFinite(vedurStationsCache.updatedAt) &&
+        nowMs - Number(vedurStationsCache.updatedAt) < VEDUR_STATIONS_TTL_MS
+      ) {
+        return vedurStationsCache.stations;
+      }
+      if (vedurStationsInFlight) {
+        return vedurStationsInFlight;
+      }
+
+      vedurStationsInFlight = (async () => {
+        const query = new URLSearchParams({
+          active: "true",
+          station_type: "sj"
+        });
+        const url = VEDUR_WEATHER_API_BASE_URL + "/stations?" + query.toString();
+        const payload = await fetchJsonWithTimeout(url, 9000);
+        const stations = Array.isArray(payload)
+          ? payload
+              .map(normalizeVedurStation)
+              .filter((entry) => Boolean(entry && entry.station && Array.isArray(entry.coords)))
+          : [];
+        if (!stations.length) {
+          throw new Error("No active vedur stations available");
+        }
+        vedurStationsCache = {
+          updatedAt: Date.now(),
+          stations
+        };
+        return stations;
+      })()
+        .finally(() => {
+          vedurStationsInFlight = null;
+        });
+
+      return vedurStationsInFlight;
+    }
+
+    function findNearestVedurStation(coords, stations) {
+      if (!Array.isArray(coords) || coords.length < 2 || !Array.isArray(stations)) {
+        return null;
+      }
+      let nearest = null;
+      stations.forEach((station) => {
+        const distanceKm = haversineDistanceKm(coords, station.coords);
+        if (!Number.isFinite(distanceKm)) {
+          return;
+        }
+        if (!nearest || distanceKm < nearest.distanceKm) {
+          nearest = {
+            ...station,
+            distanceKm
+          };
+        }
+      });
+      return nearest;
+    }
+
+    async function fetchLiveWeatherAtCoordsFromVedur(coords, options = {}) {
+      const nowMs = Number(options.nowMs) || Date.now();
+      const lat = Number(coords && coords[0]);
+      const lon = Number(coords && coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return null;
+      }
+
+      const stations = await fetchVedurStations({ useCache: true });
+      const nearestStation = findNearestVedurStation([lat, lon], stations);
+      if (
+        !nearestStation ||
+        !Number.isFinite(nearestStation.distanceKm) ||
+        nearestStation.distanceKm > 120
+      ) {
+        return null;
+      }
+
+      const query = new URLSearchParams({
+        station_id: String(nearestStation.station),
+        parameters: "basic"
+      });
+      const url =
+        VEDUR_WEATHER_API_BASE_URL +
+        "/observations/aws/10min/latest?" +
+        query.toString();
+      const payload = await fetchJsonWithTimeout(url, 8500);
+      const observation = Array.isArray(payload) ? payload[0] : null;
+      if (!observation || typeof observation !== "object") {
+        return null;
+      }
+
+      const weatherCode = deriveWeatherCodeFromVedurObservation(observation);
+      const defaultConditionLabel = Number.isFinite(weatherCode)
+        ? openMeteoCodeLabel(weatherCode)
+        : "Observed at nearby IMO station";
+      return {
+        temperatureC: Number(observation.t),
+        precipMm: Number(observation.r),
+        windKmh: convertMetersPerSecondToKmh(observation.f),
+        gustKmh: convertMetersPerSecondToKmh(observation.fg),
+        windDirectionDeg: Number(observation.d),
+        weatherCode,
+        conditionLabel: defaultConditionLabel,
+        observedAt: typeof observation.time === "string" ? observation.time : "",
+        fetchedAt: nowMs,
+        provider: "vedur",
+        stationId: nearestStation.station,
+        stationName: nearestStation.name,
+        stationDistanceKm: nearestStation.distanceKm
+      };
+    }
+
+    async function fetchLiveWeatherAtCoordsFromOpenMeteo(coords, options = {}) {
+      const nowMs = Number(options.nowMs) || Date.now();
+      const lat = Number(coords && coords[0]);
+      const lon = Number(coords && coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return null;
+      }
+      const query = new URLSearchParams({
+        latitude: String(lat),
+        longitude: String(lon),
+        timezone: "auto",
+        current: [
+          "temperature_2m",
+          "precipitation",
+          "wind_speed_10m",
+          "wind_gusts_10m",
+          "weather_code"
+        ].join(",")
+      });
+      const url = "https://api.open-meteo.com/v1/forecast?" + query.toString();
+
+      const data = await fetchJsonWithTimeout(url, 8500);
+      const current = data && data.current ? data.current : null;
+      if (!current || typeof current !== "object") {
+        return null;
+      }
+
+      return {
+        temperatureC: Number(current.temperature_2m),
+        precipMm: Number(current.precipitation),
+        windKmh: Number(current.wind_speed_10m),
+        gustKmh: Number(current.wind_gusts_10m),
+        weatherCode: Number(current.weather_code),
+        observedAt: typeof current.time === "string" ? current.time : "",
+        fetchedAt: nowMs,
+        provider: "openmeteo"
+      };
+    }
+
+    async function fetchLiveWeatherViaProviderChain(coords, options = {}) {
+      let lastError = null;
+      for (const provider of WEATHER_PROVIDER_CHAIN) {
+        try {
+          if (provider === "vedur") {
+            const vedurWeather = await fetchLiveWeatherAtCoordsFromVedur(coords, options);
+            if (vedurWeather) {
+              return vedurWeather;
+            }
+            continue;
+          }
+          if (provider === "openmeteo") {
+            const openMeteoWeather = await fetchLiveWeatherAtCoordsFromOpenMeteo(coords, options);
+            if (openMeteoWeather) {
+              return openMeteoWeather;
+            }
+            continue;
+          }
+        } catch (error) {
+          lastError = error;
+          console.warn("Live weather provider failed", provider, error);
+        }
+      }
+      if (lastError) {
+        throw lastError;
+      }
+      return null;
+    }
+
     async function fetchLiveWeatherAtCoords(coords, options = {}) {
       const cacheKey = buildTodayOverviewWeatherCacheKey(coords);
       if (!cacheKey) {
@@ -7664,38 +7985,11 @@
         }
       }
 
-      const lat = Number(coords[0]);
-      const lon = Number(coords[1]);
-      const query = new URLSearchParams({
-        latitude: String(lat),
-        longitude: String(lon),
-        timezone: "auto",
-        current: [
-          "temperature_2m",
-          "precipitation",
-          "wind_speed_10m",
-          "wind_gusts_10m",
-          "weather_code"
-        ].join(",")
-      });
-      const url = "https://api.open-meteo.com/v1/forecast?" + query.toString();
-
       try {
-        const data = await fetchJsonWithTimeout(url, 8500);
-        const current = data && data.current ? data.current : null;
-        if (!current || typeof current !== "object") {
+        const weather = await fetchLiveWeatherViaProviderChain(coords, { nowMs });
+        if (!weather || typeof weather !== "object") {
           throw new Error("Weather payload missing");
         }
-
-        const weather = {
-          temperatureC: Number(current.temperature_2m),
-          precipMm: Number(current.precipitation),
-          windKmh: Number(current.wind_speed_10m),
-          gustKmh: Number(current.wind_gusts_10m),
-          weatherCode: Number(current.weather_code),
-          observedAt: typeof current.time === "string" ? current.time : "",
-          fetchedAt: nowMs
-        };
         todayOverviewWeatherCache[cacheKey] = {
           updatedAt: nowMs,
           data: weather
@@ -7799,13 +8093,17 @@
       if (!weather) {
         return "No live weather data";
       }
-      const codeLabel = openMeteoCodeLabel(weather.weatherCode);
+      const codeLabel = weatherConditionLabel(weather);
       const windText = Number.isFinite(weather.windKmh)
         ? Math.round(weather.windKmh) + " km/h"
         : "N/A";
       const gustText = Number.isFinite(weather.gustKmh)
         ? Math.round(weather.gustKmh) + " km/h"
         : "N/A";
+      const sourceText =
+        weather.provider === "vedur" && typeof weather.stationName === "string" && weather.stationName
+          ? " · IMO " + weather.stationName
+          : "";
       return (
         formatSignedTemperature(weather.temperatureC) +
         " · " +
@@ -7814,8 +8112,346 @@
         windText +
         " (gust " +
         gustText +
-        ")"
+        ")" +
+        sourceText
       );
+    }
+
+    function getRoadBearingDegrees(fromPoint, toPoint) {
+      if (
+        !Array.isArray(fromPoint) ||
+        !Array.isArray(toPoint) ||
+        fromPoint.length !== 2 ||
+        toPoint.length !== 2
+      ) {
+        return null;
+      }
+
+      const lat1 = Number(fromPoint[0]);
+      const lon1 = Number(fromPoint[1]);
+      const lat2 = Number(toPoint[0]);
+      const lon2 = Number(toPoint[1]);
+      if (
+        !Number.isFinite(lat1) ||
+        !Number.isFinite(lon1) ||
+        !Number.isFinite(lat2) ||
+        !Number.isFinite(lon2)
+      ) {
+        return null;
+      }
+
+      const lat1Rad = (lat1 * Math.PI) / 180;
+      const lat2Rad = (lat2 * Math.PI) / 180;
+      const deltaLonRad = ((lon2 - lon1) * Math.PI) / 180;
+      const y = Math.sin(deltaLonRad) * Math.cos(lat2Rad);
+      const x =
+        Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+        Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(deltaLonRad);
+      return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+    }
+
+    function angleDifferenceDegrees(a, b) {
+      if (!Number.isFinite(a) || !Number.isFinite(b)) {
+        return null;
+      }
+      const normalized = Math.abs((((a - b) % 360) + 540) % 360 - 180);
+      return Number.isFinite(normalized) ? normalized : null;
+    }
+
+    function isMostlyCrosswind(windDirectionDeg, roadBearingDeg) {
+      const diff = angleDifferenceDegrees(windDirectionDeg, roadBearingDeg);
+      return Number.isFinite(diff) && diff >= 60 && diff <= 120;
+    }
+
+    function classifyWindCondition(windKmh, gustKmh, options = {}) {
+      const sustained = Number(windKmh);
+      const gust = Number(gustKmh);
+      const hasWind = Number.isFinite(sustained);
+      const hasGust = Number.isFinite(gust);
+      const roadBearingDeg = Number(options.roadBearingDeg);
+      const windDirectionDeg = Number(options.windDirectionDeg);
+      const useCrosswindTightening = options.applyCrosswindTightening !== false;
+      const crosswind = useCrosswindTightening && isMostlyCrosswind(windDirectionDeg, roadBearingDeg);
+      const adjustmentKmh = crosswind ? CROSSWIND_TIGHTENING_KMH : 0;
+      const adjustedSustained = hasWind ? sustained + adjustmentKmh : null;
+      const adjustedGust = hasGust ? gust + adjustmentKmh : null;
+
+      if (!hasWind && !hasGust) {
+        return {
+          level: "unknown",
+          label: "UNKNOWN",
+          crosswind,
+          adjustmentKmh,
+          adjustedSustainedKmh: null,
+          adjustedGustKmh: null,
+          simpleRuleGo: false
+        };
+      }
+
+      let level = "go";
+      if (
+        (Number.isFinite(adjustedSustained) && adjustedSustained >= 65) ||
+        (Number.isFinite(adjustedGust) && adjustedGust >= 90)
+      ) {
+        level = "nogo";
+      } else if (
+        (Number.isFinite(adjustedSustained) && adjustedSustained >= 54) ||
+        (Number.isFinite(adjustedGust) && adjustedGust >= 79)
+      ) {
+        level = "wait";
+      } else if (
+        (Number.isFinite(adjustedSustained) && adjustedSustained >= 43) ||
+        (Number.isFinite(adjustedGust) && adjustedGust >= 65)
+      ) {
+        level = "caution";
+      }
+
+      const labelByLevel = {
+        go: "GO",
+        caution: "CAUTION",
+        wait: "WAIT",
+        nogo: "NO-GO",
+        unknown: "UNKNOWN"
+      };
+      const simpleRuleGo =
+        Number.isFinite(adjustedSustained) &&
+        Number.isFinite(adjustedGust) &&
+        adjustedSustained < 54 &&
+        adjustedGust < 79;
+
+      return {
+        level,
+        label: labelByLevel[level] || "UNKNOWN",
+        crosswind,
+        adjustmentKmh,
+        adjustedSustainedKmh: adjustedSustained,
+        adjustedGustKmh: adjustedGust,
+        simpleRuleGo
+      };
+    }
+
+    function buildNextLegWindOutlookCacheKey(leg) {
+      if (!leg || !Array.isArray(leg.fromPoint) || !Array.isArray(leg.toPoint)) {
+        return "";
+      }
+      return (
+        "next-leg-wind|" +
+        "day-" + Number(leg.dayNumber) +
+        "|leg-" + Number(leg.index) +
+        "|from-" + leg.fromPoint[0].toFixed(4) + "," + leg.fromPoint[1].toFixed(4) +
+        "|to-" + leg.toPoint[0].toFixed(4) + "," + leg.toPoint[1].toFixed(4)
+      );
+    }
+
+    function getNextRoadLegForToday(day, driveLegSummaries = []) {
+      if (!day || !Number.isFinite(day.day)) {
+        return null;
+      }
+      const currentProgressKm = estimateFuelContextTripProgressKm(new Date(), getLatestKnownCoords());
+      const dayLegRecords = buildTripLegRecords(day, driveLegSummaries).legRecords
+        .filter((leg) => leg.dayNumber === day.day);
+      if (!dayLegRecords.length) {
+        return null;
+      }
+
+      const nextLeg = dayLegRecords.find((leg) => (
+        !Number.isFinite(currentProgressKm) ||
+        leg.endKm > currentProgressKm + PASSED_STOP_PROGRESS_BUFFER_KM
+      ));
+      return nextLeg || null;
+    }
+
+    function parseHourlyForecastTimeMs(value) {
+      const text = String(value || "").trim();
+      if (!text) {
+        return NaN;
+      }
+      if (/[zZ]$|[+\-]\d{2}:?\d{2}$/.test(text)) {
+        return Date.parse(text);
+      }
+      return Date.parse(text + "Z");
+    }
+
+    function findHourlyIndexAtOrAfter(hourlyTimesMs, targetMs) {
+      const values = Array.isArray(hourlyTimesMs) ? hourlyTimesMs : [];
+      let fallbackIndex = -1;
+      for (let index = 0; index < values.length; index += 1) {
+        const value = values[index];
+        if (!Number.isFinite(value)) {
+          continue;
+        }
+        fallbackIndex = index;
+        if (value >= targetMs) {
+          return index;
+        }
+      }
+      return fallbackIndex;
+    }
+
+    function formatWindowClockLabel(timestampMs) {
+      if (!Number.isFinite(timestampMs)) {
+        return "";
+      }
+      try {
+        return new Date(timestampMs).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch {
+        return "";
+      }
+    }
+
+    function getCachedNextLegWindOutlook(day, driveLegSummaries = [], options = {}) {
+      const nextLeg = getNextRoadLegForToday(day, driveLegSummaries);
+      if (!nextLeg) {
+        return null;
+      }
+      const cacheKey = buildNextLegWindOutlookCacheKey(nextLeg);
+      if (!cacheKey) {
+        return null;
+      }
+      return getCachedWeatherByKey(cacheKey, NEXT_LEG_WIND_WINDOW_TTL_MS, options);
+    }
+
+    async function fetchNextLegWindOutlook(day, driveLegSummaries = [], options = {}) {
+      const nextLeg = getNextRoadLegForToday(day, driveLegSummaries);
+      if (!nextLeg) {
+        return null;
+      }
+      const cacheKey = buildNextLegWindOutlookCacheKey(nextLeg);
+      if (!cacheKey) {
+        return null;
+      }
+
+      const useCache = options.useCache !== false;
+      if (useCache) {
+        const cached = getCachedWeatherByKey(cacheKey, NEXT_LEG_WIND_WINDOW_TTL_MS, {
+          includeExpired: false
+        });
+        if (cached) {
+          return cached;
+        }
+      }
+
+      const fromPoint = resolveCoords(nextLeg.fromPoint);
+      const toPoint = resolveCoords(nextLeg.toPoint);
+      if (!fromPoint || !toPoint) {
+        return null;
+      }
+      const midpoint = [
+        (fromPoint[0] + toPoint[0]) / 2,
+        (fromPoint[1] + toPoint[1]) / 2
+      ];
+      const roadBearingDeg = getRoadBearingDegrees(fromPoint, toPoint);
+      const nowMs = Date.now();
+      const query = new URLSearchParams({
+        latitude: String(midpoint[0]),
+        longitude: String(midpoint[1]),
+        timezone: "GMT",
+        forecast_hours: "30",
+        hourly: [
+          "wind_speed_10m",
+          "wind_gusts_10m",
+          "wind_direction_10m"
+        ].join(",")
+      });
+      const url = "https://api.open-meteo.com/v1/forecast?" + query.toString();
+
+      try {
+        const payload = await fetchJsonWithTimeout(url, 9000);
+        const hourly = payload && payload.hourly && typeof payload.hourly === "object"
+          ? payload.hourly
+          : null;
+        const rawTimes = hourly && Array.isArray(hourly.time) ? hourly.time : [];
+        const winds = hourly && Array.isArray(hourly.wind_speed_10m) ? hourly.wind_speed_10m : [];
+        const gusts = hourly && Array.isArray(hourly.wind_gusts_10m) ? hourly.wind_gusts_10m : [];
+        const windDirections = hourly && Array.isArray(hourly.wind_direction_10m)
+          ? hourly.wind_direction_10m
+          : [];
+        if (!rawTimes.length) {
+          return null;
+        }
+
+        const hourlyTimesMs = rawTimes.map(parseHourlyForecastTimeMs);
+        const currentIndex = findHourlyIndexAtOrAfter(hourlyTimesMs, nowMs);
+        const currentSustainedKmh = currentIndex >= 0 ? Number(winds[currentIndex]) : NaN;
+        const currentGustKmh = currentIndex >= 0 ? Number(gusts[currentIndex]) : NaN;
+        const currentWindDirectionDeg = currentIndex >= 0 ? Number(windDirections[currentIndex]) : NaN;
+        const currentClassification = classifyWindCondition(currentSustainedKmh, currentGustKmh, {
+          roadBearingDeg,
+          windDirectionDeg: currentWindDirectionDeg,
+          applyCrosswindTightening: true
+        });
+        const currentSampleTimestampMs = currentIndex >= 0 ? hourlyTimesMs[currentIndex] : NaN;
+        const currentSample = {
+          offsetHours: 0,
+          timestampMs: currentSampleTimestampMs,
+          timeLabel: formatWindowClockLabel(currentSampleTimestampMs),
+          sustainedKmh: Number.isFinite(currentSustainedKmh) ? currentSustainedKmh : null,
+          gustKmh: Number.isFinite(currentGustKmh) ? currentGustKmh : null,
+          windDirectionDeg: Number.isFinite(currentWindDirectionDeg) ? currentWindDirectionDeg : null,
+          ...currentClassification
+        };
+        const samples = NEXT_LEG_WIND_WINDOW_OFFSETS_HOURS.map((offsetHours) => {
+          const targetMs = nowMs + offsetHours * 60 * 60 * 1000;
+          const index = findHourlyIndexAtOrAfter(hourlyTimesMs, targetMs);
+          const sustainedKmh = index >= 0 ? Number(winds[index]) : NaN;
+          const gustKmh = index >= 0 ? Number(gusts[index]) : NaN;
+          const windDirectionDeg = index >= 0 ? Number(windDirections[index]) : NaN;
+          const classification = classifyWindCondition(sustainedKmh, gustKmh, {
+            roadBearingDeg,
+            windDirectionDeg,
+            applyCrosswindTightening: true
+          });
+          const sampleTimestampMs = index >= 0 ? hourlyTimesMs[index] : NaN;
+          return {
+            offsetHours,
+            timestampMs: sampleTimestampMs,
+            timeLabel: formatWindowClockLabel(sampleTimestampMs),
+            sustainedKmh: Number.isFinite(sustainedKmh) ? sustainedKmh : null,
+            gustKmh: Number.isFinite(gustKmh) ? gustKmh : null,
+            windDirectionDeg: Number.isFinite(windDirectionDeg) ? windDirectionDeg : null,
+            ...classification
+          };
+        });
+
+        const nextGoSample = samples.find((sample) => sample.simpleRuleGo) || null;
+        const outlook = {
+          legIndex: Number(nextLeg.index),
+          fromName: nextLeg.fromLocation && nextLeg.fromLocation.name
+            ? nextLeg.fromLocation.name
+            : "Current stop",
+          toName: nextLeg.toLocation && nextLeg.toLocation.name
+            ? nextLeg.toLocation.name
+            : "Next stop",
+          roadDirection: getCardinalDirection(fromPoint, toPoint),
+          roadBearingDeg: Number.isFinite(roadBearingDeg) ? roadBearingDeg : null,
+          generatedAt: nowMs,
+          currentSample,
+          samples,
+          nextGoSample,
+          level:
+            (currentSample && currentSample.level) ||
+            (samples[0] && samples[0].level) ||
+            "unknown",
+          simpleRule:
+            "Go only if sustained < 54 km/h and gusts < 79 km/h (crosswind-adjusted)."
+        };
+
+        todayOverviewWeatherCache[cacheKey] = {
+          updatedAt: nowMs,
+          data: outlook
+        };
+        persistTodayOverviewWeatherCache();
+        return outlook;
+      } catch (error) {
+        console.warn("Next leg wind outlook lookup failed", error);
+        const cachedFallback = getCachedWeatherByKey(cacheKey, NEXT_LEG_WIND_WINDOW_TTL_MS, {
+          includeExpired: true
+        });
+        return cachedFallback || null;
+      }
     }
 
     function normalizeRoadNumberToken(roadValue) {
@@ -8177,7 +8813,7 @@
       if (!forecast) {
         return "Forecast unavailable";
       }
-      const condition = openMeteoCodeLabel(forecast.weatherCode);
+      const condition = weatherConditionLabel(forecast);
       const tempText =
         Number.isFinite(forecast.tempMinC) && Number.isFinite(forecast.tempMaxC)
           ? Math.round(forecast.tempMinC) + " to " + Math.round(forecast.tempMaxC) + "°C"
@@ -8231,20 +8867,15 @@
             return fetchForecastWeatherAtCoordsForDate(targetCoords, targetDate, { useCache: false });
           });
 
-          const trip = getTripPhaseAndDay();
-          const shouldShowRoadStatus = trip.phase === "during" && day.day === trip.dayNumber;
-          let officialStatusByRoad = {};
-          if (shouldShowRoadStatus) {
-            const roadTokens = Array.from(
-              new Set(
-                (Array.isArray(driveLegSummaries) ? driveLegSummaries : [])
-                  .flatMap((summary) => getLegRoadTokens(summary))
-              )
-            );
-            if (roadTokens.length) {
-              officialStatusByRoad = await fetchOfficialRoadStatuses(roadTokens, { useCache: false });
-            }
-          }
+          const roadTokens = Array.from(
+            new Set(
+              (Array.isArray(driveLegSummaries) ? driveLegSummaries : [])
+                .flatMap((summary) => getLegRoadTokens(summary))
+            )
+          );
+          const officialStatusByRoad = roadTokens.length
+            ? await fetchOfficialRoadStatuses(roadTokens, { useCache: false })
+            : {};
 
           const weatherByLeg = await Promise.all(weatherPromises);
           for (let index = 0; index < legCount; index += 1) {
@@ -8255,31 +8886,32 @@
               forecast: weatherByLeg[index] || null
             };
 
-            if (shouldShowRoadStatus) {
-              const legRoads = getLegRoadTokens(driveLegSummaries[index]);
-              if (legRoads.length) {
-                const knownOfficial = legRoads
-                  .map((roadToken) => officialStatusByRoad[roadToken] || null)
-                  .filter((entry) => entry && entry.status && entry.status !== "Unknown");
-                const roadUrl = "https://umferdin.is/en?search=" + encodeURIComponent(legRoads.join(" "));
-                if (knownOfficial.length) {
-                  const worstStatus = knownOfficial.slice().sort(
-                    (left, right) => roadRiskLevelRank(right.level) - roadRiskLevelRank(left.level)
-                  )[0];
-                  legContext.road = {
-                    level: worstStatus.level || "unknown",
-                    label: worstStatus.status || "Unknown",
-                    official: true,
-                    url: roadUrl
-                  };
-                } else {
-                  legContext.road = {
-                    level: "unknown",
-                    label: "No official data",
-                    official: false,
-                    url: roadUrl
-                  };
-                }
+            const legRoads = getLegRoadTokens(driveLegSummaries[index]);
+            if (legRoads.length) {
+              const roadUrl = "https://umferdin.is/en?search=" + encodeURIComponent(legRoads.join(" "));
+              const knownOfficial = legRoads
+                .map((roadToken) => officialStatusByRoad[roadToken] || null)
+                .filter((entry) => entry && entry.status && entry.status !== "Unknown");
+              if (knownOfficial.length) {
+                const worstStatus = knownOfficial.slice().sort(
+                  (left, right) => roadRiskLevelRank(right.level) - roadRiskLevelRank(left.level)
+                )[0];
+                legContext.road = {
+                  level: worstStatus.level || "unknown",
+                  label: worstStatus.status || "Unknown",
+                  official: true,
+                  url: roadUrl
+                };
+              }
+
+              if (!legContext.road) {
+                const fallbackRisk = getRoadRiskFromWeather(legContext.weather.forecast || null);
+                legContext.road = {
+                  level: fallbackRisk.level || "unknown",
+                  label: fallbackRisk.label || "Estimated",
+                  official: false,
+                  url: roadUrl
+                };
               }
             }
 
@@ -8568,24 +9200,120 @@
       return assessments;
     }
 
+    function selectProgressiveWindWindowSamples(nextLegWindOutlook) {
+      const samples = Array.isArray(nextLegWindOutlook && nextLegWindOutlook.samples)
+        ? nextLegWindOutlook.samples
+        : [];
+      const selected = [];
+      for (const sample of samples) {
+        selected.push(sample);
+        if (sample && sample.simpleRuleGo) {
+          break;
+        }
+      }
+      return selected;
+    }
+
+    function hasNoGoLiveWeatherSnapshot(weatherSnapshots = []) {
+      return (Array.isArray(weatherSnapshots) ? weatherSnapshots : []).some((entry) => {
+        const weather = entry && entry.weather ? entry.weather : null;
+        if (!weather) {
+          return false;
+        }
+        const status = classifyWindCondition(
+          Number(weather.windKmh),
+          Number(weather.gustKmh),
+          { applyCrosswindTightening: false }
+        );
+        return status && status.level !== "go";
+      });
+    }
+
+    function renderNextLegGoWindowWeatherCardHtml(nextLegWindOutlook, weatherSnapshots = []) {
+      if (!nextLegWindOutlook || typeof nextLegWindOutlook !== "object") {
+        return "";
+      }
+
+      const currentSample = nextLegWindOutlook.currentSample || null;
+      const hasNoGoLiveSnapshot = hasNoGoLiveWeatherSnapshot(weatherSnapshots);
+      if (currentSample && currentSample.simpleRuleGo && !hasNoGoLiveSnapshot) {
+        return "";
+      }
+
+      const selectedSamples = selectProgressiveWindWindowSamples(nextLegWindOutlook);
+      if (!selectedSamples.length) {
+        return "";
+      }
+      const selectedNextGoSample = selectedSamples.find((sample) => sample && sample.simpleRuleGo) || null;
+      const nextWindowText = selectedNextGoSample
+        ? (
+          "Best next GO window: +" +
+          selectedNextGoSample.offsetHours +
+          "h" +
+          (selectedNextGoSample.timeLabel ? " (" + selectedNextGoSample.timeLabel + ")" : "") +
+          (selectedNextGoSample.crosswind ? " · crosswind-adjusted" : "")
+        )
+        : "No GO window found in the next 24h checkpoints.";
+      const routeLine =
+        escapeHtml(String(nextLegWindOutlook.fromName || "Current stop")) +
+        " → " +
+        escapeHtml(String(nextLegWindOutlook.toName || "Next stop")) +
+        " · heading " +
+        escapeHtml(String(nextLegWindOutlook.roadDirection || "Unknown"));
+      const statusesHtml = selectedSamples
+        .map((sample) => (
+          "<span class=\"today-overview-wind-chip level-" + escapeHtml(String(sample.level || "unknown")) + "\">" +
+            "+" + escapeHtml(String(sample.offsetHours)) + "h " + escapeHtml(String(sample.label || "UNKNOWN")) +
+          "</span>"
+        ))
+        .join("");
+
+      return (
+        "<div class=\"today-overview-weather-item\">" +
+          "<span class=\"today-overview-main\">🧭 Next GO window for next leg</span>" +
+          "<span class=\"today-overview-sub\">" + routeLine + "</span>" +
+          "<div class=\"today-overview-window-row\">" + statusesHtml + "</div>" +
+          "<span class=\"today-overview-sub\">" + escapeHtml(nextWindowText) + "</span>" +
+          "<span class=\"today-overview-sub\">" + escapeHtml(String(nextLegWindOutlook.simpleRule || "")) + "</span>" +
+        "</div>"
+      );
+    }
+
     function renderTodayOverviewContent(day, weatherSnapshots = [], roadAssessments = [], options = {}) {
       if (todayOverviewDayEl && day) {
         todayOverviewDayEl.textContent = "Day " + day.day + " · " + day.title;
       }
 
       if (todayOverviewWeatherEl) {
+        const nextLegWindowCardHtml = renderNextLegGoWindowWeatherCardHtml(
+          options.nextLegWindOutlook || null,
+          weatherSnapshots
+        );
         if (!weatherSnapshots.length) {
           todayOverviewWeatherEl.innerHTML =
+            (nextLegWindowCardHtml || "") +
             "<div class=\"today-overview-weather-item\"><span class=\"today-overview-main\">No live weather locations found for today.</span></div>";
         } else {
-          todayOverviewWeatherEl.innerHTML = weatherSnapshots
-            .map((entry) => (
+          const weatherCardsHtml = weatherSnapshots
+            .map((entry) => {
+              const weather = entry && entry.weather ? entry.weather : null;
+              const windStatus = classifyWindCondition(
+                weather ? Number(weather.windKmh) : NaN,
+                weather ? Number(weather.gustKmh) : NaN,
+                { applyCrosswindTightening: false }
+              );
+              return (
               "<div class=\"today-overview-weather-item\">" +
-                "<span class=\"today-overview-main\">📍 " + escapeHtml(entry.name) + "</span>" +
+                "<span class=\"today-overview-main-row\">" +
+                  "<span class=\"today-overview-main\">📍 " + escapeHtml(entry.name) + "</span>" +
+                  "<span class=\"today-overview-wind-chip level-" + escapeHtml(windStatus.level) + "\">" + escapeHtml(windStatus.label) + "</span>" +
+                "</span>" +
                 "<span class=\"today-overview-sub\">" + escapeHtml(formatWeatherSnapshotLine(entry.weather)) + "</span>" +
               "</div>"
-            ))
+              );
+            })
             .join("");
+          todayOverviewWeatherEl.innerHTML = weatherCardsHtml + (nextLegWindowCardHtml || "");
         }
       }
 
@@ -8801,6 +9529,9 @@
         dedupedTargets.push(entry);
       });
       const roadCandidates = collectTodayRoadCandidates(day, driveLegSummaries);
+      const cachedNextLegWindOutlook = getCachedNextLegWindOutlook(day, driveLegSummaries, {
+        includeExpired: true
+      });
       const weatherTargetsForFetch = dedupedTargets.slice(0, 3);
       const cachedWeatherSnapshots = weatherTargetsForFetch
         .map((entry) => ({
@@ -8817,11 +9548,15 @@
         cachedOfficialStatusByRoad,
         (entry) => getCachedLiveWeatherAtCoords(entry.coords, { includeExpired: true })
       );
-      const hasCachedData = cachedWeatherSnapshots.length > 0 || cachedRoadAssessments.length > 0;
+      const hasCachedData =
+        cachedWeatherSnapshots.length > 0 ||
+        cachedRoadAssessments.length > 0 ||
+        Boolean(cachedNextLegWindOutlook);
       if (hasCachedData && requestId === todayOverviewRequestId) {
         renderTodayOverviewContent(day, cachedWeatherSnapshots, cachedRoadAssessments, {
           status: "refreshing",
-          updatedText: "Refreshing… showing cached data"
+          updatedText: "Refreshing… showing cached data",
+          nextLegWindOutlook: cachedNextLegWindOutlook
         });
       }
 
@@ -8854,8 +9589,16 @@
         return;
       }
 
+      const nextLegWindOutlook = await fetchNextLegWindOutlook(day, driveLegSummaries, {
+        useCache: false
+      });
+      if (requestId !== todayOverviewRequestId) {
+        return;
+      }
+
       renderTodayOverviewContent(day, weatherSnapshots, roadAssessments, {
-        status: "ready"
+        status: "ready",
+        nextLegWindOutlook
       });
     }
 
@@ -10090,26 +10833,65 @@
 
     function renderTodayOverviewQuickSummary(weatherSnapshots = [], roadAssessments = []) {
       if (todayOverviewQuickWeatherEl) {
-        const firstWeatherEntry = (Array.isArray(weatherSnapshots) ? weatherSnapshots : [])
-          .find((entry) => entry && entry.weather);
-        if (!firstWeatherEntry || !firstWeatherEntry.weather) {
+        const weatherEntries = (Array.isArray(weatherSnapshots) ? weatherSnapshots : [])
+          .filter((entry) => entry && entry.weather);
+        if (!weatherEntries.length) {
           todayOverviewQuickWeatherEl.innerHTML =
             "<span class=\"today-overview-quick-icon\">❔</span><span>Weather unavailable right now</span>";
         } else {
-          const weather = firstWeatherEntry.weather;
-          const temp = formatSignedTemperature(weather.temperatureC);
-          const wind = Number.isFinite(Number(weather.windKmh))
-            ? Math.round(Number(weather.windKmh)) + " km/h"
+          const levelRank = {
+            unknown: 0,
+            go: 1,
+            caution: 2,
+            wait: 3,
+            nogo: 4
+          };
+          let highestWindEntry = null;
+          weatherEntries.forEach((entry) => {
+            const weather = entry.weather;
+            const windStatus = classifyWindCondition(
+              Number(weather.windKmh),
+              Number(weather.gustKmh),
+              { applyCrosswindTightening: false }
+            );
+            const rank = Number(levelRank[windStatus.level] || 0);
+            if (!highestWindEntry || rank > highestWindEntry.rank) {
+              highestWindEntry = {
+                entry,
+                windStatus,
+                rank
+              };
+            }
+          });
+          const representativeEntry =
+            highestWindEntry && highestWindEntry.entry
+              ? highestWindEntry.entry
+              : weatherEntries[0];
+          const representativeWeather = representativeEntry.weather;
+          const temp = formatSignedTemperature(representativeWeather.temperatureC);
+          const wind = Number.isFinite(Number(representativeWeather.windKmh))
+            ? Math.round(Number(representativeWeather.windKmh)) + " km/h"
             : "N/A";
+          const highestWindChipHtml =
+            highestWindEntry && highestWindEntry.windStatus && highestWindEntry.windStatus.level !== "go"
+              ? (
+                "<span class=\"today-overview-wind-chip level-" +
+                  escapeHtml(highestWindEntry.windStatus.level) +
+                  "\">" +
+                  escapeHtml(highestWindEntry.windStatus.label) +
+                "</span>"
+              )
+              : "";
           todayOverviewQuickWeatherEl.innerHTML =
-            "<span class=\"today-overview-quick-icon\">" + weatherQuickIcon(weather) + "</span>" +
+            "<span class=\"today-overview-quick-icon\">" + weatherQuickIcon(representativeWeather) + "</span>" +
             "<span>" +
-              escapeHtml(firstWeatherEntry.name) +
+              escapeHtml(representativeEntry.name) +
               " · " +
               escapeHtml(temp) +
               " · wind " +
               escapeHtml(wind) +
-            "</span>";
+            "</span>" +
+            highestWindChipHtml;
         }
       }
 
