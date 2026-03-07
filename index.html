@@ -4894,7 +4894,6 @@
       if (syncApplyingRemote) {
         return;
       }
-      setSyncLocalUpdatedAt(Date.now());
       if (!hasSyncConfig()) {
         return;
       }
@@ -4912,12 +4911,12 @@
     }
 
     function readSyncPayloadTimestampMs(row) {
-      const payloadTimestamp = Number(row && row.payload && row.payload.updatedAtMs);
-      if (Number.isFinite(payloadTimestamp) && payloadTimestamp > 0) {
-        return payloadTimestamp;
-      }
       const rowTimestamp = Date.parse((row && row.updated_at) || "");
-      return Number.isFinite(rowTimestamp) && rowTimestamp > 0 ? rowTimestamp : 0;
+      if (Number.isFinite(rowTimestamp) && rowTimestamp > 0) {
+        return rowTimestamp;
+      }
+      const payloadTimestamp = Number(row && row.payload && row.payload.updatedAtMs);
+      return Number.isFinite(payloadTimestamp) && payloadTimestamp > 0 ? payloadTimestamp : 0;
     }
 
     async function pullTripState(options = {}) {
@@ -4985,7 +4984,8 @@
           return false;
         }
 
-        if (remoteUpdatedAtMs > syncLocalUpdatedAtMs) {
+        const localTimestampBeforePull = syncLocalUpdatedAtMs;
+        if (remoteUpdatedAtMs > localTimestampBeforePull) {
           const applied = applySyncPayload(row.payload, remoteUpdatedAtMs);
           if (!silent) {
             setSyncStatus(applied ? "Pulled latest shared data." : "Nothing to apply.");
@@ -4993,8 +4993,13 @@
           return applied;
         }
 
+        // Keep local sync cursor aligned with server time, including after clock-skewed history.
+        if (remoteUpdatedAtMs !== localTimestampBeforePull) {
+          setSyncLocalUpdatedAt(remoteUpdatedAtMs);
+        }
+
         if (!silent) {
-          if (syncLocalUpdatedAtMs > remoteUpdatedAtMs) {
+          if (localTimestampBeforePull > remoteUpdatedAtMs) {
             setSyncStatus("Local data is newer. Push to share updates.");
           } else {
             setSyncStatus("Already up to date.");
@@ -5035,16 +5040,12 @@
       }
 
       try {
-        const payloadTimestamp = syncLocalUpdatedAtMs > 0 ? syncLocalUpdatedAtMs : Date.now();
-        if (payloadTimestamp !== syncLocalUpdatedAtMs) {
-          setSyncLocalUpdatedAt(payloadTimestamp);
-        }
+        const payloadTimestamp = Date.now();
         const payload = createSyncPayload(payloadTimestamp);
         const body = [
           {
             trip_id: syncSettings.tripId,
-            payload,
-            updated_at: new Date(payloadTimestamp).toISOString()
+            payload
           }
         ];
 
@@ -5061,7 +5062,11 @@
           throw new Error("Supabase push failed (" + response.status + ")");
         }
 
-        const whenLabel = syncTimestampLabel(payloadTimestamp);
+        const rows = await response.json().catch(() => []);
+        const firstRow = Array.isArray(rows) && rows.length ? rows[0] : null;
+        const effectiveTimestamp = readSyncPayloadTimestampMs(firstRow) || payloadTimestamp;
+        setSyncLocalUpdatedAt(effectiveTimestamp);
+        const whenLabel = syncTimestampLabel(effectiveTimestamp);
         if (!silent) {
           const syncModeLabel = reason === "auto" ? "Auto-sync complete" : "Sync complete";
           setSyncStatus(syncModeLabel + (whenLabel ? " · " + whenLabel : ""), "ok");
