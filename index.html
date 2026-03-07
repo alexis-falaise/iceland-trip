@@ -9569,11 +9569,68 @@
       return 0;
     }
 
+    function pickWorstOfficialRoadStatus(legRoads, officialStatusByRoad = {}) {
+      const roads = Array.isArray(legRoads) ? legRoads : [];
+      let worst = null;
+      roads.forEach((roadToken) => {
+        const normalizedToken = normalizeRoadNumberToken(roadToken);
+        const tokenVariants = Array.from(
+          new Set(
+            [
+              String(roadToken || "").trim().toUpperCase(),
+              normalizedToken,
+              normalizedToken ? normalizedToken.replace(/^F/, "") : "",
+              normalizedToken && !normalizedToken.startsWith("F")
+                ? "F" + normalizedToken
+                : ""
+            ].filter(Boolean)
+          )
+        );
+        const candidate = tokenVariants
+          .map((variant) => officialStatusByRoad && officialStatusByRoad[variant])
+          .find((entry) => entry && typeof entry === "object");
+        if (!candidate || !candidate.status || candidate.status === "Unknown") {
+          return;
+        }
+        if (!worst) {
+          worst = candidate;
+          return;
+        }
+        const candidateRank = roadRiskLevelRank(candidate.level);
+        const worstRank = roadRiskLevelRank(worst.level);
+        if (candidateRank > worstRank) {
+          worst = candidate;
+        }
+      });
+      return worst;
+    }
+
     function getLegRoadTokens(legSummary) {
       const rawRoads = legSummary && Array.isArray(legSummary.roads)
         ? legSummary.roads
         : [];
-      return Array.from(new Set(rawRoads.map(normalizeRoadNumberToken).filter(Boolean)));
+      const tokens = new Set();
+      rawRoads.forEach((roadEntry) => {
+        const text = String(roadEntry || "").toUpperCase();
+        if (!text) {
+          return;
+        }
+        const matches = text.match(/F?\d{1,3}[A-Z]?/g);
+        if (matches && matches.length) {
+          matches.forEach((match) => {
+            const normalized = normalizeRoadNumberToken(match);
+            if (normalized) {
+              tokens.add(normalized);
+            }
+          });
+          return;
+        }
+        const normalized = normalizeRoadNumberToken(text);
+        if (normalized) {
+          tokens.add(normalized);
+        }
+      });
+      return Array.from(tokens);
     }
 
     function buildItineraryLegContextCacheKey(day, driveLegSummaries = []) {
@@ -9688,13 +9745,8 @@
             const legRoads = getLegRoadTokens(driveLegSummaries[index]);
             if (legRoads.length) {
               const roadUrl = "https://umferdin.is/en?search=" + encodeURIComponent(legRoads.join(" "));
-              const knownOfficial = legRoads
-                .map((roadToken) => officialStatusByRoad[roadToken] || null)
-                .filter((entry) => entry && entry.status && entry.status !== "Unknown");
-              if (knownOfficial.length) {
-                const worstStatus = knownOfficial.slice().sort(
-                  (left, right) => roadRiskLevelRank(right.level) - roadRiskLevelRank(left.level)
-                )[0];
+              const worstStatus = pickWorstOfficialRoadStatus(legRoads, officialStatusByRoad);
+              if (worstStatus) {
                 legContext.road = {
                   level: worstStatus.level || "unknown",
                   label: worstStatus.status || "Unknown",
