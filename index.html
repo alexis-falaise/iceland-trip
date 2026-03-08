@@ -953,6 +953,112 @@
       padding: 14px 16px;
     }
 
+    #today-overview-card {
+      background: var(--card-ui);
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      padding: 14px 16px;
+    }
+
+    .today-overview-day {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--text-ui);
+      margin-bottom: 8px;
+    }
+
+    .today-overview-block + .today-overview-block {
+      margin-top: 10px;
+    }
+
+    .today-overview-label {
+      font-size: 0.69rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-text-ui);
+      margin-bottom: 5px;
+    }
+
+    .today-overview-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .today-overview-weather-item,
+    .today-overview-road-item {
+      display: block;
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .today-overview-weather-item:hover,
+    .today-overview-road-item:hover {
+      border-color: #a1a1aa;
+      background: #ffffff;
+    }
+
+    .today-overview-main {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-ui);
+      line-height: 1.25;
+    }
+
+    .today-overview-sub {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.72rem;
+      color: var(--muted-text-ui);
+      line-height: 1.25;
+    }
+
+    .today-overview-road-item.level-good {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+
+    .today-overview-road-item.level-warn {
+      border-color: #fde68a;
+      background: #fffbeb;
+    }
+
+    .today-overview-road-item.level-bad {
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    .today-overview-road-item.level-unknown {
+      border-color: var(--border-ui);
+      background: var(--muted-ui);
+    }
+
+    .today-overview-note {
+      margin: 6px 0 0;
+      font-size: 0.67rem;
+      color: var(--muted-text-ui);
+      line-height: 1.35;
+    }
+
+    .today-overview-advice {
+      margin: 0;
+      font-size: 0.79rem;
+      color: var(--text-ui);
+      line-height: 1.45;
+    }
+
+    .today-overview-updated {
+      margin-top: 8px;
+      font-size: 0.68rem;
+      color: var(--muted-text-ui);
+      line-height: 1.3;
+    }
+
     .daily-limit-main {
       font-size: 1.06rem;
       font-weight: 700;
@@ -2012,6 +2118,33 @@
       </div>
     </section>
 
+    <section id="today-overview-card" class="card" aria-labelledby="today-overview-title" style="display:none;">
+      <h2 id="today-overview-title" class="card-title">🧭 Today's Overview</h2>
+      <div id="today-overview-day" class="today-overview-day">Day 1 · The Discovery</div>
+      <div class="today-overview-block">
+        <div class="today-overview-label">Live weather updates</div>
+        <div id="today-overview-weather" class="today-overview-list">
+          <div class="today-overview-weather-item">
+            <span class="today-overview-main">Loading live weather…</span>
+          </div>
+        </div>
+      </div>
+      <div class="today-overview-block">
+        <div class="today-overview-label">Road conditions on planned roads</div>
+        <div id="today-overview-roads" class="today-overview-list">
+          <div class="today-overview-road-item level-unknown">
+            <span class="today-overview-main">Loading road context…</span>
+          </div>
+        </div>
+        <p class="today-overview-note">Uses official umferdin road status when available, with weather-based fallback.</p>
+      </div>
+      <div class="today-overview-block">
+        <div class="today-overview-label">AI suggestions</div>
+        <p id="today-overview-advice" class="today-overview-advice">Building smart advice for today…</p>
+      </div>
+      <div id="today-overview-updated" class="today-overview-updated">Refreshing automatically.</div>
+    </section>
+
     <section id="daily-limit-card" class="card" aria-labelledby="daily-limit-title" style="display:none;">
       <h2 id="daily-limit-title" class="card-title">🎯 Today's Budget Limit</h2>
       <div id="daily-limit-main" class="daily-limit-main">0 ISK · €0.00</div>
@@ -2269,6 +2402,13 @@
     const SYNC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0cWZjdXRmbW5yd3ZwdmJ3dWx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjYyNDQsImV4cCI6MjA4Nzk0MjI0NH0.-DGZKD7BVWfaQkvr5LiKu9aNyBlO-pMJVgGnLWX9F6c";
     const SYNC_REALTIME_CHANNEL_PREFIX = "trip_state_live_";
     const SYNC_PUSH_DEBOUNCE_MS = 1200;
+    const TODAY_OVERVIEW_WEATHER_CACHE_KEY = "icelandTodayOverviewWeatherV1";
+    const TODAY_OVERVIEW_WEATHER_TTL_MS = 20 * 60 * 1000;
+    const TODAY_OVERVIEW_ROAD_STATUS_CACHE_KEY = "icelandTodayOverviewRoadStatusV1";
+    const TODAY_OVERVIEW_ROAD_STATUS_TTL_MS = 8 * 60 * 1000;
+    const TODAY_OVERVIEW_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+    const UMFERDIN_ROAD_STATUS_PROXY_URL =
+      SYNC_SUPABASE_URL + "/functions/v1/umferdin-road-status";
     let headerVideoBlobUrl = "";
 
     function readLocalStorageObject(key) {
@@ -2366,6 +2506,8 @@
     let imageUrlCache = readLocalStorageObject(IMAGE_CACHE_STORAGE_KEY);
     let recommendationImageCache = readLocalStorageObject(RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY);
     let driveTimesStorageCache = readLocalStorageObject(DRIVE_CACHE_STORAGE_KEY);
+    let todayOverviewWeatherCache = readLocalStorageObject(TODAY_OVERVIEW_WEATHER_CACHE_KEY);
+    let todayOverviewRoadStatusCache = readLocalStorageObject(TODAY_OVERVIEW_ROAD_STATUS_CACHE_KEY);
     const wikimediaImageSearchCache = {};
     const googlePlacesImageSearchCache = {};
 
@@ -4520,6 +4662,12 @@
     const budgetCalcInputEl = document.getElementById("budget-calc-isk-input");
     const budgetCalcOutputEl = document.getElementById("budget-calc-output");
     const dailyLimitCardEl = document.getElementById("daily-limit-card");
+    const todayOverviewCardEl = document.getElementById("today-overview-card");
+    const todayOverviewDayEl = document.getElementById("today-overview-day");
+    const todayOverviewWeatherEl = document.getElementById("today-overview-weather");
+    const todayOverviewRoadsEl = document.getElementById("today-overview-roads");
+    const todayOverviewAdviceEl = document.getElementById("today-overview-advice");
+    const todayOverviewUpdatedEl = document.getElementById("today-overview-updated");
     const dailyLimitMainEl = document.getElementById("daily-limit-main");
     const dailyLimitSubEl = document.getElementById("daily-limit-sub");
     const dailyLimitPaceValueEl = document.getElementById("daily-limit-pace-value");
@@ -4615,6 +4763,7 @@
     let syncIsPushing = false;
     let syncIsPulling = false;
     let syncApplyingRemote = false;
+    let todayOverviewRequestId = 0;
 
     function setSyncStatus(text, tone = "muted") {
       if (!syncStatusEl) {
@@ -5389,6 +5538,753 @@
         ")";
     }
 
+    function getTodayOverviewTargetDay() {
+      const trip = getTripPhaseAndDay();
+      if (trip.phase === "before") {
+        return days[0] || null;
+      }
+      return days.find((entry) => entry.day === trip.dayNumber) || days[0] || null;
+    }
+
+    function buildTodayOverviewWeatherCacheKey(coords) {
+      if (!Array.isArray(coords) || coords.length !== 2) {
+        return "";
+      }
+      const lat = Number(coords[0]);
+      const lon = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return "";
+      }
+      return lat.toFixed(3) + "," + lon.toFixed(3);
+    }
+
+    function persistTodayOverviewWeatherCache() {
+      todayOverviewWeatherCache = compactObjectCache(todayOverviewWeatherCache, 200);
+      writeLocalStorageObject(TODAY_OVERVIEW_WEATHER_CACHE_KEY, todayOverviewWeatherCache);
+    }
+
+    async function fetchJsonWithTimeout(url, timeoutMs = 8000) {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal
+        });
+        if (!response.ok) {
+          throw new Error("Request failed (" + response.status + ")");
+        }
+        return await response.json();
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    function openMeteoCodeLabel(code) {
+      const weatherCode = Number(code);
+      if (!Number.isFinite(weatherCode)) {
+        return "Unknown";
+      }
+      if (weatherCode === 0) {
+        return "Clear";
+      }
+      if (weatherCode === 1 || weatherCode === 2) {
+        return "Partly cloudy";
+      }
+      if (weatherCode === 3) {
+        return "Overcast";
+      }
+      if (weatherCode === 45 || weatherCode === 48) {
+        return "Fog";
+      }
+      if (weatherCode >= 51 && weatherCode <= 57) {
+        return "Drizzle";
+      }
+      if ((weatherCode >= 61 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82)) {
+        return "Rain";
+      }
+      if (weatherCode >= 71 && weatherCode <= 77) {
+        return "Snow";
+      }
+      if (weatherCode === 85 || weatherCode === 86) {
+        return "Snow showers";
+      }
+      if (weatherCode === 95 || weatherCode === 96 || weatherCode === 99) {
+        return "Thunderstorm";
+      }
+      return "Mixed weather";
+    }
+
+    async function fetchLiveWeatherAtCoords(coords, options = {}) {
+      const cacheKey = buildTodayOverviewWeatherCacheKey(coords);
+      if (!cacheKey) {
+        return null;
+      }
+
+      const useCache = options.useCache !== false;
+      const nowMs = Date.now();
+      const cachedEntry = todayOverviewWeatherCache[cacheKey];
+      if (
+        useCache &&
+        cachedEntry &&
+        typeof cachedEntry === "object" &&
+        Number.isFinite(cachedEntry.updatedAt) &&
+        nowMs - Number(cachedEntry.updatedAt) <= TODAY_OVERVIEW_WEATHER_TTL_MS &&
+        cachedEntry.data &&
+        typeof cachedEntry.data === "object"
+      ) {
+        return {
+          ...cachedEntry.data,
+          stale: false,
+          fromCache: true
+        };
+      }
+
+      const lat = Number(coords[0]);
+      const lon = Number(coords[1]);
+      const query = new URLSearchParams({
+        latitude: String(lat),
+        longitude: String(lon),
+        timezone: "auto",
+        current: [
+          "temperature_2m",
+          "precipitation",
+          "wind_speed_10m",
+          "wind_gusts_10m",
+          "weather_code"
+        ].join(",")
+      });
+      const url = "https://api.open-meteo.com/v1/forecast?" + query.toString();
+
+      try {
+        const data = await fetchJsonWithTimeout(url, 8500);
+        const current = data && data.current ? data.current : null;
+        if (!current || typeof current !== "object") {
+          throw new Error("Weather payload missing");
+        }
+
+        const weather = {
+          temperatureC: Number(current.temperature_2m),
+          precipMm: Number(current.precipitation),
+          windKmh: Number(current.wind_speed_10m),
+          gustKmh: Number(current.wind_gusts_10m),
+          weatherCode: Number(current.weather_code),
+          observedAt: typeof current.time === "string" ? current.time : "",
+          fetchedAt: nowMs
+        };
+        todayOverviewWeatherCache[cacheKey] = {
+          updatedAt: nowMs,
+          data: weather
+        };
+        persistTodayOverviewWeatherCache();
+        return weather;
+      } catch (error) {
+        console.warn("Today overview weather lookup failed", error);
+        if (cachedEntry && cachedEntry.data && typeof cachedEntry.data === "object") {
+          return {
+            ...cachedEntry.data,
+            stale: true,
+            fromCache: true
+          };
+        }
+        return null;
+      }
+    }
+
+    function formatSignedTemperature(tempC) {
+      if (!Number.isFinite(tempC)) {
+        return "N/A";
+      }
+      const rounded = Math.round(tempC);
+      return (rounded > 0 ? "+" : "") + rounded + "°C";
+    }
+
+    function formatWeatherSnapshotLine(weather) {
+      if (!weather) {
+        return "No live weather data";
+      }
+      const codeLabel = openMeteoCodeLabel(weather.weatherCode);
+      const windText = Number.isFinite(weather.windKmh)
+        ? Math.round(weather.windKmh) + " km/h"
+        : "N/A";
+      const gustText = Number.isFinite(weather.gustKmh)
+        ? Math.round(weather.gustKmh) + " km/h"
+        : "N/A";
+      return (
+        formatSignedTemperature(weather.temperatureC) +
+        " · " +
+        codeLabel +
+        " · wind " +
+        windText +
+        " (gust " +
+        gustText +
+        ")"
+      );
+    }
+
+    function normalizeRoadNumberToken(roadValue) {
+      const raw = String(roadValue || "").trim().toUpperCase();
+      if (!raw) {
+        return "";
+      }
+      const match = raw.match(/F?\d{1,3}[A-Z]?/);
+      if (!match) {
+        return raw.replace(/[^A-Z0-9]/g, "");
+      }
+      return match[0];
+    }
+
+    function buildTodayOverviewRoadStatusCacheKey(roadValue) {
+      return normalizeRoadNumberToken(roadValue);
+    }
+
+    function persistTodayOverviewRoadStatusCache() {
+      todayOverviewRoadStatusCache = compactObjectCache(todayOverviewRoadStatusCache, 240);
+      writeLocalStorageObject(TODAY_OVERVIEW_ROAD_STATUS_CACHE_KEY, todayOverviewRoadStatusCache);
+    }
+
+    function normalizeStatusText(value) {
+      return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+    }
+
+    function mapRoadStatusToRisk(rawStatus, sourceDescription, sourceCode) {
+      const statusText = normalizeStatusText(rawStatus);
+      const descriptionText = normalizeStatusText(sourceDescription);
+      const combined = (statusText + " " + descriptionText + " " + String(sourceCode || "")).trim();
+      const code = String(sourceCode || "").trim();
+
+      let status = "Unknown";
+      let level = "unknown";
+
+      if (code === "14") {
+        status = "Easily passable";
+        level = "good";
+      } else if (code === "23") {
+        status = "Spots of ice";
+        level = "warn";
+      } else if (code === "36") {
+        status = "Slippery";
+        level = "warn";
+      } else if (
+        /\b(impassable|closed|lokad|lokud|lokun|ofaert|ofaert|ófært)\b/.test(combined)
+      ) {
+        status = "Impassable";
+        level = "bad";
+      } else if (/\b(spots? of ice|halkublett|hálkublett)\b/.test(combined)) {
+        status = "Spots of ice";
+        level = "warn";
+      } else if (/\b(slippery|halt|hált|halka|hálka|snow|sno)\b/.test(combined)) {
+        if (/\b(spots? of ice|halkublett|hálkublett)\b/.test(combined)) {
+          status = "Spots of ice";
+        } else if (/\b(slippery|halt|hált|halka|hálka)\b/.test(combined)) {
+          status = "Slippery";
+        } else {
+          status = "Spots of ice";
+        }
+        level = "warn";
+      } else if (/\b(easily passable|greidf(a|æ)rt|greidfært|greidfart|clear)\b/.test(combined)) {
+        status = "Easily passable";
+        level = "good";
+      }
+
+      return {
+        status,
+        level,
+        label: status,
+        details:
+          status === "Unknown"
+            ? "Official status unavailable for this road segment."
+            : "Official umferdin status" +
+              (sourceDescription ? " · " + sourceDescription : "") +
+              (sourceCode ? " (code " + sourceCode + ")" : "")
+      };
+    }
+
+    function sanitizeOfficialRoadStatusEntry(entry) {
+      const road = buildTodayOverviewRoadStatusCacheKey(entry && entry.road);
+      if (!road) {
+        return null;
+      }
+
+      const sourceDescription =
+        entry && typeof entry.sourceDescription === "string"
+          ? entry.sourceDescription.trim()
+          : "";
+      const sourceCode = entry && entry.code != null ? String(entry.code).trim() : "";
+      const mapped = mapRoadStatusToRisk(entry && entry.status, sourceDescription, sourceCode);
+
+      return {
+        road,
+        status: mapped.status,
+        level: mapped.level,
+        label: mapped.label,
+        details: mapped.details,
+        sourceDescription,
+        code: sourceCode,
+        updatedAt:
+          entry && typeof entry.updatedAt === "string"
+            ? entry.updatedAt
+            : ""
+      };
+    }
+
+    async function fetchOfficialRoadStatuses(roadValues, options = {}) {
+      const useCache = options.useCache !== false;
+      const nowMs = Date.now();
+      const roads = Array.from(
+        new Set((Array.isArray(roadValues) ? roadValues : []).map(buildTodayOverviewRoadStatusCacheKey))
+      ).filter(Boolean);
+
+      const statusByRoad = {};
+      const roadsToFetch = [];
+
+      roads.forEach((road) => {
+        const cached = todayOverviewRoadStatusCache[road];
+        if (
+          useCache &&
+          cached &&
+          typeof cached === "object" &&
+          Number.isFinite(cached.updatedAtMs) &&
+          nowMs - Number(cached.updatedAtMs) <= TODAY_OVERVIEW_ROAD_STATUS_TTL_MS &&
+          cached.data &&
+          typeof cached.data === "object"
+        ) {
+          statusByRoad[road] = cached.data;
+          return;
+        }
+        roadsToFetch.push(road);
+      });
+
+      if (!roadsToFetch.length) {
+        return statusByRoad;
+      }
+
+      try {
+        const response = await fetch(UMFERDIN_ROAD_STATUS_PROXY_URL, {
+          method: "POST",
+          headers: {
+            apikey: SYNC_SUPABASE_ANON_KEY,
+            Authorization: "Bearer " + SYNC_SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+            Accept: "application/json"
+          },
+          body: JSON.stringify({ roads: roadsToFetch })
+        });
+
+        if (!response.ok) {
+          throw new Error("Road status proxy failed (" + response.status + ")");
+        }
+
+        const payload = await response.json();
+        const rows = Array.isArray(payload && payload.roads)
+          ? payload.roads
+          : Array.isArray(payload && payload.results)
+            ? payload.results
+            : [];
+
+        rows.forEach((entry) => {
+          const sanitized = sanitizeOfficialRoadStatusEntry(entry);
+          if (!sanitized) {
+            return;
+          }
+          statusByRoad[sanitized.road] = sanitized;
+          todayOverviewRoadStatusCache[sanitized.road] = {
+            updatedAtMs: nowMs,
+            data: sanitized
+          };
+        });
+
+        persistTodayOverviewRoadStatusCache();
+      } catch (error) {
+        console.warn("Official road status lookup failed", error);
+      }
+
+      return statusByRoad;
+    }
+
+    function collectTodayRoadCandidates(day, driveLegSummaries = []) {
+      const routePoints = getDayRoutePoints(day);
+      const locations = getDisplayLocations(day, routePoints);
+      if (routePoints.length < 2 || locations.length < 2) {
+        return [];
+      }
+
+      const byRoad = {};
+      for (let index = 0; index < locations.length - 1; index += 1) {
+        const summary = driveLegSummaries[index];
+        const rawRoads = summary && Array.isArray(summary.roads) ? summary.roads : [];
+        if (!rawRoads.length) {
+          continue;
+        }
+        const fromPoint = routePoints[index];
+        const toPoint = routePoints[index + 1];
+        const midPoint =
+          Array.isArray(fromPoint) &&
+          fromPoint.length === 2 &&
+          Array.isArray(toPoint) &&
+          toPoint.length === 2
+            ? [(fromPoint[0] + toPoint[0]) / 2, (fromPoint[1] + toPoint[1]) / 2]
+            : fromPoint;
+        const direction =
+          summary && typeof summary.direction === "string" && summary.direction
+            ? summary.direction
+            : getCardinalDirection(fromPoint, toPoint);
+        const fromLocation = locations[index];
+        const toLocation = locations[index + 1];
+        const mapDirectionsUrl = mapsDirectionsUrl(fromLocation, toLocation, fromPoint, toPoint);
+
+        rawRoads.forEach((roadValue) => {
+          const road = normalizeRoadNumberToken(roadValue);
+          if (!road) {
+            return;
+          }
+          if (!byRoad[road]) {
+            byRoad[road] = {
+              road,
+              direction,
+              fromName: fromLocation ? fromLocation.name : "Start",
+              toName: toLocation ? toLocation.name : "Next stop",
+              coords: midPoint,
+              mapDirectionsUrl,
+              legs: 0
+            };
+          }
+          byRoad[road].legs += 1;
+        });
+      }
+
+      return Object.values(byRoad)
+        .sort((left, right) => {
+          const leftNum = Number.parseInt(String(left.road).replace(/[^0-9]/g, ""), 10);
+          const rightNum = Number.parseInt(String(right.road).replace(/[^0-9]/g, ""), 10);
+          if (Number.isFinite(leftNum) && Number.isFinite(rightNum) && leftNum !== rightNum) {
+            return leftNum - rightNum;
+          }
+          return String(left.road).localeCompare(String(right.road));
+        })
+        .slice(0, 6);
+    }
+
+    function getRoadRiskFromWeather(weather) {
+      if (!weather) {
+        return {
+          level: "unknown",
+          label: "No live data",
+          details: "Open umferdin for official status."
+        };
+      }
+
+      const code = Number(weather.weatherCode);
+      const tempC = Number(weather.temperatureC);
+      const precipMm = Number(weather.precipMm);
+      const windKmh = Number(weather.windKmh);
+      const gustKmh = Number(weather.gustKmh);
+
+      const hasSnow =
+        (code >= 71 && code <= 77) || code === 85 || code === 86;
+      const hasFreezingRisk = Number.isFinite(tempC) && tempC <= 1;
+      const hasWetRoadRisk = Number.isFinite(precipMm) && precipMm > 0;
+      const hasStrongWind =
+        (Number.isFinite(gustKmh) && gustKmh >= 70) ||
+        (Number.isFinite(windKmh) && windKmh >= 50);
+      const hasStorm = code === 95 || code === 96 || code === 99;
+      const hasFog = code === 45 || code === 48;
+
+      if (hasStorm || (hasSnow && hasStrongWind) || (hasSnow && hasFreezingRisk)) {
+        return {
+          level: "bad",
+          label: "High caution",
+          details: "Snow/ice or storm-like conditions possible."
+        };
+      }
+
+      if (hasStrongWind || hasFog || (hasFreezingRisk && hasWetRoadRisk) || hasSnow) {
+        return {
+          level: "warn",
+          label: "Use caution",
+          details: "Reduced grip/visibility or strong wind gusts possible."
+        };
+      }
+
+      return {
+        level: "good",
+        label: "Generally clear",
+        details: "No major weather-related issues detected now."
+      };
+    }
+
+    function buildTodayAiAdvice(day, weatherSnapshots, roadAssessments) {
+      const validWeather = weatherSnapshots.filter((entry) => entry && entry.weather);
+      const validRoads = roadAssessments.filter((entry) => entry && entry.risk);
+      const allTemps = validWeather
+        .map((entry) => Number(entry.weather.temperatureC))
+        .filter((value) => Number.isFinite(value));
+      const allGusts = validWeather
+        .map((entry) => Number(entry.weather.gustKmh))
+        .filter((value) => Number.isFinite(value));
+      const allPrecip = validWeather
+        .map((entry) => Number(entry.weather.precipMm))
+        .filter((value) => Number.isFinite(value));
+
+      const minTemp = allTemps.length ? Math.min(...allTemps) : null;
+      const maxGust = allGusts.length ? Math.max(...allGusts) : null;
+      const precipNow = allPrecip.length ? Math.max(...allPrecip) : null;
+      const hasHighRoadRisk = validRoads.some((entry) => entry.risk.level === "bad");
+      const hasWarnRoadRisk = validRoads.some((entry) => entry.risk.level === "warn");
+
+      const mustSee = getDisplayLocations(day, getDayRoutePoints(day))
+        .filter((location) => !location.isCampsite)
+        .slice(0, 2)
+        .map((location) => location.name);
+
+      const sentences = [];
+      sentences.push(
+        "Day " +
+          day.day +
+          " (" +
+          day.title +
+          ") looks best when paced around key stops and short weather checks."
+      );
+
+      if ((Number.isFinite(minTemp) && minTemp <= 0) || (Number.isFinite(maxGust) && maxGust >= 55)) {
+        sentences.push(
+          "Wear thermal base layers plus a windproof outer shell; gloves and a beanie will matter in exposed viewpoints."
+        );
+      } else if (Number.isFinite(precipNow) && precipNow > 0) {
+        sentences.push("Keep waterproof layers ready and protect camera gear from drizzle and spray.");
+      } else {
+        sentences.push("Light layers should work, but keep one warm mid-layer in the van for fast weather changes.");
+      }
+
+      if (hasHighRoadRisk) {
+        sentences.push(
+          "Drive conservatively on flagged roads, reduce speed before turns, and keep extra buffer time between stops."
+        );
+      } else if (hasWarnRoadRisk) {
+        sentences.push("Roads look manageable overall, but expect occasional wind or grip changes on open stretches.");
+      } else {
+        sentences.push("Road profile is relatively friendly right now; use the margin to enjoy one extra photo stop.");
+      }
+
+      if (mustSee.length >= 2) {
+        sentences.push("Do not miss " + mustSee[0] + " and " + mustSee[1] + " while light is best.");
+      } else if (mustSee.length === 1) {
+        sentences.push("Do not miss " + mustSee[0] + " today.");
+      }
+
+      return sentences.join(" ");
+    }
+
+    function renderTodayOverviewLoading(day) {
+      if (!todayOverviewCardEl) {
+        return;
+      }
+      if (todayOverviewDayEl && day) {
+        todayOverviewDayEl.textContent = "Day " + day.day + " · " + day.title;
+      }
+      if (todayOverviewWeatherEl) {
+        todayOverviewWeatherEl.innerHTML =
+          "<div class=\"today-overview-weather-item\"><span class=\"today-overview-main\">Loading live weather…</span></div>";
+      }
+      if (todayOverviewRoadsEl) {
+        todayOverviewRoadsEl.innerHTML =
+          "<div class=\"today-overview-road-item level-unknown\"><span class=\"today-overview-main\">Loading road context…</span></div>";
+      }
+      if (todayOverviewAdviceEl) {
+        todayOverviewAdviceEl.textContent = "Building smart advice for today…";
+      }
+      if (todayOverviewUpdatedEl) {
+        todayOverviewUpdatedEl.textContent = "Refreshing…";
+      }
+    }
+
+    async function refreshTodayOverview(options = {}) {
+      if (!todayOverviewCardEl || activeTab !== "home") {
+        return;
+      }
+
+      const forceRefresh = Boolean(options.force);
+      const day = getTodayOverviewTargetDay();
+      if (!day) {
+        return;
+      }
+
+      const requestId = ++todayOverviewRequestId;
+      renderTodayOverviewLoading(day);
+
+      let driveLegSummaries = getCachedDrivingLegDurations(day);
+      if (forceRefresh || !driveLegSummaries.length) {
+        const fetchedSummaries = await fetchDrivingLegDurations(day);
+        if (Array.isArray(fetchedSummaries) && fetchedSummaries.length) {
+          driveLegSummaries = fetchedSummaries;
+        }
+      }
+
+      if (requestId !== todayOverviewRequestId) {
+        return;
+      }
+
+      const routePoints = getDayRoutePoints(day);
+      const locations = getDisplayLocations(day, routePoints);
+      const weatherTargets = [];
+      if (locations[0] && Array.isArray(locations[0].coords)) {
+        weatherTargets.push({
+          name: locations[0].name,
+          coords: locations[0].coords
+        });
+      }
+      const middleLocation = locations[Math.floor(locations.length / 2)];
+      if (middleLocation && Array.isArray(middleLocation.coords)) {
+        weatherTargets.push({
+          name: middleLocation.name,
+          coords: middleLocation.coords
+        });
+      }
+      const campsite = [...locations].reverse().find((location) => location.isCampsite);
+      if (campsite && Array.isArray(campsite.coords)) {
+        weatherTargets.push({
+          name: campsite.name,
+          coords: campsite.coords
+        });
+      }
+
+      const dedupedTargets = [];
+      const seenTargets = new Set();
+      weatherTargets.forEach((entry) => {
+        const key = entry.name + "|" + buildTodayOverviewWeatherCacheKey(entry.coords);
+        if (!key || seenTargets.has(key)) {
+          return;
+        }
+        seenTargets.add(key);
+        dedupedTargets.push(entry);
+      });
+
+      const weatherSnapshots = await Promise.all(
+        dedupedTargets.slice(0, 3).map(async (entry) => ({
+          name: entry.name,
+          weather: await fetchLiveWeatherAtCoords(entry.coords, { useCache: !forceRefresh })
+        }))
+      );
+
+      if (requestId !== todayOverviewRequestId) {
+        return;
+      }
+
+      const roadCandidates = collectTodayRoadCandidates(day, driveLegSummaries);
+      const officialStatusByRoad = await fetchOfficialRoadStatuses(
+        roadCandidates.map((entry) => entry.road),
+        { useCache: !forceRefresh }
+      );
+      if (requestId !== todayOverviewRequestId) {
+        return;
+      }
+
+      const roadAssessments = await Promise.all(
+        roadCandidates.map(async (entry) => {
+          const official = officialStatusByRoad[entry.road] || null;
+          if (official && official.level && official.status !== "Unknown") {
+            return {
+              ...entry,
+              weather: null,
+              official,
+              risk: {
+                level: official.level,
+                label: official.status,
+                details: official.details
+              }
+            };
+          }
+
+          return {
+            ...entry,
+            weather: await fetchLiveWeatherAtCoords(entry.coords, { useCache: !forceRefresh }),
+            official: official || null,
+            risk: null
+          };
+        })
+      );
+      roadAssessments.forEach((entry) => {
+        if (entry.risk) {
+          return;
+        }
+        entry.risk = getRoadRiskFromWeather(entry.weather);
+      });
+
+      if (requestId !== todayOverviewRequestId) {
+        return;
+      }
+
+      if (todayOverviewDayEl) {
+        todayOverviewDayEl.textContent = "Day " + day.day + " · " + day.title;
+      }
+
+      if (todayOverviewWeatherEl) {
+        if (!weatherSnapshots.length) {
+          todayOverviewWeatherEl.innerHTML =
+            "<div class=\"today-overview-weather-item\"><span class=\"today-overview-main\">No live weather locations found for today.</span></div>";
+        } else {
+          todayOverviewWeatherEl.innerHTML = weatherSnapshots
+            .map((entry) => (
+              "<div class=\"today-overview-weather-item\">" +
+                "<span class=\"today-overview-main\">📍 " + escapeHtml(entry.name) + "</span>" +
+                "<span class=\"today-overview-sub\">" + escapeHtml(formatWeatherSnapshotLine(entry.weather)) + "</span>" +
+              "</div>"
+            ))
+            .join("");
+        }
+      }
+
+      if (todayOverviewRoadsEl) {
+        if (!roadAssessments.length) {
+          todayOverviewRoadsEl.innerHTML =
+            "<a class=\"today-overview-road-item level-unknown\" href=\"https://umferdin.is/en\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+              "<span class=\"today-overview-main\">No road-number data found yet</span>" +
+              "<span class=\"today-overview-sub\">Open umferdin.is for the official nationwide map.</span>" +
+            "</a>";
+        } else {
+          todayOverviewRoadsEl.innerHTML = roadAssessments
+            .map((entry) => {
+              const roadInfoUrl = "https://umferdin.is/en?search=" + encodeURIComponent(entry.road);
+              const risk = entry.risk || { level: "unknown", label: "No data", details: "" };
+              const sourcePrefix =
+                entry.official && entry.official.status !== "Unknown"
+                  ? "Official"
+                  : "Estimated";
+              return (
+                "<a class=\"today-overview-road-item level-" + escapeHtml(risk.level) + "\" href=\"" + escapeHtml(roadInfoUrl) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+                  "<span class=\"today-overview-main\">🛣️ Road " + escapeHtml(entry.road) + " · " + escapeHtml(risk.label) + "</span>" +
+                  "<span class=\"today-overview-sub\">" +
+                    escapeHtml(entry.direction) +
+                    " · " +
+                    escapeHtml(entry.fromName) +
+                    " → " +
+                    escapeHtml(entry.toName) +
+                    " · " +
+                    escapeHtml(sourcePrefix) +
+                    " · " +
+                    escapeHtml(risk.details) +
+                  "</span>" +
+                "</a>"
+              );
+            })
+            .join("");
+        }
+      }
+
+      if (todayOverviewAdviceEl) {
+        todayOverviewAdviceEl.textContent = buildTodayAiAdvice(day, weatherSnapshots, roadAssessments);
+      }
+
+      if (todayOverviewUpdatedEl) {
+        todayOverviewUpdatedEl.textContent =
+          "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+    }
+
     function renderFxRateLabel(isLoading = false) {
       const formattedRate = "€" + fxState.rate.toFixed(5);
       budgetRateEl.classList.toggle("loading", Boolean(isLoading));
@@ -5855,6 +6751,9 @@
     function updateTimeAwareVisibility() {
       const now = Date.now();
       const today = startOfLocalDay(now);
+      const shouldShowOverview = activeTab === "home";
+      setElementVisibility(todayOverviewCardEl, shouldShowOverview);
+
       const shouldShowCountdown = activeTab === "home" && now < COUNTDOWN_HIDE_DATE.getTime();
       setElementVisibility(departureCountdownCardEl, shouldShowCountdown);
       if (appHeaderEl) {
@@ -5881,12 +6780,16 @@
 
     function applyTabView(nextTab) {
       const trip = getTripPhaseAndDay();
+      if (nextTab !== "home") {
+        todayOverviewRequestId += 1;
+      }
       activeTab = nextTab;
       setActiveTabButton(nextTab);
 
       if (nextTab === "itinerary") {
         setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(dailyLimitCardEl, false);
+        setElementVisibility(todayOverviewCardEl, false);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(packingCardEl, false);
         setElementVisibility(fxCardEl, false);
@@ -5904,6 +6807,7 @@
       if (nextTab === "tools") {
         setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(dailyLimitCardEl, false);
+        setElementVisibility(todayOverviewCardEl, false);
         setElementVisibility(flightCardEl, false);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, true);
@@ -5919,6 +6823,7 @@
       if (trip.phase === "before") {
         setElementVisibility(departureCountdownCardEl, true);
         setElementVisibility(dailyLimitCardEl, false);
+        setElementVisibility(todayOverviewCardEl, true);
         setElementVisibility(flightCardEl, true);
         setElementVisibility(packingCardEl, true);
         setElementVisibility(fxCardEl, false);
@@ -5929,10 +6834,12 @@
         setElementVisibility(daysContainerEl, false);
         showAllDayCards();
         updateTimeAwareVisibility();
+        refreshTodayOverview();
         return;
       }
 
       setElementVisibility(departureCountdownCardEl, true);
+      setElementVisibility(todayOverviewCardEl, true);
       setElementVisibility(flightCardEl, false);
       setElementVisibility(packingCardEl, false);
       setElementVisibility(fxCardEl, false);
@@ -5953,6 +6860,7 @@
       }
       showSingleDayCard(trip.dayNumber);
       updateTimeAwareVisibility();
+      refreshTodayOverview();
     }
 
     tabButtons.forEach((button) => {
@@ -5969,6 +6877,12 @@
     updateTimeAwareVisibility();
     setInterval(updateDepartureCountdown, 60 * 1000);
     setInterval(updateTimeAwareVisibility, 60 * 1000);
+    setInterval(() => {
+      if (activeTab !== "home") {
+        return;
+      }
+      refreshTodayOverview({ force: true });
+    }, TODAY_OVERVIEW_REFRESH_INTERVAL_MS);
 
     const modalEl = document.getElementById("fullscreen-modal");
     const modalHeadEl = document.getElementById("fullscreen-head");
