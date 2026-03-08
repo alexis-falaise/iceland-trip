@@ -2877,6 +2877,20 @@
       line-height: 1.2;
       text-align: left;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      justify-content: flex-start;
+    }
+
+    .location-action-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      flex: 0 0 12px;
+      font-size: 0.8rem;
+      line-height: 1;
     }
 
     .location-action-item:hover {
@@ -3588,7 +3602,7 @@
           Auto-push local changes
         </label>
         <p id="sync-status" class="sync-status" aria-live="polite"></p>
-        <p class="sync-note">Syncs packing + budget + fuel planner + disabled itinerary stops + custom added stops. Enter the same trip code on both phones.</p>
+        <p class="sync-note">Syncs packing + budget + fuel planner + disabled itinerary stops + custom added stops + reordered day stops. Enter the same trip code on both phones.</p>
       </div>
     </section>
 
@@ -3839,6 +3853,7 @@
     const RECOMMENDATION_IMAGE_CACHE_STORAGE_KEY = "icelandRecommendationImageCacheV1";
     const DRIVE_CACHE_STORAGE_KEY = "icelandDriveLegCacheV1";
     const CUSTOM_DAY_STOPS_STORAGE_KEY = "icelandCustomDayStopsV1";
+    const DAY_LOCATION_ORDER_STORAGE_KEY = "icelandDayLocationOrderV1";
     const CUSTOM_STOP_SOURCE_INDEX_OFFSET = 1000;
     const IMAGE_CACHE_MAX_ITEMS = 240;
     const RECOMMENDATION_IMAGE_CACHE_MAX_ITEMS = 240;
@@ -3928,6 +3943,7 @@
     let moduleCollapseState = {};
     let syncSettings = { tripId: "", autoSync: true };
     let customDayStops = {};
+    let dayLocationOrder = {};
     let nextCustomStopId = 1;
     const googleMapsExpandedLinkCache = new Map();
 
@@ -4054,6 +4070,100 @@
         return currentMax;
       }, 0);
       return Math.max(1, Math.round(maxId) + 1);
+    }
+
+    function sanitizeDayLocationOrder(rawValue) {
+      if (!rawValue || typeof rawValue !== "object") {
+        return {};
+      }
+
+      const sanitized = {};
+      Object.keys(rawValue).forEach((dayKey) => {
+        const dayNumber = Number(dayKey);
+        if (!Number.isFinite(dayNumber) || dayNumber <= 0) {
+          return;
+        }
+
+        const source = Array.isArray(rawValue[dayKey]) ? rawValue[dayKey] : [];
+        const seen = new Set();
+        const orderedKeys = [];
+        source.forEach((entry) => {
+          const key = String(entry || "").trim();
+          if (!/^day-\d+-loc-\d+$/i.test(key)) {
+            return;
+          }
+          if (seen.has(key)) {
+            return;
+          }
+          seen.add(key);
+          orderedKeys.push(key);
+        });
+        if (!orderedKeys.length) {
+          return;
+        }
+        sanitized[String(dayNumber)] = orderedKeys;
+      });
+
+      return sanitized;
+    }
+
+    function areStringArraysEqual(left, right) {
+      const a = Array.isArray(left) ? left : [];
+      const b = Array.isArray(right) ? right : [];
+      if (a.length !== b.length) {
+        return false;
+      }
+      for (let index = 0; index < a.length; index += 1) {
+        if (String(a[index]) !== String(b[index])) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function collectChangedDayLocationOrderDayNumbers(previousState, nextState) {
+      const changed = new Set();
+      const keys = new Set([
+        ...Object.keys(previousState || {}),
+        ...Object.keys(nextState || {})
+      ]);
+
+      keys.forEach((dayKey) => {
+        const previousOrder = Array.isArray(previousState && previousState[dayKey])
+          ? previousState[dayKey]
+          : [];
+        const nextOrder = Array.isArray(nextState && nextState[dayKey])
+          ? nextState[dayKey]
+          : [];
+        if (!areStringArraysEqual(previousOrder, nextOrder)) {
+          changed.add(Number(dayKey));
+        }
+      });
+
+      return changed;
+    }
+
+    function loadDayLocationOrder() {
+      const parsed = appPersistence.loadDomain(DAY_LOCATION_ORDER_STORAGE_KEY, null);
+      return sanitizeDayLocationOrder(parsed);
+    }
+
+    function saveDayLocationOrder() {
+      appPersistence.saveDomain(DAY_LOCATION_ORDER_STORAGE_KEY, dayLocationOrder);
+    }
+
+    function setDayLocationOrder(nextState, options = {}) {
+      const previousState = sanitizeDayLocationOrder(dayLocationOrder);
+      const sanitizedNextState = sanitizeDayLocationOrder(nextState);
+      const changedDayNumbers = collectChangedDayLocationOrderDayNumbers(previousState, sanitizedNextState);
+      dayLocationOrder = sanitizedNextState;
+      if (!options.skipPersist) {
+        saveDayLocationOrder();
+      }
+      if (!options.skipSync && changedDayNumbers.size) {
+        markSyncLocalChange();
+      }
+      return changedDayNumbers;
     }
 
     function loadCustomDayStops() {
@@ -4927,6 +5037,21 @@
         [dayKey]: [...currentStops, nextStop]
       };
       setCustomDayStops(nextState);
+
+      const dayOrder = dayLocationOrder && Array.isArray(dayLocationOrder[dayKey])
+        ? dayLocationOrder[dayKey].slice()
+        : [];
+      if (dayOrder.length) {
+        const nextLocationKey = getLocationStateKey(day.day, sourceIndex);
+        const insertAfterIndex = dayOrder.indexOf(afterKey);
+        const deduped = dayOrder.filter((key) => key !== nextLocationKey);
+        const insertIndex = insertAfterIndex >= 0 ? insertAfterIndex + 1 : deduped.length;
+        deduped.splice(Math.max(0, insertIndex), 0, nextLocationKey);
+        setDayLocationOrder({
+          ...dayLocationOrder,
+          [dayKey]: deduped
+        });
+      }
       return nextStop;
     }
 
@@ -4964,10 +5089,103 @@
       }
       setCustomDayStops(nextState);
 
+      const nextDayLocationOrder = { ...dayLocationOrder };
+      const currentDayOrder = Array.isArray(nextDayLocationOrder[dayKey])
+        ? nextDayLocationOrder[dayKey]
+        : [];
+      const filteredDayOrder = currentDayOrder.filter((key) => String(key) !== String(locationKey));
+      if (filteredDayOrder.length) {
+        nextDayLocationOrder[dayKey] = filteredDayOrder;
+      } else {
+        delete nextDayLocationOrder[dayKey];
+      }
+      setDayLocationOrder(nextDayLocationOrder);
+
       if (isLocationDisabled(locationKey)) {
         appActions.setLocationDisabled(locationKey, false);
       }
       return true;
+    }
+
+    function getCurrentDayLocationOrderKeys(day) {
+      const dayRoute = getDayEnabledRoute(day);
+      return dayRoute.allLocations
+        .map((location) => String(location && location.locationKey || "").trim())
+        .filter(Boolean);
+    }
+
+    function getDefaultDayLocationOrderKeys(day) {
+      const routePoints = getDayRoutePoints(day);
+      const locations = getDisplayLocations(day, routePoints, {
+        includeDisabled: true,
+        applyOrder: false
+      });
+      return locations
+        .map((location) => String(location && location.locationKey || "").trim())
+        .filter(Boolean);
+    }
+
+    function setExplicitDayLocationOrder(day, orderedKeys) {
+      if (!day || !Number.isFinite(Number(day.day))) {
+        return false;
+      }
+      const dayKey = String(day.day);
+      const nextOrder = Array.isArray(orderedKeys) ? orderedKeys.slice() : [];
+      const defaultOrder = getDefaultDayLocationOrderKeys(day);
+
+      const normalizedNextOrder = [];
+      const seenKeys = new Set();
+      nextOrder.forEach((key) => {
+        const locationKey = String(key || "").trim();
+        if (!locationKey || seenKeys.has(locationKey) || !defaultOrder.includes(locationKey)) {
+          return;
+        }
+        seenKeys.add(locationKey);
+        normalizedNextOrder.push(locationKey);
+      });
+      defaultOrder.forEach((locationKey) => {
+        if (!seenKeys.has(locationKey)) {
+          seenKeys.add(locationKey);
+          normalizedNextOrder.push(locationKey);
+        }
+      });
+
+      const nextState = { ...dayLocationOrder };
+      if (areStringArraysEqual(normalizedNextOrder, defaultOrder)) {
+        delete nextState[dayKey];
+      } else {
+        nextState[dayKey] = normalizedNextOrder;
+      }
+      const changedDays = setDayLocationOrder(nextState);
+      return changedDays.has(Number(day.day));
+    }
+
+    function moveLocationWithinDayOrder(day, locationKey, direction) {
+      if (!day || !Number.isFinite(Number(day.day))) {
+        return false;
+      }
+      const dir = String(direction || "").trim().toLowerCase();
+      if (dir !== "up" && dir !== "down") {
+        return false;
+      }
+
+      const order = getCurrentDayLocationOrderKeys(day);
+      const index = order.indexOf(String(locationKey || "").trim());
+      if (index < 0) {
+        return false;
+      }
+      if (index <= 0 || index >= order.length - 1) {
+        return false;
+      }
+
+      const targetIndex = dir === "up" ? index - 1 : index + 1;
+      if (targetIndex <= 0 || targetIndex >= order.length - 1) {
+        return false;
+      }
+
+      const nextOrder = order.slice();
+      [nextOrder[index], nextOrder[targetIndex]] = [nextOrder[targetIndex], nextOrder[index]];
+      return setExplicitDayLocationOrder(day, nextOrder);
     }
 
     function buildCustomStopLocation(day, stop) {
@@ -5583,6 +5801,7 @@
 
     function getDisplayLocations(day, routePoints = getDayRoutePoints(day), options = {}) {
       const includeDisabled = options.includeDisabled !== false;
+      const applyOrder = options.applyOrder !== false;
       const locations = day.locations.map((location, sourceIndex) => {
         const isCampsite = Boolean(location.isCampsite || location.isCamp);
         const locationKey = getLocationStateKey(day.day, sourceIndex);
@@ -5635,9 +5854,55 @@
       }
 
       const locationsWithCustomStops = injectCustomStopsIntoLocations(day, locations);
+      const orderedLocations = applyOrder
+        ? applyDayLocationOrder(day, locationsWithCustomStops)
+        : locationsWithCustomStops;
       return includeDisabled
-        ? locationsWithCustomStops
-        : locationsWithCustomStops.filter((location) => !location.isDisabled);
+        ? orderedLocations
+        : orderedLocations.filter((location) => !location.isDisabled);
+    }
+
+    function applyDayLocationOrder(day, locations) {
+      const dayKey = String(Number(day && day.day));
+      const baseLocations = Array.isArray(locations) ? locations : [];
+      const desiredOrder = dayLocationOrder && Array.isArray(dayLocationOrder[dayKey])
+        ? dayLocationOrder[dayKey]
+        : null;
+      if (!desiredOrder || !desiredOrder.length) {
+        return baseLocations;
+      }
+
+      const byKey = new Map();
+      baseLocations.forEach((location) => {
+        const key = String(location && location.locationKey || "").trim();
+        if (key) {
+          byKey.set(key, location);
+        }
+      });
+
+      const ordered = [];
+      const usedKeys = new Set();
+      desiredOrder.forEach((key) => {
+        const locationKey = String(key || "").trim();
+        if (!locationKey || usedKeys.has(locationKey) || !byKey.has(locationKey)) {
+          return;
+        }
+        usedKeys.add(locationKey);
+        ordered.push(byKey.get(locationKey));
+      });
+
+      baseLocations.forEach((location) => {
+        const locationKey = String(location && location.locationKey || "").trim();
+        if (!locationKey || usedKeys.has(locationKey)) {
+          return;
+        }
+        usedKeys.add(locationKey);
+        ordered.push(location);
+      });
+
+      return ordered.length === baseLocations.length
+        ? ordered
+        : baseLocations;
     }
 
     function getDayEnabledRoute(day) {
@@ -7795,6 +8060,7 @@
 
     appActions.setSyncSettings(loadSyncSettings());
     customDayStops = loadCustomDayStops();
+    dayLocationOrder = loadDayLocationOrder();
     nextCustomStopId = computeNextCustomStopId(customDayStops);
     const syncMeta = loadSyncMeta();
     const syncDeviceId = getOrCreateSyncDeviceId();
@@ -8056,6 +8322,7 @@
           expenses: state.budget.expenses
         },
         customDayStops,
+        dayLocationOrder,
         fuelPlannerState: sanitizeSyncedFuelPlannerState(fuelPlannerState),
         syncSettings: state.syncSettings
       };
@@ -8095,10 +8362,16 @@
       });
       const nextBudgetState = sanitizeSyncedBudgetState(migratedPayload.budgetState);
       const previousCustomDayStops = sanitizeCustomDayStops(customDayStops);
-      const nextCustomDayStops = sanitizeCustomDayStops(payload.customDayStops);
+      const nextCustomDayStops = sanitizeCustomDayStops(migratedPayload.customDayStops);
       const changedCustomStopDayNumbers = collectChangedCustomStopDayNumbers(
         previousCustomDayStops,
         nextCustomDayStops
+      );
+      const previousDayLocationOrder = sanitizeDayLocationOrder(dayLocationOrder);
+      const nextDayLocationOrder = sanitizeDayLocationOrder(migratedPayload.dayLocationOrder);
+      const changedDayLocationOrderDayNumbers = collectChangedDayLocationOrderDayNumbers(
+        previousDayLocationOrder,
+        nextDayLocationOrder
       );
       const hasRemoteFuelPlannerState =
         payload.fuelPlannerState && typeof payload.fuelPlannerState === "object";
@@ -8115,6 +8388,7 @@
           ? Math.max(...budgetState.expenses.map((item) => item.id)) + 1
           : 1;
         setCustomDayStops(nextCustomDayStops, { skipPersist: false, skipSync: true });
+        setDayLocationOrder(nextDayLocationOrder, { skipPersist: false, skipSync: true });
         saveBudgetState({ skipSync: true });
         renderBudgetCard();
         if (hasRemoteFuelPlannerState) {
@@ -8142,6 +8416,17 @@
       });
 
       changedCustomStopDayNumbers.forEach((dayNumber) => {
+        const day = days.find((entry) => entry.day === dayNumber);
+        if (!day) {
+          return;
+        }
+        refreshRoutingDependentUiForDay(day, {
+          refreshTodayOverview: activeTab === "home",
+          forceItineraryOverviewRefit: activeTab === "itinerary"
+        });
+      });
+
+      changedDayLocationOrderDayNumbers.forEach((dayNumber) => {
         const day = days.find((entry) => entry.day === dayNumber);
         if (!day) {
           return;
@@ -12948,8 +13233,13 @@
         const canRemoveLocation =
           canShowLocationActions &&
           Boolean(location.isCustomStop);
+        const canMoveUp = canShowLocationActions && index > 1;
+        const canMoveDown = canShowLocationActions && index < locations.length - 2;
         const toggleAction = isDisabledStop ? "enable" : "disable";
         const toggleLabel = isDisabledStop ? "Re-enable stop" : "Disable stop";
+        const toggleIcon = isDisabledStop ? "↺" : "⊘";
+        const moveUpDisabledAttr = canMoveUp ? "" : " disabled aria-disabled=\"true\"";
+        const moveDownDisabledAttr = canMoveDown ? "" : " disabled aria-disabled=\"true\"";
         const removeActionDisabledAttr = canRemoveLocation
           ? ""
           : " disabled aria-disabled=\"true\" title=\"Only custom added stops can be removed.\"";
@@ -12958,8 +13248,10 @@
             "<div class=\"location-actions\" data-location-actions=\"1\" data-location-key=\"" + escapeHtml(location.locationKey) + "\">" +
               "<button class=\"location-actions-toggle\" type=\"button\" data-location-menu-toggle=\"1\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" aria-haspopup=\"menu\" aria-expanded=\"false\" aria-label=\"Open actions for " + locationName + "\">⋯</button>" +
               "<div class=\"location-actions-menu\" role=\"menu\" aria-label=\"Stop actions\">" +
-                "<button class=\"location-action-item\" type=\"button\" data-location-toggle=\"" + toggleAction + "\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" role=\"menuitem\">" + escapeHtml(toggleLabel) + "</button>" +
-                "<button class=\"location-action-item danger\" type=\"button\" data-location-action=\"remove\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" data-location-name=\"" + locationName + "\" role=\"menuitem\"" + removeActionDisabledAttr + ">Remove stop</button>" +
+                "<button class=\"location-action-item\" type=\"button\" data-location-move=\"up\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" role=\"menuitem\"" + moveUpDisabledAttr + "><span class=\"location-action-icon\" aria-hidden=\"true\">↑</span><span>Move up</span></button>" +
+                "<button class=\"location-action-item\" type=\"button\" data-location-move=\"down\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" role=\"menuitem\"" + moveDownDisabledAttr + "><span class=\"location-action-icon\" aria-hidden=\"true\">↓</span><span>Move down</span></button>" +
+                "<button class=\"location-action-item\" type=\"button\" data-location-toggle=\"" + toggleAction + "\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" role=\"menuitem\"><span class=\"location-action-icon\" aria-hidden=\"true\">" + escapeHtml(toggleIcon) + "</span><span>" + escapeHtml(toggleLabel) + "</span></button>" +
+                "<button class=\"location-action-item danger\" type=\"button\" data-location-action=\"remove\" data-location-key=\"" + escapeHtml(location.locationKey) + "\" data-day-number=\"" + day.day + "\" data-location-name=\"" + locationName + "\" role=\"menuitem\"" + removeActionDisabledAttr + "><span class=\"location-action-icon\" aria-hidden=\"true\">🗑️</span><span>Remove stop</span></button>" +
               "</div>" +
             "</div>"
           )
@@ -13541,6 +13833,38 @@
           locationName
         });
         closeLocationActionMenu();
+        return;
+      }
+
+      const moveTrigger = event.target.closest("[data-location-move]");
+      if (moveTrigger) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (moveTrigger.hasAttribute("disabled")) {
+          return;
+        }
+
+        const direction = String(moveTrigger.getAttribute("data-location-move") || "").trim();
+        const locationKey = String(moveTrigger.getAttribute("data-location-key") || "").trim();
+        const dayNumber = Number(moveTrigger.getAttribute("data-day-number"));
+        if (!locationKey || !Number.isFinite(dayNumber) || (direction !== "up" && direction !== "down")) {
+          return;
+        }
+
+        const day = days.find((entry) => entry.day === dayNumber);
+        if (!day) {
+          return;
+        }
+
+        const moved = moveLocationWithinDayOrder(day, locationKey, direction);
+        closeLocationActionMenu();
+        if (!moved) {
+          return;
+        }
+        refreshRoutingDependentUiForDay(day, {
+          refreshTodayOverview: true,
+          forceItineraryOverviewRefit: true
+        });
         return;
       }
 
