@@ -8546,6 +8546,7 @@
 
       auroraAlertOneSignalReadyPromise = new Promise((resolve, reject) => {
         let settled = false;
+        let initPromise = null;
         const timeoutId = window.setTimeout(() => {
           if (settled) {
             return;
@@ -8575,17 +8576,38 @@
         };
 
         const initWithSdk = async (oneSignal) => {
+          if (!oneSignal || typeof oneSignal.init !== "function") {
+            finalizeReject(new Error("OneSignal SDK is unavailable."));
+            return;
+          }
           try {
-            if (!auroraAlertOneSignalInitialized) {
-              await oneSignal.init({
-                appId,
-                notifyButton: { enable: false },
-                allowLocalhostAsSecureOrigin: true,
-                serviceWorkerPath: "OneSignalSDKWorker.js",
-                serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js"
-              });
-              auroraAlertOneSignalInitialized = true;
+            if (auroraAlertOneSignalInitialized) {
+              finalizeResolve(oneSignal);
+              return;
             }
+
+            if (!initPromise) {
+              initPromise = oneSignal
+                .init({
+                  appId,
+                  notifyButton: { enable: false },
+                  allowLocalhostAsSecureOrigin: true,
+                  serviceWorkerPath: "OneSignalSDKWorker.js",
+                  serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js"
+                })
+                .catch((error) => {
+                  const message = String((error && error.message) || error || "");
+                  if (/already initialized/i.test(message)) {
+                    return;
+                  }
+                  throw error instanceof Error ? error : new Error(message);
+                })
+                .then(() => {
+                  auroraAlertOneSignalInitialized = true;
+                });
+            }
+
+            await initPromise;
             finalizeResolve(oneSignal);
           } catch (error) {
             finalizeReject(
