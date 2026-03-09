@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="./manifest.webmanifest">
   <title>Iceland Epic 🇮🇸</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <style>
@@ -1247,6 +1248,197 @@
       padding: 14px 16px;
     }
 
+    #aurora-signal-card {
+      background: var(--card-ui);
+      border: 1px solid var(--border-ui);
+      border-radius: var(--radius-ui);
+      padding: 14px 16px;
+    }
+
+    .aurora-quick {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .aurora-quick-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border: 1px solid var(--border-ui);
+      background: var(--card-ui);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.76rem;
+      color: var(--text-ui);
+    }
+
+    .aurora-quick-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-ui);
+      line-height: 1.25;
+    }
+
+    .aurora-status-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.66rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .aurora-status-chip.level-strong {
+      background: var(--wind-go-bg);
+      color: var(--wind-go-text);
+    }
+
+    .aurora-status-chip.level-weak {
+      background: var(--wind-caution-bg);
+      color: var(--wind-caution-text);
+    }
+
+    .aurora-status-chip.level-no {
+      background: var(--wind-nogo-bg);
+      color: var(--wind-nogo-text);
+    }
+
+    .aurora-status-chip.level-unknown {
+      background: var(--wind-unknown-bg);
+      color: var(--wind-unknown-text);
+    }
+
+    .aurora-status-chip.level-move {
+      background: var(--wind-wait-bg);
+      color: var(--wind-wait-text);
+    }
+
+    .aurora-status-chip.level-stay {
+      background: var(--wind-go-bg);
+      color: var(--wind-go-text);
+    }
+
+    .aurora-section + .aurora-section {
+      margin-top: 10px;
+    }
+
+    .aurora-label {
+      font-size: 0.69rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted-text-ui);
+      margin-bottom: 5px;
+    }
+
+    .aurora-recommendation {
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.76rem;
+      line-height: 1.35;
+      color: var(--text-ui);
+      display: grid;
+      gap: 5px;
+    }
+
+    .aurora-recommendation-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-ui);
+    }
+
+    .aurora-grid {
+      display: grid;
+      gap: 6px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    }
+
+    .aurora-item {
+      border: 1px solid var(--border-ui);
+      background: var(--muted-ui);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--text-ui);
+    }
+
+    .aurora-item.aurora-level-strong {
+      background: var(--wind-go-bg);
+      border-color: transparent;
+      color: var(--wind-go-text);
+    }
+    .aurora-item.aurora-level-strong .aurora-item-sub { color: var(--wind-go-text); opacity: 0.75; }
+
+    .aurora-item.aurora-level-good {
+      background: var(--wind-caution-bg);
+      border-color: transparent;
+      color: var(--wind-caution-text);
+    }
+    .aurora-item.aurora-level-good .aurora-item-sub { color: var(--wind-caution-text); opacity: 0.75; }
+
+    .aurora-item.aurora-level-moderate {
+      background: var(--wind-wait-bg);
+      border-color: transparent;
+      color: var(--wind-wait-text);
+    }
+    .aurora-item.aurora-level-moderate .aurora-item-sub { color: var(--wind-wait-text); opacity: 0.75; }
+
+    .aurora-item.aurora-level-bad {
+      background: var(--wind-nogo-bg);
+      border-color: transparent;
+      color: var(--wind-nogo-text);
+    }
+    .aurora-item.aurora-level-bad .aurora-item-sub { color: var(--wind-nogo-text); opacity: 0.75; }
+
+    .aurora-item-main {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    .aurora-item-sub {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.7rem;
+      color: var(--muted-text-ui);
+      line-height: 1.25;
+    }
+
+    .aurora-reasons {
+      margin: 0;
+      padding-left: 16px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .aurora-reasons li {
+      font-size: 0.74rem;
+      line-height: 1.35;
+      color: var(--text-ui);
+    }
+
+    .aurora-note {
+      margin: 8px 0 0;
+      font-size: 0.68rem;
+      color: var(--muted-text-ui);
+      line-height: 1.3;
+    }
+
     #nearby-service-card {
       background: var(--card-ui);
       border: 1px solid var(--border-ui);
@@ -1751,6 +1943,23 @@
       font-size: 0.68rem;
       color: var(--muted-text-ui);
       line-height: 1.35;
+    }
+
+    .aurora-alert-form {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .aurora-alert-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .aurora-alert-actions .btn-primary,
+    .aurora-alert-actions .btn {
+      min-height: 34px;
     }
 
     .useful-links-list {
@@ -3433,6 +3642,48 @@
       </div>
     </section>
 
+    <section id="aurora-signal-card" class="card" aria-labelledby="aurora-signal-title" style="display:none;">
+      <div class="module-head">
+        <h2 id="aurora-signal-title" class="card-title">🌌 Aurora signal</h2>
+        <button id="aurora-signal-toggle" class="module-toggle-btn" type="button" aria-expanded="false">Expand</button>
+      </div>
+      <div id="aurora-signal-collapsed" class="module-collapsed">
+        <div class="aurora-quick">
+          <div id="aurora-signal-quick-main" class="aurora-quick-item">
+            <span class="aurora-quick-main">Loading aurora signal…</span>
+            <span class="aurora-status-chip level-unknown">Unknown</span>
+          </div>
+          <div id="aurora-signal-quick-stay" class="aurora-quick-item">
+            <span class="aurora-quick-main">Checking if waiting 1–2h is worth it…</span>
+          </div>
+          <div id="aurora-signal-quick-move" class="aurora-quick-item" hidden>
+            <span class="aurora-quick-main">Scouting nearby clear spots…</span>
+          </div>
+        </div>
+      </div>
+      <div id="aurora-signal-expanded" class="module-expanded" hidden>
+        <div class="aurora-section">
+          <div class="aurora-label">Assessment</div>
+          <div id="aurora-signal-recommendation" class="aurora-recommendation">
+            <span class="aurora-recommendation-main">Loading aurora assessment…</span>
+          </div>
+        </div>
+        <div class="aurora-section">
+          <div class="aurora-label">Cloud cover windows</div>
+          <div id="aurora-signal-cloud" class="aurora-grid"></div>
+        </div>
+        <div class="aurora-section">
+          <div class="aurora-label">Solar wind now</div>
+          <div id="aurora-signal-solar" class="aurora-grid"></div>
+        </div>
+        <div class="aurora-section">
+          <div class="aurora-label">Reasons</div>
+          <ul id="aurora-signal-reasons" class="aurora-reasons"></ul>
+        </div>
+        <p id="aurora-signal-note" class="aurora-note"></p>
+      </div>
+    </section>
+
     <section id="today-overview-card" class="card" aria-labelledby="today-overview-title" style="display:none;">
       <div class="module-head">
         <h2 id="today-overview-title" class="card-title">🧭 Today's Overview</h2>
@@ -3603,6 +3854,24 @@
         </label>
         <p id="sync-status" class="sync-status" aria-live="polite"></p>
         <p class="sync-note">Syncs packing + budget + fuel planner + disabled itinerary stops + custom added stops + reordered day stops. Enter the same trip code on both phones.</p>
+      </div>
+    </section>
+
+    <section id="aurora-alert-card" class="card" aria-labelledby="aurora-alert-title" style="display:none;">
+      <h2 id="aurora-alert-title" class="card-title">🔔 Aurora Wake Alerts</h2>
+      <div class="aurora-alert-form">
+        <label class="sync-toggle">
+          <input id="aurora-alert-enabled-input" type="checkbox">
+          Enable wake alerts on this device
+        </label>
+        <p id="aurora-alert-location" class="sync-status">Saved location: not set</p>
+        <p id="aurora-alert-permission" class="sync-status">Push permission: unknown</p>
+        <div class="aurora-alert-actions">
+          <button id="aurora-alert-save-btn" class="btn-primary" type="button">Save current position</button>
+          <button id="aurora-alert-disable-btn" class="btn btn-ghost" type="button">Disable alerts</button>
+        </div>
+        <p id="aurora-alert-status" class="sync-status" aria-live="polite"></p>
+        <p class="sync-note">Strong-only alerts at night (18:00-06:00 local to your saved position). Position refreshes on app open and nearby-location updates.</p>
       </div>
     </section>
 
@@ -3825,6 +4094,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script src="./src/runtime-globals.js"></script>
   <script src="./src/gas-supermarket-points.js"></script>
   <script>
@@ -3875,6 +4145,14 @@
     const SYNC_PUSH_DEBOUNCE_MS = 1200;
     const TODAY_OVERVIEW_WEATHER_CACHE_KEY = "icelandTodayOverviewWeatherV1";
     const TODAY_OVERVIEW_WEATHER_TTL_MS = 20 * 60 * 1000;
+    const AURORA_SIGNAL_CACHE_KEY = "icelandAuroraSignalCacheV1";
+    const AURORA_SIGNAL_TTL_MS = 2 * 60 * 1000;
+    const AURORA_SIGNAL_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
+    const AURORA_ALERT_SETTINGS_STORAGE_KEY = "icelandAuroraAlertSettingsV1";
+    const AURORA_ALERT_SYNC_MIN_INTERVAL_MS = 2 * 60 * 1000;
+    const AURORA_ALERT_ONESIGNAL_APP_ID = "84580714-4126-4684-a4a2-792e1c010846";
+    const NOAA_SOLAR_WIND_PLASMA_URL = "https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json";
+    const NOAA_SOLAR_WIND_MAG_URL = "https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json";
     const WEATHER_PROVIDER_CHAIN = ["vedur", "openmeteo"];
     const VEDUR_WEATHER_API_BASE_URL = "https://api.vedur.is/weather";
     const VEDUR_STATIONS_TTL_MS = 12 * 60 * 60 * 1000;
@@ -3904,6 +4182,8 @@
       SYNC_SUPABASE_URL + "/functions/v1/umferdin-road-status";
     const GOOGLE_MAPS_LINK_EXPAND_PROXY_URL =
       SYNC_SUPABASE_URL + "/functions/v1/google-maps-expand-link";
+    const AURORA_ALERT_SUBSCRIPTION_PROXY_URL =
+      SYNC_SUPABASE_URL + "/functions/v1/aurora-alert-subscription";
     const SERVICE_POINTS = Array.isArray(window.ICELAND_SERVICE_POINTS)
       ? window.ICELAND_SERVICE_POINTS
       : [];
@@ -4251,6 +4531,7 @@
     let driveTimesStorageCache = readLocalStorageObject(DRIVE_CACHE_STORAGE_KEY);
     let todayOverviewWeatherCache = readLocalStorageObject(TODAY_OVERVIEW_WEATHER_CACHE_KEY);
     let todayOverviewRoadStatusCache = readLocalStorageObject(TODAY_OVERVIEW_ROAD_STATUS_CACHE_KEY);
+    let auroraSignalCache = readLocalStorageObject(AURORA_SIGNAL_CACHE_KEY);
     const wikimediaImageSearchCache = {};
     const googlePlacesImageSearchCache = {};
     const itineraryLegContextCache = {};
@@ -7988,6 +8269,18 @@
     const fuelOverrideSaveEl = document.getElementById("fuel-override-save");
     const fuelManualEventEl = document.getElementById("fuel-manual-event");
     const dailyLimitCardEl = document.getElementById("daily-limit-card");
+    const auroraSignalCardEl = document.getElementById("aurora-signal-card");
+    const auroraSignalToggleEl = document.getElementById("aurora-signal-toggle");
+    const auroraSignalCollapsedEl = document.getElementById("aurora-signal-collapsed");
+    const auroraSignalExpandedEl = document.getElementById("aurora-signal-expanded");
+    const auroraSignalQuickMainEl = document.getElementById("aurora-signal-quick-main");
+    const auroraSignalQuickStayEl = document.getElementById("aurora-signal-quick-stay");
+    const auroraSignalQuickMoveEl = document.getElementById("aurora-signal-quick-move");
+    const auroraSignalRecommendationEl = document.getElementById("aurora-signal-recommendation");
+    const auroraSignalCloudEl = document.getElementById("aurora-signal-cloud");
+    const auroraSignalSolarEl = document.getElementById("aurora-signal-solar");
+    const auroraSignalReasonsEl = document.getElementById("aurora-signal-reasons");
+    const auroraSignalNoteEl = document.getElementById("aurora-signal-note");
     const todayOverviewCardEl = document.getElementById("today-overview-card");
     const todayOverviewToggleEl = document.getElementById("today-overview-toggle");
     const todayOverviewCollapsedEl = document.getElementById("today-overview-collapsed");
@@ -8014,6 +8307,13 @@
     const syncTripInputEl = document.getElementById("sync-trip-input");
     const syncAutoInputEl = document.getElementById("sync-auto-input");
     const syncStatusEl = document.getElementById("sync-status");
+    const auroraAlertCardEl = document.getElementById("aurora-alert-card");
+    const auroraAlertEnabledInputEl = document.getElementById("aurora-alert-enabled-input");
+    const auroraAlertLocationEl = document.getElementById("aurora-alert-location");
+    const auroraAlertPermissionEl = document.getElementById("aurora-alert-permission");
+    const auroraAlertSaveBtnEl = document.getElementById("aurora-alert-save-btn");
+    const auroraAlertDisableBtnEl = document.getElementById("aurora-alert-disable-btn");
+    const auroraAlertStatusEl = document.getElementById("aurora-alert-status");
     const packingToggleEl = document.getElementById("packing-toggle");
     const packingExpandedEl = document.getElementById("packing-expanded");
 
@@ -8073,6 +8373,10 @@
     let syncIsPulling = false;
     let syncApplyingRemote = false;
     let todayOverviewRequestId = 0;
+    let auroraAlertSettings = loadAuroraAlertSettings();
+    let auroraAlertSyncInFlight = false;
+    let auroraAlertOneSignalReadyPromise = null;
+    let auroraAlertOneSignalInitialized = false;
 
     function setSyncStatus(text, tone = "muted") {
       if (!syncStatusEl) {
@@ -8086,6 +8390,486 @@
         syncStatusEl.classList.add("sync-error");
       } else if (tone === "loading") {
         syncStatusEl.classList.add("sync-loading");
+      }
+    }
+
+    function getConfiguredOneSignalAppId() {
+      const fromWindow = normalizePlaceText(
+        typeof window !== "undefined" && typeof window.ONESIGNAL_APP_ID === "string"
+          ? window.ONESIGNAL_APP_ID
+          : ""
+      );
+      const direct = fromWindow || normalizePlaceText(AURORA_ALERT_ONESIGNAL_APP_ID);
+      if (!direct || direct.startsWith("replace_with_")) {
+        return "";
+      }
+      return direct;
+    }
+
+    function sanitizeAuroraAlertSettings(rawSettings) {
+      const parsed = rawSettings && typeof rawSettings === "object" ? rawSettings : {};
+      const rawInstallationId = String(parsed.installationId || "").trim().toLowerCase();
+      const normalizedInstallationId = rawInstallationId
+        ? rawInstallationId.replace(/[^a-z0-9-]/g, "").slice(0, 120)
+        : "";
+      const fallbackDeviceId = String(syncDeviceId || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+      const installationId =
+        normalizedInstallationId ||
+        ("aurora-" + (fallbackDeviceId || Math.random().toString(36).slice(2, 10)));
+      const coords = Array.isArray(parsed.coords) ? parsed.coords : [];
+      const lat = Number(coords[0]);
+      const lon = Number(coords[1]);
+      return {
+        installationId,
+        enabled: Boolean(parsed.enabled),
+        coords: Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null,
+        timezone: String(parsed.timezone || "").trim().slice(0, 80),
+        oneSignalSubscriptionId: String(parsed.oneSignalSubscriptionId || "").trim().slice(0, 128),
+        permission: String(parsed.permission || "").trim().slice(0, 24),
+        lastSyncedAtMs: Number.isFinite(Number(parsed.lastSyncedAtMs))
+          ? Math.max(0, Number(parsed.lastSyncedAtMs))
+          : 0
+      };
+    }
+
+    function loadAuroraAlertSettings() {
+      const parsed = appPersistence.loadDomain(AURORA_ALERT_SETTINGS_STORAGE_KEY, null);
+      return sanitizeAuroraAlertSettings(parsed);
+    }
+
+    function saveAuroraAlertSettings() {
+      appPersistence.saveDomain(AURORA_ALERT_SETTINGS_STORAGE_KEY, auroraAlertSettings);
+    }
+
+    function setAuroraAlertStatus(text, tone = "muted") {
+      if (!auroraAlertStatusEl) {
+        return;
+      }
+      auroraAlertStatusEl.textContent = String(text || "");
+      auroraAlertStatusEl.classList.remove("sync-ok", "sync-error", "sync-loading");
+      if (tone === "ok") {
+        auroraAlertStatusEl.classList.add("sync-ok");
+      } else if (tone === "error") {
+        auroraAlertStatusEl.classList.add("sync-error");
+      } else if (tone === "loading") {
+        auroraAlertStatusEl.classList.add("sync-loading");
+      }
+    }
+
+    function formatAuroraAlertCoords(coords) {
+      if (!Array.isArray(coords) || coords.length !== 2) {
+        return "not set";
+      }
+      const lat = Number(coords[0]);
+      const lon = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return "not set";
+      }
+      return lat.toFixed(4) + ", " + lon.toFixed(4);
+    }
+
+    function renderAuroraAlertSettings() {
+      if (!auroraAlertCardEl) {
+        return;
+      }
+
+      if (auroraAlertEnabledInputEl) {
+        auroraAlertEnabledInputEl.checked = Boolean(auroraAlertSettings.enabled);
+      }
+
+      if (auroraAlertLocationEl) {
+        auroraAlertLocationEl.textContent = "Saved location: " + formatAuroraAlertCoords(auroraAlertSettings.coords);
+      }
+
+      const configuredOneSignalAppId = getConfiguredOneSignalAppId();
+      if (auroraAlertPermissionEl) {
+        if (!configuredOneSignalAppId) {
+          auroraAlertPermissionEl.textContent =
+            "Push config: set AURORA_ALERT_ONESIGNAL_APP_ID in index.html (or window.ONESIGNAL_APP_ID).";
+        } else {
+          const permission = auroraAlertSettings.permission || (typeof Notification !== "undefined" ? Notification.permission : "unknown");
+          auroraAlertPermissionEl.textContent = "Push permission: " + permission;
+        }
+      }
+    }
+
+    function getCurrentCoordsFromBrowser(timeoutMs = 12000) {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Geolocation is not available on this browser."));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve([
+              Number(position.coords.latitude),
+              Number(position.coords.longitude)
+            ]);
+          },
+          (error) => {
+            if (error && error.code === 1) {
+              reject(new Error("Location permission denied."));
+              return;
+            }
+            reject(new Error("Could not resolve current location."));
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: timeoutMs,
+            maximumAge: 2 * 60 * 1000
+          }
+        );
+      });
+    }
+
+    function getOneSignalPermissionSnapshot(oneSignal) {
+      const fallback = typeof Notification !== "undefined" ? Notification.permission : "unknown";
+      try {
+        const fromSdk = oneSignal && oneSignal.Notifications
+          ? oneSignal.Notifications.permissionNative || oneSignal.Notifications.permission
+          : "";
+        const normalized = String(fromSdk || "").trim();
+        return normalized || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    async function ensureOneSignalReady() {
+      const appId = getConfiguredOneSignalAppId();
+      if (!appId) {
+        throw new Error("OneSignal app id is not configured.");
+      }
+      if (auroraAlertOneSignalReadyPromise) {
+        return auroraAlertOneSignalReadyPromise;
+      }
+
+      auroraAlertOneSignalReadyPromise = new Promise((resolve, reject) => {
+        let settled = false;
+        const timeoutId = window.setTimeout(() => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          auroraAlertOneSignalReadyPromise = null;
+          reject(new Error("OneSignal SDK did not initialize in time."));
+        }, 15000);
+
+        const finalizeResolve = (value) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeoutId);
+          resolve(value);
+        };
+
+        const finalizeReject = (error) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeoutId);
+          auroraAlertOneSignalReadyPromise = null;
+          reject(error);
+        };
+
+        const initWithSdk = async (oneSignal) => {
+          try {
+            if (!auroraAlertOneSignalInitialized) {
+              await oneSignal.init({
+                appId,
+                notifyButton: { enable: false },
+                allowLocalhostAsSecureOrigin: true,
+                serviceWorkerPath: "OneSignalSDKWorker.js",
+                serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js"
+              });
+              auroraAlertOneSignalInitialized = true;
+            }
+            finalizeResolve(oneSignal);
+          } catch (error) {
+            finalizeReject(
+              error instanceof Error ? error : new Error(String(error))
+            );
+          }
+        };
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        window.OneSignalDeferred.push((oneSignal) => {
+          initWithSdk(oneSignal);
+        });
+
+        if (window.OneSignal && typeof window.OneSignal.init === "function") {
+          initWithSdk(window.OneSignal);
+        }
+      });
+
+      return auroraAlertOneSignalReadyPromise;
+    }
+
+    async function getOneSignalSubscriptionSnapshot(oneSignal) {
+      let subscriptionId = "";
+      let optedIn = false;
+      try {
+        const pushSub = oneSignal && oneSignal.User ? oneSignal.User.PushSubscription : null;
+        if (pushSub) {
+          if (typeof pushSub.id === "string") {
+            subscriptionId = pushSub.id.trim();
+          }
+          if (!subscriptionId && typeof pushSub.getId === "function") {
+            const fromGetter = await pushSub.getId();
+            subscriptionId = String(fromGetter || "").trim();
+          }
+          if (typeof pushSub.optedIn === "boolean") {
+            optedIn = pushSub.optedIn;
+          }
+        }
+      } catch {
+        // Keep fallback values.
+      }
+
+      if (!subscriptionId && oneSignal && typeof oneSignal.getUserId === "function") {
+        try {
+          const legacy = await oneSignal.getUserId();
+          subscriptionId = String(legacy || "").trim();
+        } catch {
+          // legacy fallback failed
+        }
+      }
+
+      return {
+        permission: getOneSignalPermissionSnapshot(oneSignal),
+        subscriptionId,
+        optedIn
+      };
+    }
+
+    async function waitForOneSignalSubscriptionSnapshot(oneSignal, timeoutMs = 12000) {
+      const startedAt = Date.now();
+      let snapshot = await getOneSignalSubscriptionSnapshot(oneSignal);
+      while (!snapshot.subscriptionId && Date.now() - startedAt < timeoutMs) {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+        snapshot = await getOneSignalSubscriptionSnapshot(oneSignal);
+      }
+      return snapshot;
+    }
+
+    async function upsertAuroraAlertSubscription(payload) {
+      const response = await fetch(AURORA_ALERT_SUBSCRIPTION_PROXY_URL, {
+        method: "POST",
+        headers: syncRequestHeaders({
+          "Content-Type": "application/json"
+        }),
+        body: JSON.stringify(payload)
+      });
+      const parsed = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(parsed && parsed.error ? parsed.error : "Could not update aurora alert subscription.");
+      }
+      return parsed;
+    }
+
+    function shouldRunAuroraAlertSync(force = false) {
+      if (force) {
+        return true;
+      }
+      const lastSyncedAtMs = Number(auroraAlertSettings.lastSyncedAtMs || 0);
+      if (!Number.isFinite(lastSyncedAtMs) || lastSyncedAtMs <= 0) {
+        return true;
+      }
+      return Date.now() - lastSyncedAtMs >= AURORA_ALERT_SYNC_MIN_INTERVAL_MS;
+    }
+
+    async function syncAuroraAlertRegistration(options = {}) {
+      const force = Boolean(options.force);
+      const silent = Boolean(options.silent);
+      const skipPermissionPrompt = Boolean(options.skipPermissionPrompt);
+      const selectedEnabled = Boolean(
+        auroraAlertEnabledInputEl ? auroraAlertEnabledInputEl.checked : auroraAlertSettings.enabled
+      );
+
+      if (auroraAlertSyncInFlight) {
+        return false;
+      }
+      if (!shouldRunAuroraAlertSync(force)) {
+        return true;
+      }
+
+      auroraAlertSyncInFlight = true;
+      if (auroraAlertSaveBtnEl) {
+        auroraAlertSaveBtnEl.disabled = true;
+      }
+      if (auroraAlertDisableBtnEl) {
+        auroraAlertDisableBtnEl.disabled = true;
+      }
+
+      if (!silent) {
+        setAuroraAlertStatus(
+          selectedEnabled ? "Saving aurora wake alerts…" : "Disabling aurora wake alerts…",
+          "loading"
+        );
+      }
+
+      try {
+        const coordsFromOptions = Array.isArray(options.coords) && options.coords.length === 2
+          ? [Number(options.coords[0]), Number(options.coords[1])]
+          : null;
+        let coords = coordsFromOptions || getLatestKnownCoords() || auroraAlertSettings.coords;
+        let subscriptionId = auroraAlertSettings.oneSignalSubscriptionId;
+        let permission = auroraAlertSettings.permission || (typeof Notification !== "undefined" ? Notification.permission : "unknown");
+
+        if (selectedEnabled) {
+          if (!Array.isArray(coords) || coords.length !== 2) {
+            coords = await getCurrentCoordsFromBrowser();
+          }
+
+          const oneSignal = await ensureOneSignalReady();
+          if (!skipPermissionPrompt && oneSignal && oneSignal.Notifications && typeof oneSignal.Notifications.requestPermission === "function") {
+            await oneSignal.Notifications.requestPermission();
+          }
+          const snapshot = await waitForOneSignalSubscriptionSnapshot(oneSignal);
+          permission = snapshot.permission || permission;
+          subscriptionId = snapshot.subscriptionId || "";
+
+          if (permission === "denied") {
+            throw new Error("Push permission is denied on this device.");
+          }
+          if (!subscriptionId) {
+            throw new Error("Push subscription is not ready yet. Open the app from Home Screen and allow notifications.");
+          }
+        }
+
+        const timezone =
+          String(
+            (options.timezone || auroraAlertSettings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "")
+          )
+            .trim()
+            .slice(0, 80);
+
+        await upsertAuroraAlertSubscription({
+          installationId: auroraAlertSettings.installationId,
+          enabled: selectedEnabled,
+          coords,
+          timezone,
+          oneSignalSubscriptionId: subscriptionId,
+          permission,
+          language: navigator.language || "",
+          userAgent: navigator.userAgent || ""
+        });
+
+        auroraAlertSettings = sanitizeAuroraAlertSettings({
+          ...auroraAlertSettings,
+          enabled: selectedEnabled,
+          coords,
+          timezone,
+          oneSignalSubscriptionId: subscriptionId,
+          permission,
+          lastSyncedAtMs: Date.now()
+        });
+        saveAuroraAlertSettings();
+        renderAuroraAlertSettings();
+
+        if (!silent) {
+          setAuroraAlertStatus(
+            selectedEnabled
+              ? "Aurora wake alerts are enabled for this device."
+              : "Aurora wake alerts are disabled for this device.",
+            "ok"
+          );
+        }
+        return true;
+      } catch (error) {
+        if (!silent) {
+          setAuroraAlertStatus(error && error.message ? error.message : "Aurora alert setup failed.", "error");
+        }
+        return false;
+      } finally {
+        auroraAlertSyncInFlight = false;
+        if (auroraAlertSaveBtnEl) {
+          auroraAlertSaveBtnEl.disabled = false;
+        }
+        if (auroraAlertDisableBtnEl) {
+          auroraAlertDisableBtnEl.disabled = false;
+        }
+      }
+    }
+
+    function handleAuroraAlertCoordsUpdate(coords) {
+      if (!Array.isArray(coords) || coords.length !== 2) {
+        return;
+      }
+      const lat = Number(coords[0]);
+      const lon = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return;
+      }
+
+      auroraAlertSettings = sanitizeAuroraAlertSettings({
+        ...auroraAlertSettings,
+        coords: [lat, lon],
+        timezone: String(Intl.DateTimeFormat().resolvedOptions().timeZone || ""),
+        lastSyncedAtMs: auroraAlertSettings.lastSyncedAtMs
+      });
+      saveAuroraAlertSettings();
+      renderAuroraAlertSettings();
+
+      if (!auroraAlertSettings.enabled) {
+        return;
+      }
+
+      syncAuroraAlertRegistration({
+        silent: true,
+        skipPermissionPrompt: true,
+        coords: [lat, lon]
+      }).catch(() => {});
+    }
+
+    function initializeAuroraAlertCard() {
+      if (!auroraAlertCardEl) {
+        return;
+      }
+
+      auroraAlertSettings = sanitizeAuroraAlertSettings(auroraAlertSettings);
+      saveAuroraAlertSettings();
+      renderAuroraAlertSettings();
+
+      if (auroraAlertEnabledInputEl) {
+        auroraAlertEnabledInputEl.addEventListener("change", () => {
+          auroraAlertSettings = sanitizeAuroraAlertSettings({
+            ...auroraAlertSettings,
+            enabled: Boolean(auroraAlertEnabledInputEl.checked)
+          });
+          saveAuroraAlertSettings();
+          renderAuroraAlertSettings();
+        });
+      }
+
+      if (auroraAlertSaveBtnEl) {
+        auroraAlertSaveBtnEl.addEventListener("click", () => {
+          syncAuroraAlertRegistration({ force: true, silent: false });
+        });
+      }
+
+      if (auroraAlertDisableBtnEl) {
+        auroraAlertDisableBtnEl.addEventListener("click", () => {
+          if (auroraAlertEnabledInputEl) {
+            auroraAlertEnabledInputEl.checked = false;
+          }
+          auroraAlertSettings = sanitizeAuroraAlertSettings({
+            ...auroraAlertSettings,
+            enabled: false
+          });
+          saveAuroraAlertSettings();
+          renderAuroraAlertSettings();
+          syncAuroraAlertRegistration({ force: true, silent: false });
+        });
+      }
+
+      if (auroraAlertSettings.enabled) {
+        syncAuroraAlertRegistration({
+          silent: true,
+          skipPermissionPrompt: true
+        }).catch(() => {});
       }
     }
 
@@ -9026,6 +9810,474 @@
     function persistTodayOverviewWeatherCache() {
       todayOverviewWeatherCache = compactObjectCache(todayOverviewWeatherCache, 200);
       writeLocalStorageObject(TODAY_OVERVIEW_WEATHER_CACHE_KEY, todayOverviewWeatherCache);
+    }
+
+    function buildAuroraSignalCacheKey(coords) {
+      if (!Array.isArray(coords) || coords.length !== 2) {
+        return "";
+      }
+      const lat = Number(coords[0]);
+      const lon = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        return "";
+      }
+      return lat.toFixed(2) + "," + lon.toFixed(2);
+    }
+
+    function persistAuroraSignalCache() {
+      auroraSignalCache = compactObjectCache(auroraSignalCache, 80);
+      writeLocalStorageObject(AURORA_SIGNAL_CACHE_KEY, auroraSignalCache);
+    }
+
+    function getCachedAuroraSignalAssessment(coords, options = {}) {
+      const cacheKey = buildAuroraSignalCacheKey(coords);
+      if (!cacheKey) {
+        return null;
+      }
+      const includeExpired = options.includeExpired === true;
+      const cachedEntry = auroraSignalCache[cacheKey];
+      if (
+        !cachedEntry ||
+        typeof cachedEntry !== "object" ||
+        !cachedEntry.data ||
+        typeof cachedEntry.data !== "object" ||
+        !Number.isFinite(cachedEntry.updatedAtMs)
+      ) {
+        return null;
+      }
+      const ageMs = Date.now() - Number(cachedEntry.updatedAtMs);
+      if (!includeExpired && ageMs > AURORA_SIGNAL_TTL_MS) {
+        return null;
+      }
+      return {
+        ...cachedEntry.data,
+        stale: ageMs > AURORA_SIGNAL_TTL_MS,
+        fromCache: true
+      };
+    }
+
+    function saveAuroraSignalAssessment(coords, payload) {
+      const cacheKey = buildAuroraSignalCacheKey(coords);
+      if (!cacheKey || !payload || typeof payload !== "object") {
+        return;
+      }
+      auroraSignalCache[cacheKey] = {
+        updatedAtMs: Date.now(),
+        data: payload
+      };
+      persistAuroraSignalCache();
+    }
+
+    function parseNoaaTable(rows) {
+      if (!Array.isArray(rows) || rows.length < 2 || !Array.isArray(rows[0])) {
+        return [];
+      }
+      const headers = rows[0].map((entry) => String(entry || ""));
+      return rows.slice(1).reduce((list, row) => {
+        if (!Array.isArray(row)) {
+          return list;
+        }
+        const nextEntry = {};
+        headers.forEach((header, index) => {
+          nextEntry[header] = row[index];
+        });
+        list.push(nextEntry);
+        return list;
+      }, []);
+    }
+
+    function pickLatestNoaaRowWithFields(rows, requiredKeys) {
+      const sourceRows = Array.isArray(rows) ? rows : [];
+      for (let index = sourceRows.length - 1; index >= 0; index -= 1) {
+        const row = sourceRows[index];
+        if (!row || typeof row !== "object") {
+          continue;
+        }
+        const hasAll = requiredKeys.every((key) => {
+          const value = row[key];
+          return value !== undefined && value !== null && value !== "";
+        });
+        if (hasAll) {
+          return row;
+        }
+      }
+      return null;
+    }
+
+    function parseFiniteNumber(value) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+
+    function recommendationFromAuroraScore(finalScore) {
+      if (finalScore >= 60) {
+        return "GO";
+      }
+      if (finalScore >= 35) {
+        return "MAYBE";
+      }
+      return "NO";
+    }
+
+    function solarScore0to100(sw) {
+      const reasons = [];
+      const speedKms = Number(sw && sw.speedKms);
+      const densityPcm3 = Number(sw && sw.densityPcm3);
+      const bzNt = sw && sw.bzNt !== undefined ? Number(sw.bzNt) : undefined;
+
+      const speedScore = clampNumber(((speedKms - 350) / 300) * 60, 0, 60, 0);
+      if (speedKms >= 450) {
+        reasons.push("Solar wind speed is decent (" + speedKms.toFixed(0) + " km/s).");
+      } else {
+        reasons.push("Solar wind speed is modest (" + speedKms.toFixed(0) + " km/s).");
+      }
+
+      const densityScore = clampNumber((densityPcm3 / 20) * 20, 0, 20, 0);
+      if (densityPcm3 >= 10) {
+        reasons.push("Particle density is elevated (" + densityPcm3.toFixed(1) + " p/cm³).");
+      }
+
+      let bzScore = 0;
+      if (Number.isFinite(bzNt)) {
+        bzScore = clampNumber(((5 - bzNt) / 20) * 20, 0, 20, 0);
+        if (bzNt <= -5) {
+          reasons.push("IMF Bz is southward (" + bzNt.toFixed(1) + " nT), which helps auroras.");
+        } else {
+          reasons.push("IMF Bz is not strongly southward (" + bzNt.toFixed(1) + " nT).");
+        }
+      } else {
+        reasons.push("IMF Bz unavailable right now (still using speed+density).");
+      }
+
+      return {
+        score: clampNumber(speedScore + densityScore + bzScore, 0, 100, 0),
+        reasons
+      };
+    }
+
+    function computeAuroraViewingScore(solarScore, cloudCoverPct) {
+      const cloud = Number.isFinite(Number(cloudCoverPct))
+        ? clampNumber(cloudCoverPct, 0, 100, 100)
+        : 100;
+      const visibility = 1 - cloud / 100;
+      return clampNumber(solarScore * visibility, 0, 100, 0);
+    }
+
+    function shouldStayForAurora(params) {
+      const reasons = [];
+      const solarScore = clampNumber(params && params.solarScore_0_100, 0, 100, 0);
+      const bzNt = parseFiniteNumber(params && params.bzNt);
+      const speedKms = parseFiniteNumber(params && params.speedKms);
+      const densityPcm3 = parseFiniteNumber(params && params.densityPcm3);
+      const cloudNowPct = parseFiniteNumber(params && params.cloudNowPct);
+      const cloudPlus1hPct = parseFiniteNumber(params && params.cloudPlus1hPct);
+      const cloudPlus2hPct = parseFiniteNumber(params && params.cloudPlus2hPct);
+
+      const scoreNow = computeAuroraViewingScore(solarScore, cloudNowPct);
+      const score1h = computeAuroraViewingScore(solarScore, cloudPlus1hPct);
+      const score2h = computeAuroraViewingScore(solarScore, cloudPlus2hPct);
+
+      const entries = [
+        { window: "NOW", score: scoreNow },
+        { window: "IN_1H", score: score1h },
+        { window: "IN_2H", score: score2h }
+      ].sort((left, right) => right.score - left.score);
+      const best = entries[0];
+
+      if (Number.isFinite(speedKms)) {
+        reasons.push("Solar wind speed: " + speedKms.toFixed(0) + " km/s.");
+      }
+      if (Number.isFinite(densityPcm3)) {
+        reasons.push("Density: " + densityPcm3.toFixed(1) + " p/cm³.");
+      }
+      if (Number.isFinite(bzNt)) {
+        reasons.push("Bz: " + bzNt.toFixed(1) + " nT.");
+        reasons.push(
+          bzNt <= -5
+            ? "Bz is southward (favorable)."
+            : "Bz is not strongly southward (less favorable)."
+        );
+      }
+
+      const cloudLabel = (value) => Number.isFinite(value) ? value.toFixed(0) + "%" : "n/a";
+      reasons.push(
+        "Cloud cover: now " + cloudLabel(cloudNowPct) +
+        ", +1h " + cloudLabel(cloudPlus1hPct) +
+        ", +2h " + cloudLabel(cloudPlus2hPct) + "."
+      );
+
+      const solarStrong = solarScore >= 60;
+      const solarOk = solarScore >= 40;
+      const goodNow = scoreNow >= 35;
+      const goodSoon = score1h >= 35 || score2h >= 35;
+      const improves1h = score1h - scoreNow >= 12;
+      const improves2h = score2h - scoreNow >= 12;
+      const cloudClears1h =
+        Number.isFinite(cloudNowPct) &&
+        Number.isFinite(cloudPlus1hPct) &&
+        cloudPlus1hPct <= cloudNowPct - 20;
+      const cloudClears2h =
+        Number.isFinite(cloudNowPct) &&
+        Number.isFinite(cloudPlus2hPct) &&
+        cloudPlus2hPct <= cloudNowPct - 20;
+
+      let decision = "LEAVE";
+      let bestWindow = best && best.score > 0 ? best.window : "NONE";
+
+      if (goodNow && solarOk) {
+        decision = "STAY_1H";
+        reasons.push("Conditions are decent right now. Aurora activity can come in waves.");
+        if ((score1h >= scoreNow - 5 && solarOk) || improves1h || improves2h) {
+          decision = "STAY_2H";
+          reasons.push("Forecast suggests conditions stay decent or improve within 2 hours.");
+        }
+      } else if (goodSoon && solarOk) {
+        decision = score1h >= score2h ? "STAY_1H" : "STAY_2H";
+        reasons.push("Not great now, but forecast suggests a better window soon.");
+        if (cloudClears1h) {
+          reasons.push("Clouds are expected to clear significantly within ~1 hour.");
+        }
+        if (cloudClears2h) {
+          reasons.push("Clouds are expected to clear significantly within ~2 hours.");
+        }
+      } else if (solarStrong && (cloudClears1h || cloudClears2h)) {
+        decision = cloudClears1h ? "STAY_1H" : "STAY_2H";
+        reasons.push("Space weather potential is strong. Waiting for cloud breaks may pay off.");
+      } else {
+        decision = "LEAVE";
+        reasons.push("Not worth waiting here 1–2 hours given space weather and cloud trend.");
+        bestWindow = "NONE";
+      }
+
+      reasons.push(
+        "Viewing score (0-100): now " + scoreNow.toFixed(0) +
+        ", +1h " + score1h.toFixed(0) +
+        ", +2h " + score2h.toFixed(0) +
+        ". Best: " + (best ? best.window : "NONE") +
+        " (" + (best ? best.score.toFixed(0) : "0") + ")."
+      );
+
+      return {
+        decision,
+        bestWindow,
+        scoreNow: Number(scoreNow.toFixed(1)),
+        score1h: Number(score1h.toFixed(1)),
+        score2h: Number(score2h.toFixed(1)),
+        reasons
+      };
+    }
+
+    function getHourInTimeZone(timeZone, dateValue = new Date()) {
+      const date = new Date(dateValue);
+      if (!Number.isFinite(date.getTime())) {
+        return NaN;
+      }
+      try {
+        const formatter = new Intl.DateTimeFormat("en-US", {
+          hour: "2-digit",
+          hour12: false,
+          timeZone: timeZone || undefined
+        });
+        const parts = formatter.formatToParts(date);
+        const hourPart = parts.find((entry) => entry.type === "hour");
+        const parsed = Number(hourPart && hourPart.value);
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      } catch {
+        // Fallback below.
+      }
+      return date.getHours();
+    }
+
+    function isAuroraNightTime(timeZone, dateValue = new Date()) {
+      const hour = getHourInTimeZone(timeZone, dateValue);
+      if (!Number.isFinite(hour)) {
+        return false;
+      }
+      return hour >= 18 || hour < 6;
+    }
+
+    async function fetchAuroraSolarWindNow() {
+      const [plasmaPayload, magPayload] = await Promise.all([
+        fetchJsonWithTimeout(NOAA_SOLAR_WIND_PLASMA_URL, 9000),
+        fetchJsonWithTimeout(NOAA_SOLAR_WIND_MAG_URL, 9000)
+      ]);
+
+      const plasmaRows = parseNoaaTable(plasmaPayload);
+      const magRows = parseNoaaTable(magPayload);
+      const plasmaLatest = pickLatestNoaaRowWithFields(plasmaRows, ["time_tag", "speed", "density"]);
+      const magLatest = pickLatestNoaaRowWithFields(magRows, ["time_tag", "bt", "bz_gsm"]);
+
+      if (!plasmaLatest) {
+        throw new Error("NOAA plasma data unavailable.");
+      }
+
+      const speedKms = parseFiniteNumber(plasmaLatest.speed);
+      const densityPcm3 = parseFiniteNumber(plasmaLatest.density);
+      if (!Number.isFinite(speedKms) || !Number.isFinite(densityPcm3)) {
+        throw new Error("NOAA solar wind values are invalid.");
+      }
+
+      return {
+        timeTag: String(plasmaLatest.time_tag || ""),
+        speedKms,
+        densityPcm3,
+        btNt: magLatest ? parseFiniteNumber(magLatest.bt) : undefined,
+        bzNt: magLatest ? parseFiniteNumber(magLatest.bz_gsm) : undefined
+      };
+    }
+
+    async function fetchAuroraCloudCoverPoints(coords) {
+      const lat = Number(coords && coords[0]);
+      const lon = Number(coords && coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        throw new Error("Invalid coordinates for cloud cover lookup.");
+      }
+
+      const query = new URLSearchParams();
+      query.set("latitude", String(lat));
+      query.set("longitude", String(lon));
+      query.set("hourly", "cloud_cover");
+      query.set("forecast_days", "2");
+      query.set("timezone", "auto");
+
+      const payload = await fetchJsonWithTimeout(
+        "https://api.open-meteo.com/v1/forecast?" + query.toString(),
+        9000
+      );
+      const times = Array.isArray(payload && payload.hourly && payload.hourly.time)
+        ? payload.hourly.time.map((entry) => String(entry))
+        : [];
+      const covers = Array.isArray(payload && payload.hourly && payload.hourly.cloud_cover)
+        ? payload.hourly.cloud_cover.map((entry) => Number(entry))
+        : [];
+
+      if (!times.length || !covers.length || times.length !== covers.length) {
+        throw new Error("Open-Meteo cloud cover response is incomplete.");
+      }
+
+      return {
+        times,
+        covers,
+        timeZone: String(payload && payload.timezone || "")
+      };
+    }
+
+    function nearestHourIndex(timesISO, targetMs) {
+      if (!Array.isArray(timesISO) || !Number.isFinite(targetMs)) {
+        return undefined;
+      }
+      let bestIndex = undefined;
+      let bestDiff = Infinity;
+      timesISO.forEach((timeISO, index) => {
+        const timestamp = Date.parse(String(timeISO || ""));
+        if (!Number.isFinite(timestamp)) {
+          return;
+        }
+        const diff = Math.abs(timestamp - targetMs);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestIndex = index;
+        }
+      });
+      return bestIndex;
+    }
+
+    async function fetchAuroraAssessmentForCoords(coords, options = {}) {
+      const useCache = options.useCache !== false;
+      const cached = getCachedAuroraSignalAssessment(coords);
+      if (useCache && cached) {
+        return cached;
+      }
+
+      try {
+        const [solarWind, cloudPayload] = await Promise.all([
+          fetchAuroraSolarWindNow(),
+          fetchAuroraCloudCoverPoints(coords)
+        ]);
+
+        const nowMs = Date.now();
+        const idxNow = nearestHourIndex(cloudPayload.times, nowMs);
+        const idx1h = nearestHourIndex(cloudPayload.times, nowMs + 1 * 60 * 60 * 1000);
+        const idx2h = nearestHourIndex(cloudPayload.times, nowMs + 2 * 60 * 60 * 1000);
+        const idx6h = nearestHourIndex(cloudPayload.times, nowMs + 6 * 60 * 60 * 1000);
+        const pointAt = (index) => {
+          if (!Number.isFinite(index)) {
+            return undefined;
+          }
+          const cover = Number(cloudPayload.covers[index]);
+          if (!Number.isFinite(cover)) {
+            return undefined;
+          }
+          return {
+            timeISO: String(cloudPayload.times[index] || ""),
+            cloudCoverPct: cover
+          };
+        };
+
+        const cloudCover = {
+          now: pointAt(idxNow),
+          plus1h: pointAt(idx1h),
+          plus2h: pointAt(idx2h),
+          plus6h: pointAt(idx6h)
+        };
+        const cloudValues = [cloudCover.now, cloudCover.plus1h, cloudCover.plus2h, cloudCover.plus6h]
+          .map((entry) => entry && Number(entry.cloudCoverPct))
+          .filter((value) => Number.isFinite(value));
+        const bestCloud = cloudValues.length ? Math.min(...cloudValues) : 100;
+        const cloudPenalty = clampNumber(bestCloud, 0, 100, 100);
+
+        const solarScore = solarScore0to100(solarWind);
+        const finalScore = clampNumber(
+          solarScore.score * (1 - cloudPenalty / 100),
+          0,
+          100,
+          0
+        );
+        const recommendation = recommendationFromAuroraScore(finalScore);
+        const reasons = [
+          ...solarScore.reasons,
+          "Best cloud cover in the next ~6h is " + bestCloud.toFixed(0) + "%.",
+          "Solar score: " + solarScore.score.toFixed(0) + "/100, cloud penalty: " + cloudPenalty.toFixed(0) + "/100, final: " + finalScore.toFixed(0) + "/100."
+        ];
+        const stayDecision = shouldStayForAurora({
+          solarScore_0_100: solarScore.score,
+          bzNt: solarWind.bzNt,
+          speedKms: solarWind.speedKms,
+          densityPcm3: solarWind.densityPcm3,
+          cloudNowPct: cloudCover.now && cloudCover.now.cloudCoverPct,
+          cloudPlus1hPct: cloudCover.plus1h && cloudCover.plus1h.cloudCoverPct,
+          cloudPlus2hPct: cloudCover.plus2h && cloudCover.plus2h.cloudCoverPct
+        });
+
+        const payload = {
+          location: {
+            latitude: Number(coords[0]),
+            longitude: Number(coords[1])
+          },
+          timeZone: String(cloudPayload.timeZone || ""),
+          solarWind,
+          cloudCover,
+          scores: {
+            solarScore_0_100: Number(solarScore.score.toFixed(1)),
+            cloudPenalty_0_100: Number(cloudPenalty.toFixed(1)),
+            finalScore_0_100: Number(finalScore.toFixed(1))
+          },
+          recommendation,
+          reasons,
+          stayDecision
+        };
+
+        saveAuroraSignalAssessment(coords, payload);
+        return payload;
+      } catch (error) {
+        const cachedFallback = getCachedAuroraSignalAssessment(coords, { includeExpired: true });
+        if (cachedFallback) {
+          return cachedFallback;
+        }
+        throw error;
+      }
     }
 
     async function fetchJsonWithTimeout(url, timeoutMs = 8000) {
@@ -10811,6 +12063,479 @@
       renderTodayOverviewQuickSummary([], []);
     }
 
+    let auroraSignalRequestId = 0;
+    let auroraMoveDecisionCache = null; // { key, result, ts }
+
+
+    function auroraSignalLevelFromRecommendation(recommendation) {
+      if (recommendation === "GO") {
+        return { level: "strong", label: "Strong" };
+      }
+      if (recommendation === "MAYBE") {
+        return { level: "weak", label: "Weak" };
+      }
+      if (recommendation === "NO") {
+        return { level: "no", label: "No" };
+      }
+      return { level: "unknown", label: "Unknown" };
+    }
+
+    function formatAuroraStayWindowLabel(bestWindow) {
+      if (bestWindow === "NOW") {
+        return "now";
+      }
+      if (bestWindow === "IN_1H") {
+        return "in ~1h";
+      }
+      if (bestWindow === "IN_2H") {
+        return "in ~2h";
+      }
+      return "none";
+    }
+
+    function formatAuroraCloudValue(value) {
+      return Number.isFinite(Number(value))
+        ? Math.round(Number(value)) + "%"
+        : "n/a";
+    }
+
+    function formatAuroraCloudTimeLabel(point, fallbackLabel) {
+      if (!point || typeof point !== "object" || !point.timeISO) {
+        return fallbackLabel;
+      }
+      const parsed = new Date(String(point.timeISO));
+      if (!Number.isFinite(parsed.getTime())) {
+        return fallbackLabel;
+      }
+      return parsed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function auroraSpeedLevel(speedKms) {
+      const v = Number(speedKms);
+      if (!Number.isFinite(v)) return "";
+      if (v > 550) return "aurora-level-strong";
+      if (v > 450) return "aurora-level-good";
+      if (v >= 350) return "aurora-level-moderate";
+      return "aurora-level-bad";
+    }
+
+    function auroraDensityLevel(density) {
+      const v = Number(density);
+      if (!Number.isFinite(v)) return "";
+      if (v > 20) return "aurora-level-strong";
+      if (v >= 10) return "aurora-level-good";
+      if (v >= 5) return "aurora-level-moderate";
+      return "aurora-level-bad";
+    }
+
+    function auroraBzLevel(bzNt) {
+      const v = Number(bzNt);
+      if (!Number.isFinite(v)) return "";
+      if (v <= -10) return "aurora-level-strong";
+      if (v <= -5) return "aurora-level-good";
+      if (v < 0) return "aurora-level-moderate";
+      return "aurora-level-bad";
+    }
+
+    function auroraCloudLevel(pct) {
+      const v = Number(pct);
+      if (!Number.isFinite(v)) return "";
+      if (v < 40) return "aurora-level-strong";
+      if (v < 70) return "aurora-level-moderate";
+      return "aurora-level-bad";
+    }
+
+    // --- Move decision helpers ---
+
+    function auroraDeg2rad(d) { return d * Math.PI / 180; }
+    function auroraRad2deg(r) { return r * 180 / Math.PI; }
+
+    function auroraDestinationPoint(lat, lon, bearingDeg, distanceKm) {
+      const R = 6371;
+      const delta = distanceKm / R;
+      const theta = auroraDeg2rad(bearingDeg);
+      const phi1 = auroraDeg2rad(lat);
+      const lambda1 = auroraDeg2rad(lon);
+      const sinPhi2 = Math.sin(phi1) * Math.cos(delta) + Math.cos(phi1) * Math.sin(delta) * Math.cos(theta);
+      const phi2 = Math.asin(sinPhi2);
+      const y = Math.sin(theta) * Math.sin(delta) * Math.cos(phi1);
+      const x = Math.cos(delta) - Math.sin(phi1) * sinPhi2;
+      const lambda2 = lambda1 + Math.atan2(y, x);
+      return {
+        latitude: auroraRad2deg(phi2),
+        longitude: ((auroraRad2deg(lambda2) + 540) % 360) - 180
+      };
+    }
+
+    async function fetchAuroraMoveCloud(lat, lon) {
+      const url =
+        "https://api.open-meteo.com/v1/forecast?latitude=" + lat.toFixed(4) +
+        "&longitude=" + lon.toFixed(4) +
+        "&hourly=cloud_cover&forecast_days=2&timezone=auto";
+      const res = await fetchJsonWithTimeout(url, 8000);
+      const times = res && res.hourly && res.hourly.time;
+      const covers = res && res.hourly && res.hourly.cloud_cover;
+      if (!Array.isArray(times) || !Array.isArray(covers)) return {};
+      const nowMs = Date.now();
+      const nearestIdx = (targetMs) => {
+        let bestIdx = -1, bestDiff = Infinity;
+        for (let i = 0; i < times.length; i++) {
+          const ms = Date.parse(String(times[i]));
+          if (!Number.isFinite(ms)) continue;
+          const diff = Math.abs(ms - targetMs);
+          if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+        }
+        return bestIdx >= 0 ? bestIdx : undefined;
+      };
+      const get = (idx) => {
+        if (idx === undefined) return undefined;
+        const v = Number(covers[idx]);
+        return Number.isFinite(v) ? clampNumber(v, 0, 100, 0) : undefined;
+      };
+      return {
+        now: get(nearestIdx(nowMs)),
+        plus1h: get(nearestIdx(nowMs + 3600000)),
+        plus2h: get(nearestIdx(nowMs + 7200000))
+      };
+    }
+
+    async function decideAuroraStayOrMove(lat, lon, solarScore) {
+      const cacheKey = lat.toFixed(2) + "|" + lon.toFixed(2) + "|" + Math.round(solarScore / 10);
+      if (
+        auroraMoveDecisionCache &&
+        auroraMoveDecisionCache.key === cacheKey &&
+        Date.now() - auroraMoveDecisionCache.ts < 900000
+      ) {
+        return auroraMoveDecisionCache.result;
+      }
+
+      const distanceKm = 15;
+      const minImprovement = 12;
+      const directions = [
+        { dir: "N", bearing: 0 }, { dir: "NE", bearing: 45 }, { dir: "E", bearing: 90 },
+        { dir: "SE", bearing: 135 }, { dir: "S", bearing: 180 }, { dir: "SW", bearing: 225 },
+        { dir: "W", bearing: 270 }, { dir: "NW", bearing: 315 }
+      ];
+      const candidates = directions.map((d) => ({
+        dir: d.dir,
+        ...auroraDestinationPoint(lat, lon, d.bearing, distanceKm)
+      }));
+
+      const [hereCloud, ...candClouds] = await Promise.all([
+        fetchAuroraMoveCloud(lat, lon),
+        ...candidates.map((c) => fetchAuroraMoveCloud(c.latitude, c.longitude))
+      ]);
+
+      const scoreHere = {
+        now: computeAuroraViewingScore(solarScore, hereCloud.now),
+        plus1h: computeAuroraViewingScore(solarScore, hereCloud.plus1h),
+        plus2h: computeAuroraViewingScore(solarScore, hereCloud.plus2h)
+      };
+      const hereBest = [
+        { when: "NOW", s: scoreHere.now },
+        { when: "IN_1H", s: scoreHere.plus1h },
+        { when: "IN_2H", s: scoreHere.plus2h }
+      ].sort((a, b) => b.s - a.s)[0];
+
+      const scoredCandidates = candidates.map((c, i) => {
+        const cl = candClouds[i] || {};
+        const scores = {
+          now: computeAuroraViewingScore(solarScore, cl.now),
+          plus1h: computeAuroraViewingScore(solarScore, cl.plus1h),
+          plus2h: computeAuroraViewingScore(solarScore, cl.plus2h)
+        };
+        const best = [
+          { when: "NOW", s: scores.now },
+          { when: "IN_1H", s: scores.plus1h },
+          { when: "IN_2H", s: scores.plus2h }
+        ].sort((a, b) => b.s - a.s)[0];
+        return { dir: c.dir, scores, best, clouds: cl };
+      });
+      scoredCandidates.sort((a, b) => b.best.s - a.best.s);
+      const bestCand = scoredCandidates[0];
+
+      const improvement = bestCand.best.s - hereBest.s;
+      const shouldMove = improvement >= minImprovement && bestCand.best.s >= 30;
+
+      const result = {
+        action: shouldMove ? "MOVE" : "STAY",
+        direction: shouldMove ? bestCand.dir : "HERE",
+        when: shouldMove ? bestCand.best.when : hereBest.when,
+        distanceKm,
+        improvement: Math.round(improvement),
+        hereBest: Math.round(hereBest.s),
+        candBest: Math.round(bestCand.best.s),
+        candDir: bestCand.dir
+      };
+      auroraMoveDecisionCache = { key: cacheKey, result, ts: Date.now() };
+      return result;
+    }
+
+    // --- End move decision helpers ---
+
+    function renderAuroraSignalUnavailable(message, options = {}) {
+      if (!auroraSignalCardEl) {
+        return;
+      }
+      setElementVisibility(auroraSignalCardEl, options.showCard !== false);
+      if (auroraSignalQuickMainEl) {
+        auroraSignalQuickMainEl.innerHTML =
+          "<span class=\"aurora-quick-main\">🌌 " + escapeHtml(String(message || "Aurora signal unavailable.")) + "</span>" +
+          "<span class=\"aurora-status-chip level-unknown\">Unknown</span>";
+      }
+      if (auroraSignalQuickStayEl) {
+        auroraSignalQuickStayEl.innerHTML =
+          "<span class=\"aurora-quick-main\">Waiting guidance unavailable.</span>";
+      }
+      if (auroraSignalQuickMoveEl) {
+        auroraSignalQuickMoveEl.hidden = true;
+      }
+      if (auroraSignalRecommendationEl) {
+        auroraSignalRecommendationEl.innerHTML =
+          "<span class=\"aurora-recommendation-main\">Aurora assessment unavailable</span>";
+      }
+      if (auroraSignalCloudEl) {
+        auroraSignalCloudEl.innerHTML = "";
+      }
+      if (auroraSignalSolarEl) {
+        auroraSignalSolarEl.innerHTML = "";
+      }
+      if (auroraSignalReasonsEl) {
+        auroraSignalReasonsEl.innerHTML = "";
+      }
+      if (auroraSignalNoteEl) {
+        auroraSignalNoteEl.textContent =
+          "Night mode only (18:00-06:00). Enable location for local aurora assessment.";
+      }
+    }
+
+    function renderAuroraSignalAssessment(assessment) {
+      if (!auroraSignalCardEl || !assessment || typeof assessment !== "object") {
+        return;
+      }
+
+      const levelInfo = auroraSignalLevelFromRecommendation(assessment.recommendation);
+      const stay = assessment.stayDecision && typeof assessment.stayDecision === "object"
+        ? assessment.stayDecision
+        : null;
+      const staySummary =
+        stay && stay.decision === "STAY_2H"
+          ? "Worth staying ~2h · best " + formatAuroraStayWindowLabel(stay.bestWindow)
+          : stay && stay.decision === "STAY_1H"
+            ? "Worth staying ~1h · best " + formatAuroraStayWindowLabel(stay.bestWindow)
+            : "Not worth waiting 1–2h here.";
+      const mainSummary =
+        levelInfo.level === "strong"
+          ? "Strong aurora chances"
+          : levelInfo.level === "weak"
+            ? "Weak aurora chances"
+            : levelInfo.level === "no"
+              ? "No meaningful aurora chances"
+              : "Aurora chance unclear";
+
+      if (auroraSignalQuickMainEl) {
+        auroraSignalQuickMainEl.innerHTML =
+          "<span class=\"aurora-quick-main\">🌌 " + escapeHtml(mainSummary) + "</span>" +
+          "<span class=\"aurora-status-chip level-" + escapeHtml(levelInfo.level) + "\">" + escapeHtml(levelInfo.label) + "</span>";
+      }
+      if (auroraSignalQuickStayEl) {
+        auroraSignalQuickStayEl.innerHTML =
+          "<span class=\"aurora-quick-main\">" + escapeHtml(staySummary) + "</span>";
+      }
+
+      // Move decision: shown when solar is strong but clouds are blocking
+      if (auroraSignalQuickMoveEl) {
+        const solarScore = Number(assessment.scores && assessment.scores.solarScore_0_100) || 0;
+        const cloudNow = assessment.cloudCover && assessment.cloudCover.now && Number(assessment.cloudCover.now.cloudCoverPct);
+        const loc = assessment.location;
+        const solarStrong = solarScore >= 60;
+        const cloudsBlocking = Number.isFinite(cloudNow) && cloudNow >= 40;
+
+        if (solarStrong && cloudsBlocking && loc && Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)) {
+          auroraSignalQuickMoveEl.hidden = false;
+          auroraSignalQuickMoveEl.innerHTML = "<span class=\"aurora-quick-main\">Scouting nearby clear spots…</span>";
+          decideAuroraStayOrMove(loc.latitude, loc.longitude, solarScore).then((decision) => {
+            if (auroraSignalQuickMoveEl.hidden) return;
+            const dirArrows = { N: "↑", NE: "↗", E: "→", SE: "↘", S: "↓", SW: "↙", W: "←", NW: "↖" };
+            const whenLabels = { NOW: "now", IN_1H: "+1h", IN_2H: "+2h" };
+            if (decision.action === "MOVE") {
+              const arrow = dirArrows[decision.direction] || "";
+              const when = whenLabels[decision.when] || decision.when;
+              auroraSignalQuickMoveEl.innerHTML =
+                "<span class=\"aurora-quick-main\">" +
+                  escapeHtml(arrow + " " + decision.direction + " · ~" + decision.distanceKm + " km · " + when) +
+                "</span>" +
+                "<span class=\"aurora-status-chip level-move\">Move</span>";
+            } else {
+              auroraSignalQuickMoveEl.innerHTML =
+                "<span class=\"aurora-quick-main\">No better spot within ~" + decision.distanceKm + " km</span>" +
+                "<span class=\"aurora-status-chip level-stay\">Stay</span>";
+            }
+          }).catch(() => {
+            auroraSignalQuickMoveEl.hidden = true;
+          });
+        } else {
+          auroraSignalQuickMoveEl.hidden = true;
+        }
+      }
+
+      if (auroraSignalRecommendationEl) {
+        const scoreNow = stay ? stay.scoreNow : NaN;
+        const score1h = stay ? stay.score1h : NaN;
+        const score2h = stay ? stay.score2h : NaN;
+        const decisionLabel =
+          stay && stay.decision === "STAY_2H"
+            ? "Stay ~2h"
+            : stay && stay.decision === "STAY_1H"
+              ? "Stay ~1h"
+              : "Leave";
+        auroraSignalRecommendationEl.innerHTML =
+          "<span class=\"aurora-recommendation-main\">" +
+            escapeHtml(String(assessment.recommendation || "NO")) +
+            " · " +
+            escapeHtml(decisionLabel) +
+          "</span>" +
+          "<span class=\"today-overview-sub\">Solar score " + escapeHtml(String(Math.round(Number(assessment.scores && assessment.scores.solarScore_0_100) || 0))) + "/100 · final " + escapeHtml(String(Math.round(Number(assessment.scores && assessment.scores.finalScore_0_100) || 0))) + "/100</span>" +
+          "<span class=\"today-overview-sub\">Viewing score now/+1h/+2h: " +
+            escapeHtml(
+              (Number.isFinite(scoreNow) ? Math.round(scoreNow) : 0) + "/" +
+              (Number.isFinite(score1h) ? Math.round(score1h) : 0) + "/" +
+              (Number.isFinite(score2h) ? Math.round(score2h) : 0)
+            ) +
+          "</span>";
+      }
+
+      if (auroraSignalCloudEl) {
+        const cloudCover = assessment.cloudCover || {};
+        const cloudRows = [
+          { label: "Now", point: cloudCover.now },
+          { label: "+1h", point: cloudCover.plus1h },
+          { label: "+2h", point: cloudCover.plus2h },
+          { label: "+6h", point: cloudCover.plus6h }
+        ];
+        auroraSignalCloudEl.innerHTML = cloudRows
+          .map((entry) => (
+            "<div class=\"aurora-item " + auroraCloudLevel(entry.point && entry.point.cloudCoverPct) + "\">" +
+              "<span class=\"aurora-item-main\">" + escapeHtml(entry.label) + " · " + escapeHtml(formatAuroraCloudValue(entry.point && entry.point.cloudCoverPct)) + "</span>" +
+              "<span class=\"aurora-item-sub\">" + escapeHtml(formatAuroraCloudTimeLabel(entry.point, "Forecast")) + "</span>" +
+            "</div>"
+          ))
+          .join("");
+      }
+
+      if (auroraSignalSolarEl) {
+        const sw = assessment.solarWind || {};
+        auroraSignalSolarEl.innerHTML =
+          "<div class=\"aurora-item " + auroraSpeedLevel(sw.speedKms) + "\">" +
+            "<span class=\"aurora-item-main\">Speed: " + escapeHtml(Number.isFinite(Number(sw.speedKms)) ? Math.round(Number(sw.speedKms)) + " km/s" : "n/a") + "</span>" +
+            "<span class=\"aurora-item-sub\">NOAA solar wind</span>" +
+          "</div>" +
+          "<div class=\"aurora-item " + auroraDensityLevel(sw.densityPcm3) + "\">" +
+            "<span class=\"aurora-item-main\">Density: " + escapeHtml(Number.isFinite(Number(sw.densityPcm3)) ? Number(sw.densityPcm3).toFixed(1) + " p/cm³" : "n/a") + "</span>" +
+            "<span class=\"aurora-item-sub\">Solar particles</span>" +
+          "</div>" +
+          "<div class=\"aurora-item " + auroraBzLevel(sw.bzNt) + "\">" +
+            "<span class=\"aurora-item-main\">Bz: " + escapeHtml(Number.isFinite(Number(sw.bzNt)) ? Number(sw.bzNt).toFixed(1) + " nT" : "n/a") + "</span>" +
+            "<span class=\"aurora-item-sub\">Southward is better</span>" +
+          "</div>";
+      }
+
+      if (auroraSignalReasonsEl) {
+        const reasons = []
+          .concat(Array.isArray(assessment.reasons) ? assessment.reasons : [])
+          .concat(stay && Array.isArray(stay.reasons) ? stay.reasons : [])
+          .filter((reason) => typeof reason === "string" && reason.trim().length > 0)
+          .slice(0, 8);
+        auroraSignalReasonsEl.innerHTML = reasons
+          .map((reason) => "<li>" + escapeHtml(reason) + "</li>")
+          .join("");
+      }
+
+      if (auroraSignalNoteEl) {
+        const timezoneLabel = String(assessment.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "local");
+        auroraSignalNoteEl.textContent =
+          "Updated " +
+          new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) +
+          " · timezone " +
+          timezoneLabel +
+          " · active only between 18:00 and 06:00.";
+      }
+    }
+
+    function isAuroraCardActiveForHome() {
+      return Boolean(auroraSignalCardEl) && activeTab === "home";
+    }
+
+    async function refreshAuroraSignal(options = {}) {
+      if (!auroraSignalCardEl) {
+        return;
+      }
+      if (!isAuroraCardActiveForHome()) {
+        setElementVisibility(auroraSignalCardEl, false);
+        return;
+      }
+      if (IS_SMOKE_MODE) {
+        setElementVisibility(auroraSignalCardEl, false);
+        return;
+      }
+
+      const requestId = ++auroraSignalRequestId;
+      const coords = getLatestKnownCoords();
+      const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const localNight = isAuroraNightTime(localTimeZone, new Date());
+
+      if (!coords) {
+        if (!localNight) {
+          setElementVisibility(auroraSignalCardEl, false);
+          return;
+        }
+        renderAuroraSignalUnavailable("Location needed for local aurora signal.", {
+          showCard: true
+        });
+        return;
+      }
+
+      const cached = getCachedAuroraSignalAssessment(coords, { includeExpired: true });
+      if (cached && requestId === auroraSignalRequestId) {
+        const tz = String(cached.timeZone || localTimeZone || "");
+        const isNight = isAuroraNightTime(tz, new Date());
+        if (!isNight) {
+          setElementVisibility(auroraSignalCardEl, false);
+        } else {
+          setElementVisibility(auroraSignalCardEl, true);
+          renderAuroraSignalAssessment(cached);
+        }
+      }
+
+      try {
+        const assessment = await fetchAuroraAssessmentForCoords(coords, {
+          useCache: options.force !== true
+        });
+        if (requestId !== auroraSignalRequestId) {
+          return;
+        }
+        const assessmentTimeZone = String(assessment && assessment.timeZone || localTimeZone || "");
+        if (!isAuroraNightTime(assessmentTimeZone, new Date())) {
+          setElementVisibility(auroraSignalCardEl, false);
+          return;
+        }
+        setElementVisibility(auroraSignalCardEl, true);
+        renderAuroraSignalAssessment(assessment);
+      } catch (error) {
+        console.warn("Aurora signal refresh failed", error);
+        if (requestId !== auroraSignalRequestId) {
+          return;
+        }
+        if (!localNight) {
+          setElementVisibility(auroraSignalCardEl, false);
+          return;
+        }
+        renderAuroraSignalUnavailable("Aurora data is temporarily unavailable.", {
+          showCard: true
+        });
+      }
+    }
+
     let todayOverviewBackgroundRefreshQueued = false;
 
     function queueTodayOverviewBackgroundRefresh() {
@@ -11117,6 +12842,8 @@
         renderNearbyServicesFromCoords(coords);
         renderFuelPlannerCard();
         rerenderActiveFullscreenItineraryForFuelRange();
+        refreshAuroraSignal({ force: true, silent: true });
+        handleAuroraAlertCoordsUpdate(coords);
       };
 
       const onError = (error) => {
@@ -12559,12 +14286,19 @@
       if (flightCardEl) {
         flightCardEl.classList.toggle("outbound-hidden", hideOutbound);
       }
+
+      if (shouldShowOverview) {
+        refreshAuroraSignal({ silent: true });
+      } else {
+        setElementVisibility(auroraSignalCardEl, false);
+      }
     }
 
     function applyTabView(nextTab) {
       const trip = getTripPhaseAndDay();
       if (nextTab !== "home") {
         todayOverviewRequestId += 1;
+        auroraSignalRequestId += 1;
       }
       appActions.setActiveTab(nextTab);
       setActiveTabButton(nextTab);
@@ -12582,6 +14316,7 @@
       if (nextTab === "itinerary") {
         setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(dailyLimitCardEl, false);
+        setElementVisibility(auroraSignalCardEl, false);
         setElementVisibility(todayOverviewCardEl, false);
         setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, true);
@@ -12591,6 +14326,7 @@
         setElementVisibility(fxCardEl, false);
         setElementVisibility(fuelPlannerCardEl, false);
         setElementVisibility(syncCardEl, false);
+        setElementVisibility(auroraAlertCardEl, false);
         setElementVisibility(usefulLinksCardEl, false);
         setElementVisibility(budgetCardViewEl, false);
         setElementVisibility(daysSectionTitleEl, true);
@@ -12606,6 +14342,7 @@
       if (nextTab === "tools") {
         setElementVisibility(departureCountdownCardEl, false);
         setElementVisibility(dailyLimitCardEl, false);
+        setElementVisibility(auroraSignalCardEl, false);
         setElementVisibility(todayOverviewCardEl, false);
         setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, false);
@@ -12615,6 +14352,7 @@
         setElementVisibility(fxCardEl, true);
         setElementVisibility(fuelPlannerCardEl, true);
         setElementVisibility(syncCardEl, true);
+        setElementVisibility(auroraAlertCardEl, true);
         setElementVisibility(usefulLinksCardEl, true);
         setElementVisibility(budgetCardViewEl, true);
         setElementVisibility(daysSectionTitleEl, false);
@@ -12626,6 +14364,7 @@
       if (trip.phase === "before") {
         setElementVisibility(departureCountdownCardEl, true);
         setElementVisibility(dailyLimitCardEl, false);
+        setElementVisibility(auroraSignalCardEl, true);
         setElementVisibility(todayOverviewCardEl, true);
         setElementVisibility(nearbyServiceCardEl, false);
         setElementVisibility(flightCardEl, true);
@@ -12635,6 +14374,7 @@
         setElementVisibility(fxCardEl, false);
         setElementVisibility(fuelPlannerCardEl, false);
         setElementVisibility(syncCardEl, false);
+        setElementVisibility(auroraAlertCardEl, false);
         setElementVisibility(usefulLinksCardEl, false);
         setElementVisibility(budgetCardViewEl, false);
         setElementVisibility(daysSectionTitleEl, false);
@@ -12642,10 +14382,12 @@
         showAllDayCards();
         updateTimeAwareVisibility();
         refreshTodayOverview();
+        refreshAuroraSignal({ force: true });
         return;
       }
 
       setElementVisibility(departureCountdownCardEl, true);
+      setElementVisibility(auroraSignalCardEl, true);
       setElementVisibility(todayOverviewCardEl, true);
       setElementVisibility(nearbyServiceCardEl, true);
       setElementVisibility(flightCardEl, false);
@@ -12655,6 +14397,7 @@
       setElementVisibility(fxCardEl, false);
       setElementVisibility(fuelPlannerCardEl, false);
       setElementVisibility(syncCardEl, false);
+      setElementVisibility(auroraAlertCardEl, false);
       setElementVisibility(usefulLinksCardEl, false);
       setElementVisibility(budgetCardViewEl, false);
       setElementVisibility(daysSectionTitleEl, true);
@@ -12673,6 +14416,7 @@
       updateTimeAwareVisibility();
       startNearbyServiceWatcher();
       refreshTodayOverview();
+      refreshAuroraSignal({ force: true });
     }
 
     tabButtons.forEach((button) => {
@@ -12707,6 +14451,13 @@
       true
     );
     initializeModuleToggle(
+      "auroraSignal",
+      auroraSignalToggleEl,
+      auroraSignalExpandedEl,
+      auroraSignalCollapsedEl,
+      true
+    );
+    initializeModuleToggle(
       "budget",
       budgetToggleEl,
       budgetExpandedEl,
@@ -12737,6 +14488,12 @@
       }
       refreshTodayOverview({ force: true });
     }, TODAY_OVERVIEW_REFRESH_INTERVAL_MS);
+    setInterval(() => {
+      if (activeTab !== "home") {
+        return;
+      }
+      refreshAuroraSignal({ force: true, silent: true });
+    }, AURORA_SIGNAL_REFRESH_INTERVAL_MS);
 
     const modalEl = document.getElementById("fullscreen-modal");
     const modalHeadEl = document.getElementById("fullscreen-head");
@@ -13968,6 +15725,7 @@
     initializeFuelPlannerCard();
     if (!IS_SMOKE_MODE) {
       initializeSyncCard();
+      initializeAuroraAlertCard();
       refreshIskEurRate();
       cacheHeaderVideo();
     } else {
