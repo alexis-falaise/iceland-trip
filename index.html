@@ -8394,16 +8394,19 @@
     }
 
     function getConfiguredOneSignalAppId() {
-      const fromWindow = normalizePlaceText(
+      const fromWindow =
         typeof window !== "undefined" && typeof window.ONESIGNAL_APP_ID === "string"
-          ? window.ONESIGNAL_APP_ID
-          : ""
-      );
-      const direct = fromWindow || normalizePlaceText(AURORA_ALERT_ONESIGNAL_APP_ID);
-      if (!direct || direct.startsWith("replace_with_")) {
+          ? window.ONESIGNAL_APP_ID.trim()
+          : "";
+      const direct = fromWindow || String(AURORA_ALERT_ONESIGNAL_APP_ID || "").trim();
+      if (!direct || /^replace_with_/i.test(direct)) {
         return "";
       }
-      return direct;
+      const maybeUuid = direct.toLowerCase();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(maybeUuid)) {
+        return "";
+      }
+      return maybeUuid;
     }
 
     function sanitizeAuroraAlertSettings(rawSettings) {
@@ -8520,6 +8523,42 @@
           }
         );
       });
+    }
+
+    function getAuroraAlertEnvironmentBlocker() {
+      const protocol = String(window.location && window.location.protocol || "").toLowerCase();
+      if (protocol === "file:") {
+        return "Push alerts require HTTPS (or localhost). Open the deployed app URL, not a local file.";
+      }
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      if (!window.isSecureContext && !isLocalhost) {
+        return "Push alerts require a secure context (HTTPS).";
+      }
+      if (!("serviceWorker" in navigator)) {
+        return "This browser does not support service workers.";
+      }
+      if (typeof Notification === "undefined") {
+        return "This browser does not support notifications.";
+      }
+      return "";
+    }
+
+    async function requestOneSignalPermissionWithTimeout(oneSignal, timeoutMs = 12000) {
+      if (
+        !oneSignal ||
+        !oneSignal.Notifications ||
+        typeof oneSignal.Notifications.requestPermission !== "function"
+      ) {
+        return;
+      }
+      await Promise.race([
+        oneSignal.Notifications.requestPermission(),
+        new Promise((_, reject) =>
+          window.setTimeout(() => reject(new Error("Notification permission prompt timed out.")), timeoutMs)
+        )
+      ]);
     }
 
     function getOneSignalPermissionSnapshot(oneSignal) {
@@ -8741,13 +8780,18 @@
         let permission = auroraAlertSettings.permission || (typeof Notification !== "undefined" ? Notification.permission : "unknown");
 
         if (selectedEnabled) {
+          const environmentBlocker = getAuroraAlertEnvironmentBlocker();
+          if (environmentBlocker) {
+            throw new Error(environmentBlocker);
+          }
+
           if (!Array.isArray(coords) || coords.length !== 2) {
             coords = await getCurrentCoordsFromBrowser();
           }
 
           const oneSignal = await ensureOneSignalReady();
-          if (!skipPermissionPrompt && oneSignal && oneSignal.Notifications && typeof oneSignal.Notifications.requestPermission === "function") {
-            await oneSignal.Notifications.requestPermission();
+          if (!skipPermissionPrompt) {
+            await requestOneSignalPermissionWithTimeout(oneSignal);
           }
           const snapshot = await waitForOneSignalSubscriptionSnapshot(oneSignal);
           permission = snapshot.permission || permission;
