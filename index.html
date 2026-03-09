@@ -3656,9 +3656,7 @@
           <div id="aurora-signal-quick-stay" class="aurora-quick-item">
             <span class="aurora-quick-main">Checking if waiting 1–2h is worth it…</span>
           </div>
-          <div id="aurora-signal-quick-move" class="aurora-quick-item" hidden>
-            <span class="aurora-quick-main">Scouting nearby clear spots…</span>
-          </div>
+          <div id="aurora-signal-quick-move" class="aurora-quick-item" style="display:none;"></div>
         </div>
       </div>
       <div id="aurora-signal-expanded" class="module-expanded" hidden>
@@ -12277,20 +12275,24 @@
 
       const distanceKm = 15;
       const minImprovement = 12;
+      // 4 cardinal directions only — keeps parallel requests to 5 instead of 9
       const directions = [
-        { dir: "N", bearing: 0 }, { dir: "NE", bearing: 45 }, { dir: "E", bearing: 90 },
-        { dir: "SE", bearing: 135 }, { dir: "S", bearing: 180 }, { dir: "SW", bearing: 225 },
-        { dir: "W", bearing: 270 }, { dir: "NW", bearing: 315 }
+        { dir: "N", bearing: 0 }, { dir: "E", bearing: 90 },
+        { dir: "S", bearing: 180 }, { dir: "W", bearing: 270 }
       ];
       const candidates = directions.map((d) => ({
         dir: d.dir,
         ...auroraDestinationPoint(lat, lon, d.bearing, distanceKm)
       }));
 
-      const [hereCloud, ...candClouds] = await Promise.all([
+      const fetchAll = Promise.all([
         fetchAuroraMoveCloud(lat, lon),
         ...candidates.map((c) => fetchAuroraMoveCloud(c.latitude, c.longitude))
       ]);
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("aurora move timeout")), 10000)
+      );
+      const [hereCloud, ...candClouds] = await Promise.race([fetchAll, timeout]);
 
       const scoreHere = {
         now: computeAuroraViewingScore(solarScore, hereCloud.now),
@@ -12354,7 +12356,7 @@
           "<span class=\"aurora-quick-main\">Waiting guidance unavailable.</span>";
       }
       if (auroraSignalQuickMoveEl) {
-        auroraSignalQuickMoveEl.hidden = true;
+        auroraSignalQuickMoveEl.style.display = "none";
       }
       if (auroraSignalRecommendationEl) {
         auroraSignalRecommendationEl.innerHTML =
@@ -12418,10 +12420,8 @@
         const cloudsBlocking = Number.isFinite(cloudNow) && cloudNow >= 40;
 
         if (solarStrong && cloudsBlocking && loc && Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)) {
-          auroraSignalQuickMoveEl.hidden = false;
-          auroraSignalQuickMoveEl.innerHTML = "<span class=\"aurora-quick-main\">Scouting nearby clear spots…</span>";
+          // Keep hidden until result is ready — no dangling loading state
           decideAuroraStayOrMove(loc.latitude, loc.longitude, solarScore).then((decision) => {
-            if (auroraSignalQuickMoveEl.hidden) return;
             const dirArrows = { N: "↑", NE: "↗", E: "→", SE: "↘", S: "↓", SW: "↙", W: "←", NW: "↖" };
             const whenLabels = { NOW: "now", IN_1H: "+1h", IN_2H: "+2h" };
             if (decision.action === "MOVE") {
@@ -12437,11 +12437,12 @@
                 "<span class=\"aurora-quick-main\">No better spot within ~" + decision.distanceKm + " km</span>" +
                 "<span class=\"aurora-status-chip level-stay\">Stay</span>";
             }
+            auroraSignalQuickMoveEl.style.display = "";
           }).catch(() => {
-            auroraSignalQuickMoveEl.hidden = true;
+            auroraSignalQuickMoveEl.style.display = "none";
           });
         } else {
-          auroraSignalQuickMoveEl.hidden = true;
+          auroraSignalQuickMoveEl.style.display = "none";
         }
       }
 
